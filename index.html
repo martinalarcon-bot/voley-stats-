@@ -89,47 +89,47 @@
             <i data-lucide="lock" class="w-3.5 h-3.5"></i>
             <span id="password-prompt-title">Ingresá la clave de defeadmin</span>
           </span>
-          <button type="button" onclick="cancelPasswordPrompt()" class="text-slate-400 hover:text-white text-xs font-bold px-1.5">✕</button>
+  <!-- PANTALLA DE INGRESO DE USUARIO / PERFIL -->
+  <div id="user-gate-overlay" class="fixed inset-0 z-50 bg-court-950/98 backdrop-blur-lg flex flex-col justify-center p-4 overflow-y-auto">
+    <div class="max-w-md w-full mx-auto bg-court-900 border border-slate-800 rounded-3xl p-5 shadow-2xl space-y-4">
+      <div class="text-center space-y-1">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto mb-2 text-2xl">
+          🏐
         </div>
-        <div class="flex gap-1.5">
-          <input id="profile-password-input" type="password" placeholder="Contraseña..."
-            onkeydown="if(event.key==='Enter') verifyProfilePassword()"
-            class="flex-1 min-w-0 bg-court-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none" />
-          <button type="button" onclick="verifyProfilePassword()" class="tap-btn px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shrink-0">
-            Entrar
-          </button>
-        </div>
+        <h1 class="text-lg font-black text-white tracking-tight">Vóley Stats Live</h1>
+        <p class="text-xs text-slate-400">Ingresá con tu usuario y clave asignada por el administrador del club.</p>
       </div>
 
-      <div class="pt-3 border-t border-slate-800 space-y-2">
-        <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-          ➕ Crear nuevo usuario / estadístico
-        </label>
-        <div class="flex gap-1.5">
-          <input id="new-profile-name" type="text" maxlength="24" placeholder="Ej: Profe Javier, Estadística Sub 16..."
-            onkeydown="if(event.key==='Enter') createUserProfile()"
-            class="flex-1 min-w-0 bg-court-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-white placeholder-slate-500 focus:border-emerald-400 focus:outline-none" />
-          <select id="new-profile-template" class="bg-court-950 border border-slate-700 rounded-xl px-2 py-2 text-[11px] font-bold text-slate-300 focus:border-emerald-400 focus:outline-none">
-            <option value="DBANF">Con DBANF</option>
-            <option value="EMPTY">Plantel vacío</option>
-          </select>
+      <!-- FORMULARIO DE INICIO DE SESIÓN DIRECTO (SIN EXPONER PERFILES) -->
+      <div class="bg-court-950/90 border border-slate-800 rounded-2xl p-3.5 space-y-2.5">
+        <div>
+          <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">Usuario / Perfil</label>
+          <input id="login-username-input" type="text" maxlength="24" placeholder="Ej: defeadmin o tu usuario..."
+            onkeydown="if(event.key==='Enter') loginWithCredentials()"
+            class="w-full bg-court-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white placeholder-slate-500 focus:border-emerald-400 focus:outline-none" />
         </div>
-        <div class="flex gap-1.5">
-          <input id="new-profile-password" type="password" maxlength="32" placeholder="Contraseña opcional (dejar vacío para acceso libre)"
-            onkeydown="if(event.key==='Enter') createUserProfile()"
-            class="flex-1 min-w-0 bg-court-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-white placeholder-slate-500 focus:border-emerald-400 focus:outline-none" />
-          <select id="new-profile-visibility" class="bg-court-950 border border-slate-700 rounded-xl px-2 py-2 text-[11px] font-bold text-sky-300 focus:border-sky-400 focus:outline-none" title="Visibilidad de tus informes">
-            <option value="PRIVATE" selected>🔒 Privado</option>
-            <option value="PUBLIC">🌐 Público</option>
-          </select>
+        <div>
+          <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">Contraseña</label>
+          <input id="login-password-input" type="password" maxlength="32" placeholder="Ingresá tu clave (si tiene)..."
+            onkeydown="if(event.key==='Enter') loginWithCredentials()"
+            class="w-full bg-court-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white placeholder-slate-500 focus:border-emerald-400 focus:outline-none" />
         </div>
-        <button onclick="createUserProfile()" class="tap-btn w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-950/50">
-          Crear Perfil y Entrar
+        <button type="button" onclick="loginWithCredentials()" class="tap-btn w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-lg shadow-emerald-950/50">
+          Iniciar Sesión →
         </button>
       </div>
+
+      <!-- PANEL DE PERFILES VISIBLE SOLO SI YA ESTÁ LOGUEADO EL ADMIN -->
+      <div id="admin-gate-profiles-section" class="hidden pt-3 border-t border-slate-800 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-300">👑 Cambio Rápido Admin (Perfiles del Club)</span>
+        </div>
+        <div id="profiles-list" class="space-y-2 max-h-48 overflow-y-auto pr-0.5"></div>
+      </div>
+
       <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
-        <span>¿Ya tenés sesión abierta?</span>
-        <button type="button" id="gate-close-session-btn" onclick="logoutCurrentSession()" class="tap-btn px-2.5 py-1 rounded-lg bg-rose-950/50 hover:bg-rose-900/60 border border-rose-500/30 text-rose-300 font-bold">
+        <span id="gate-session-hint">Acceso privado por perfil</span>
+        <button type="button" id="gate-close-session-btn" onclick="logoutCurrentSession()" class="hidden tap-btn px-2.5 py-1 rounded-lg bg-rose-950/50 hover:bg-rose-900/60 border border-rose-500/30 text-rose-300 font-bold">
           Cerrar sesión
         </button>
       </div>
@@ -203,6 +203,11 @@
       <button id="btn-undo" onclick="undoLastAction()" disabled class="tap-btn flex flex-col items-center justify-center px-2.5 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 disabled:opacity-30 disabled:pointer-events-none" title="Deshacer última acción">
         <i data-lucide="undo-2" class="w-4 h-4"></i>
         <span class="text-[9px] font-bold uppercase mt-0.5">Deshacer</span>
+      </button>
+
+      <button id="btn-finish-match" onclick="openFinishMatchModal()" class="tap-btn flex flex-col items-center justify-center px-2.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300" title="Finalizar partido y decidir si guardar o descartar">
+        <i data-lucide="flag" class="w-4 h-4"></i>
+        <span class="text-[9px] font-bold uppercase mt-0.5">Finalizar</span>
       </button>
     </div>
 
@@ -374,6 +379,14 @@
           </div>
         </div>
 
+        <div class="flex items-center justify-between gap-2 pt-1 border-t border-slate-800/80">
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 shrink-0">Partido:</span>
+          <select id="stats-match-selector" onchange="changeStatsMatchSource(this.value)"
+            class="flex-1 min-w-0 bg-court-950 border border-slate-700 text-xs font-bold text-emerald-300 rounded-lg px-2.5 py-1 focus:outline-none">
+            <option value="CURRENT">🟢 Partido en Curso</option>
+          </select>
+        </div>
+
         <div id="readonly-source-banner" class="hidden bg-amber-500/15 border border-amber-500/40 rounded-xl px-3 py-2 text-[11px] text-amber-200 flex items-center justify-between gap-2">
           <span>👁️ <strong>Modo Solo Lectura:</strong> Estás viendo el informe público de <strong id="readonly-owner-name">otro perfil</strong>. Solo su creador puede editarlo.</span>
           <button type="button" onclick="changeStatsProfileSource('SELF')" class="tap-btn px-2 py-1 rounded-lg bg-amber-500 text-slate-950 font-black text-[10px] shrink-0">Volver al mío</button>
@@ -534,6 +547,80 @@
 
     <!-- VISTA 3: PLANTEL, DATOS DEL PARTIDO, SUPABASE E IMPORTADOR -->
     <section id="view-roster" class="hidden space-y-3.5">
+
+      <!-- MI SEGURIDAD / CAMBIO DE CLAVE (PARA TODOS LOS PERFILES) -->
+      <div class="bg-court-900 border border-slate-800 rounded-2xl p-3.5 shadow-md space-y-2.5">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center">
+              <i data-lucide="key-round" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h2 class="text-sm font-black text-white">Seguridad de Mi Perfil (<span id="my-security-username" class="text-amber-300">Usuario</span>)</h2>
+              <p id="my-password-status" class="text-[11px] text-slate-400">Configurá o cambiá tu clave de acceso</p>
+            </div>
+          </div>
+          <span id="my-lock-badge" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/15 border border-emerald-500/40 text-emerald-300">Con Clave</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <input id="my-new-password-input" type="password" maxlength="32" placeholder="Nueva contraseña..."
+            class="bg-court-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none" />
+          <input id="my-confirm-password-input" type="password" maxlength="32" placeholder="Confirmar contraseña..."
+            class="bg-court-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none" />
+          <div class="flex gap-1.5">
+            <button type="button" onclick="updateMyOwnPassword()" class="tap-btn flex-1 py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs">
+              Guardar Clave
+            </button>
+            <button type="button" id="my-clear-password-btn" onclick="clearMyOwnPassword()" class="tap-btn py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold text-[11px]" title="Quitar clave de acceso">
+              Quitar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ABM DE PERFILES (EXCLUSIVO PARA ADMIN: defeadmin) -->
+      <div id="admin-profiles-abm-panel" class="hidden bg-gradient-to-br from-amber-950/35 to-court-900 border border-amber-500/40 rounded-2xl p-3.5 shadow-md space-y-3">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 flex items-center justify-center">
+              <i data-lucide="shield-check" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h2 class="text-sm font-black text-white">Administración de Perfiles (ABM)</h2>
+              <p class="text-[11px] text-slate-400">Solo visible para defeadmin · Alta, baja y edición de usuarios</p>
+            </div>
+          </div>
+          <span id="admin-profiles-count" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 border border-amber-500/40 text-amber-300">1 perfil</span>
+        </div>
+
+        <!-- ALTA DE PERFIL -->
+        <div class="bg-court-950/80 border border-slate-800 rounded-xl p-2.5 space-y-2">
+          <div class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400">➕ Alta de Nuevo Perfil</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+            <input id="admin-new-prof-name" type="text" maxlength="24" placeholder="Nombre de usuario (ej: Profe Lucas)"
+              class="bg-court-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-white placeholder-slate-500 focus:border-emerald-400 focus:outline-none" />
+            <input id="admin-new-prof-pass" type="text" maxlength="32" placeholder="Clave inicial (opcional)"
+              class="bg-court-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-white placeholder-slate-500 focus:border-emerald-400 focus:outline-none" />
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            <select id="admin-new-prof-template" class="bg-court-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-slate-300 focus:border-emerald-400 focus:outline-none">
+              <option value="DBANF">Plantel DBANF</option>
+              <option value="EMPTY">Plantel vacío</option>
+            </select>
+            <select id="admin-new-prof-visibility" class="bg-court-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-sky-300 focus:border-sky-400 focus:outline-none">
+              <option value="PRIVATE" selected>🔒 Privado</option>
+              <option value="PUBLIC">🌐 Público</option>
+            </select>
+            <button type="button" onclick="adminCreateProfile()" class="tap-btn flex-1 py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs">
+              Crear Usuario
+            </button>
+          </div>
+        </div>
+
+        <!-- LISTADO ABM DE PERFILES -->
+        <div id="admin-abm-profiles-list" class="space-y-2"></div>
+      </div>
 
       <!-- CONEXIÓN SUPABASE (ENTRENADORES EN LA NUBE) -->
       <div id="supabase-cloud-panel" class="bg-gradient-to-br from-sky-950/40 to-court-900 border border-sky-500/35 rounded-2xl p-3.5 shadow-md space-y-2.5">
@@ -836,6 +923,44 @@
     </div>
   </div>
 
+  <!-- MODAL DE CIERRE DE PARTIDO -->
+  <div id="finish-match-modal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-court-900 border border-slate-700 rounded-3xl max-w-sm w-full p-5 shadow-2xl space-y-4">
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 flex items-center justify-center shrink-0">
+            <i data-lucide="flag" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-black text-white leading-tight">Finalizar Partido</h3>
+            <p class="text-[11px] text-slate-400">Cerrá la recolección de datos de este encuentro</p>
+          </div>
+        </div>
+        <button onclick="closeFinishMatchModal()" class="text-slate-400 hover:text-white p-1 text-sm font-bold">✕</button>
+      </div>
+
+      <div id="finish-match-summary-box" class="bg-court-950 border border-slate-800 rounded-2xl p-3 space-y-1.5 text-xs"></div>
+
+      <p class="text-xs text-slate-300 leading-relaxed">
+        ¿Qué querés hacer con los datos recolectados antes de dejar el marcador en <strong>0 - 0</strong> para el próximo partido?
+      </p>
+
+      <div class="space-y-2 pt-1">
+        <button type="button" onclick="finalizeAndSaveMatch()" class="tap-btn w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-lg shadow-emerald-950/60 flex items-center justify-center gap-2">
+          <i data-lucide="database" class="w-4 h-4"></i>
+          <span>💾 Guardar en la Base y Nuevo Partido</span>
+        </button>
+        <button type="button" onclick="finalizeAndDiscardMatch()" class="tap-btn w-full py-2.5 px-4 rounded-xl bg-rose-950/70 hover:bg-rose-900/80 border border-rose-500/40 text-rose-200 font-bold text-xs flex items-center justify-center gap-2">
+          <i data-lucide="trash-2" class="w-4 h-4"></i>
+          <span>🗑️ Eliminar Datos y Nuevo Partido</span>
+        </button>
+        <button type="button" onclick="closeFinishMatchModal()" class="tap-btn w-full py-2 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs">
+          Seguir cargando el partido
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-opacity duration-200 bg-slate-800 border border-slate-600 text-white text-xs font-bold px-3.5 py-2 rounded-full shadow-xl">
     Acción registrada
   </div>
@@ -902,6 +1027,7 @@
           '5': { home: 0, away: 0 }
         },
         events: [],
+        savedMatches: [],
         selectedPlayerId: null
       };
     }
@@ -911,6 +1037,7 @@
     let pendingResetType = 'stats';
     let statsReportMode = 'MATCH';
     let viewingStatsProfileId = 'SELF';
+    let viewingStatsMatchId = 'CURRENT';
     let selectedReportPlayerId = null;
 
     const memoryStorage = {};
@@ -1052,7 +1179,8 @@
         liveFilter: state.liveFilter,
         currentSet: state.currentSet,
         scores: state.scores,
-        events: state.events
+        events: state.events,
+        savedMatches: Array.isArray(state.savedMatches) ? state.savedMatches : []
       };
       try {
         const res = await fetch(`${cfg.url}/rest/v1/club_state?on_conflict=id`, {
@@ -1184,7 +1312,7 @@
     ];
 
     let profilesRegistry = { activeProfileId: null, profiles: [] };
-    let pendingAuthProfileId = null;
+    let adminEditingProfileId = null;
 
     function getEmptyTemplateState(ownerName) {
       const base = getDefaultState();
@@ -1251,6 +1379,7 @@
         gateEl.classList.add('hidden');
       } else {
         gateEl.classList.remove('hidden');
+        setTimeout(() => document.getElementById('login-username-input')?.focus(), 50);
       }
     }
 
@@ -1264,8 +1393,13 @@
     }
 
     function renderProfilesGate() {
+      const adminSection = document.getElementById('admin-gate-profiles-section');
       const listEl = document.getElementById('profiles-list');
-      if (!listEl) return;
+      const hasSession = readStore(SESSION_ACTIVE_KEY) === '1';
+      const showAdminList = hasSession && isAdminProfile();
+
+      if (adminSection) adminSection.classList.toggle('hidden', !showAdminList);
+      if (!listEl || !showAdminList) return;
 
       listEl.innerHTML = profilesRegistry.profiles.map(prof => {
         const initials = prof.name.slice(0, 2).toUpperCase();
@@ -1280,24 +1414,22 @@
           }
         } catch (e) {}
 
-        const canDelete = profilesRegistry.profiles.length > 1 && prof.id !== 'usr_principal';
         const hasLock = Boolean(prof.password);
         const isPublic = (prof.visibility || 'PRIVATE') === 'PUBLIC';
         return `
-          <div class="flex items-center gap-2 bg-court-950/90 hover:bg-court-800 border border-slate-800 rounded-2xl p-2.5 transition-colors">
-            <button onclick="selectUserProfile('${prof.id}')" class="tap-btn flex-1 flex items-center gap-3 text-left min-w-0">
-              <div class="w-10 h-10 rounded-xl border font-black text-xs flex items-center justify-center shrink-0 ${colorClass}">${initials}</div>
+          <div class="flex items-center gap-2 bg-court-950/90 hover:bg-court-800 border border-slate-800 rounded-2xl p-2 transition-colors">
+            <button onclick="selectUserProfile('${prof.id}', true)" class="tap-btn flex-1 flex items-center gap-2.5 text-left min-w-0">
+              <div class="w-8 h-8 rounded-xl border font-black text-[11px] flex items-center justify-center shrink-0 ${colorClass}">${initials}</div>
               <div class="min-w-0 flex-1">
-                <div class="text-sm font-black text-white truncate flex items-center gap-1.5">
+                <div class="text-xs font-black text-white truncate flex items-center gap-1.5">
                   <span>${prof.name}</span>
                   ${hasLock ? '<i data-lucide="lock" class="w-3 h-3 text-amber-400 shrink-0"></i>' : ''}
-                  <span class="px-1.5 py-0.2 rounded text-[9px] font-bold border ${isPublic ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-slate-800 border-slate-700 text-slate-400'}">${isPublic ? '🌐 Público' : '🔒 Privado'}</span>
+                  <span class="px-1.5 py-0.2 rounded text-[9px] font-bold border ${isPublic ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-slate-800 border-slate-700 text-slate-400'}">${isPublic ? '🌐' : '🔒'}</span>
                 </div>
-                <div class="text-[11px] text-slate-400 truncate">${summaryText}</div>
+                <div class="text-[10px] text-slate-400 truncate">${summaryText}</div>
               </div>
-              <span class="px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-[10px] font-black shrink-0">${hasLock ? 'Clave →' : 'Entrar →'}</span>
+              <span class="px-2 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-[10px] font-black shrink-0">Entrar →</span>
             </button>
-            ${canDelete ? `<button onclick="deleteUserProfile('${prof.id}')" class="tap-btn p-2 rounded-xl bg-rose-950/50 hover:bg-rose-900/60 border border-rose-500/30 text-rose-400 shrink-0" title="Eliminar perfil"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>` : ''}
           </div>
         `;
       }).join('');
@@ -1305,26 +1437,58 @@
       if (window.lucide) lucide.createIcons();
     }
 
+    function loginWithCredentials() {
+      const userInput = document.getElementById('login-username-input');
+      const passInput = document.getElementById('login-password-input');
+      const rawUser = (userInput?.value || '').trim();
+      const rawPass = (passInput?.value || '').trim();
+
+      if (!rawUser) {
+        showToast('Ingresá tu nombre de usuario');
+        userInput?.focus();
+        return;
+      }
+
+      const matched = profilesRegistry.profiles.find(
+        p => String(p.name || '').trim().toLowerCase() === rawUser.toLowerCase()
+      );
+
+      if (!matched) {
+        showToast('❌ Usuario no encontrado');
+        userInput?.focus();
+        return;
+      }
+
+      if (matched.password && matched.password !== rawPass) {
+        showToast('❌ Contraseña incorrecta');
+        if (passInput) {
+          passInput.value = '';
+          passInput.focus();
+        }
+        return;
+      }
+
+      if (userInput) userInput.value = '';
+      if (passInput) passInput.value = '';
+      selectUserProfile(matched.id, true);
+    }
+
     function selectUserProfile(profileId, bypassAuth = false) {
       const profile = profilesRegistry.profiles.find(p => p.id === profileId);
       if (!profile) return;
 
       if (profile.password && !bypassAuth) {
-        pendingAuthProfileId = profile.id;
-        document.getElementById('password-prompt-title').textContent = `Ingresá la clave de ${profile.name}`;
-        const pwdBox = document.getElementById('profile-password-box');
-        const pwdInput = document.getElementById('profile-password-input');
-        pwdBox.classList.remove('hidden');
-        pwdInput.value = '';
-        setTimeout(() => pwdInput.focus(), 40);
-        if (window.lucide) lucide.createIcons();
+        openUserGate();
+        const userInput = document.getElementById('login-username-input');
+        if (userInput) userInput.value = profile.name;
+        document.getElementById('login-password-input')?.focus();
         return;
       }
 
-      cancelPasswordPrompt();
       profilesRegistry.activeProfileId = profileId;
       viewingStatsProfileId = 'SELF';
       selectedReportPlayerId = null;
+      adminEditingProfileId = null;
       writeStore(SESSION_ACTIVE_KEY, '1');
       saveProfilesRegistry();
 
@@ -1336,6 +1500,7 @@
       updateScoreboardUI();
       renderPlayersGrid();
       syncSupabaseInputs();
+      renderSecurityAndAdminPanels();
       if (!document.getElementById('view-stats').classList.contains('hidden')) renderStats();
       if (!document.getElementById('view-roster').classList.contains('hidden')) renderRoster();
 
@@ -1346,76 +1511,248 @@
 
     function logoutCurrentSession() {
       removeStore(SESSION_ACTIVE_KEY);
-      cancelPasswordPrompt();
+      adminEditingProfileId = null;
       const gateLogoutBtn = document.getElementById('gate-close-session-btn');
       if (gateLogoutBtn) gateLogoutBtn.classList.add('hidden');
+      const userInput = document.getElementById('login-username-input');
+      const passInput = document.getElementById('login-password-input');
+      if (userInput) userInput.value = '';
+      if (passInput) passInput.value = '';
       openUserGate();
       showToast('Sesión cerrada');
     }
 
     function openUserGate() {
+      const hasSession = readStore(SESSION_ACTIVE_KEY) === '1';
       const gateLogoutBtn = document.getElementById('gate-close-session-btn');
-      if (gateLogoutBtn) gateLogoutBtn.classList.toggle('hidden', readStore(SESSION_ACTIVE_KEY) !== '1');
+      if (gateLogoutBtn) gateLogoutBtn.classList.toggle('hidden', !hasSession);
       renderProfilesGate();
       document.getElementById('user-gate-overlay').classList.remove('hidden');
+      if (!hasSession) setTimeout(() => document.getElementById('login-username-input')?.focus(), 50);
     }
 
-    function verifyProfilePassword() {
-      if (!pendingAuthProfileId) return;
-      const profile = profilesRegistry.profiles.find(p => p.id === pendingAuthProfileId);
-      const pwdInput = document.getElementById('profile-password-input');
-      if (!profile) return;
-      if (pwdInput.value === profile.password) {
-        selectUserProfile(profile.id, true);
-      } else {
-        pwdInput.value = '';
-        pwdInput.focus();
-        showToast('❌ Contraseña incorrecta');
-      }
-    }
-
-    function cancelPasswordPrompt() {
-      pendingAuthProfileId = null;
-      const pwdBox = document.getElementById('profile-password-box');
-      const pwdInput = document.getElementById('profile-password-input');
-      if (pwdBox) pwdBox.classList.add('hidden');
-      if (pwdInput) pwdInput.value = '';
-    }
-
-    function createUserProfile() {
-      const nameInput = document.getElementById('new-profile-name');
-      const templateSelect = document.getElementById('new-profile-template');
-      const pwdInput = document.getElementById('new-profile-password');
-      const visSelect = document.getElementById('new-profile-visibility');
-      const rawName = nameInput.value.trim();
-      const rawPwd = pwdInput ? pwdInput.value.trim() : '';
-      const visibility = visSelect ? visSelect.value : 'PRIVATE';
-      if (!rawName) {
-        showToast('Escribí un nombre para el nuevo usuario');
-        nameInput.focus();
+    function updateMyOwnPassword() {
+      const prof = getActiveProfile();
+      if (!prof) return;
+      const newPass = (document.getElementById('my-new-password-input')?.value || '').trim();
+      const confirmPass = (document.getElementById('my-confirm-password-input')?.value || '').trim();
+      if (!newPass) {
+        showToast('Escribí una nueva contraseña');
+        document.getElementById('my-new-password-input')?.focus();
         return;
       }
+      if (newPass !== confirmPass) {
+        showToast('❌ Las contraseñas no coinciden');
+        document.getElementById('my-confirm-password-input')?.focus();
+        return;
+      }
+      prof.password = newPass;
+      saveProfilesRegistry();
+      document.getElementById('my-new-password-input').value = '';
+      document.getElementById('my-confirm-password-input').value = '';
+      renderSecurityAndAdminPanels();
+      showToast('🔐 Contraseña actualizada correctamente');
+    }
+
+    function clearMyOwnPassword() {
+      const prof = getActiveProfile();
+      if (!prof) return;
+      if (prof.id === 'usr_principal') {
+        showToast('El perfil administrador debe mantener una clave');
+        return;
+      }
+      prof.password = null;
+      saveProfilesRegistry();
+      renderSecurityAndAdminPanels();
+      showToast('🔓 Clave quitada de tu perfil');
+    }
+
+    function renderSecurityAndAdminPanels() {
+      const prof = getActiveProfile();
+      if (!prof) return;
+      const userEl = document.getElementById('my-security-username');
+      const statusEl = document.getElementById('my-password-status');
+      const lockBadge = document.getElementById('my-lock-badge');
+      const clearBtn = document.getElementById('my-clear-password-btn');
+
+      if (userEl) userEl.textContent = prof.name;
+      if (prof.password) {
+        if (statusEl) statusEl.textContent = 'Tu perfil está protegido con clave al iniciar sesión';
+        if (lockBadge) {
+          lockBadge.textContent = 'Con Clave';
+          lockBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/15 border border-emerald-500/40 text-emerald-300';
+        }
+      } else {
+        if (statusEl) statusEl.textContent = 'Actualmente sin clave (acceso solo con tu usuario)';
+        if (lockBadge) {
+          lockBadge.textContent = 'Sin Clave';
+          lockBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-800 border border-slate-700 text-slate-400';
+        }
+      }
+      if (clearBtn) clearBtn.classList.toggle('hidden', prof.id === 'usr_principal' || !prof.password);
+
+      const abmPanel = document.getElementById('admin-profiles-abm-panel');
+      const isAdmin = isAdminProfile();
+      if (abmPanel) abmPanel.classList.toggle('hidden', !isAdmin);
+      if (!isAdmin) return;
+
+      const countBadge = document.getElementById('admin-profiles-count');
+      if (countBadge) {
+        const n = profilesRegistry.profiles.length;
+        countBadge.textContent = `${n} ${n === 1 ? 'perfil' : 'perfiles'}`;
+      }
+
+      const listEl = document.getElementById('admin-abm-profiles-list');
+      if (!listEl) return;
+
+      listEl.innerHTML = profilesRegistry.profiles.map(p => {
+        const isEditing = adminEditingProfileId === p.id;
+        const isMainAdmin = p.id === 'usr_principal';
+        const isPub = (p.visibility || 'PRIVATE') === 'PUBLIC';
+        let evCount = 0;
+        try {
+          const raw = readStore(PROFILE_DATA_PREFIX + p.id);
+          if (raw) evCount = (JSON.parse(raw).events || []).length;
+        } catch (e) {}
+
+        let rowHtml = `
+          <div class="bg-court-950/90 border border-slate-800 rounded-xl p-2.5 space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <div class="min-w-0 flex-1">
+                <div class="text-xs font-black text-white flex items-center gap-1.5 flex-wrap">
+                  <span>${p.name}</span>
+                  ${isMainAdmin ? '<span class="px-1.5 py-0.2 rounded text-[9px] font-black bg-amber-500/20 border border-amber-500/40 text-amber-300">ADMIN</span>' : ''}
+                  <span class="px-1.5 py-0.2 rounded text-[9px] font-bold border ${p.password ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-slate-800 border-slate-700 text-slate-400'}">${p.password ? '🔐 Con clave' : '🔓 Sin clave'}</span>
+                  <span class="px-1.5 py-0.2 rounded text-[9px] font-bold border ${isPub ? 'bg-sky-500/10 border-sky-500/30 text-sky-300' : 'bg-slate-800 border-slate-700 text-slate-400'}">${isPub ? '🌐 Público' : '🔒 Privado'}</span>
+                </div>
+                <div class="text-[10px] text-slate-400 mt-0.5">${evCount} jugadas registradas</div>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <button type="button" onclick="selectUserProfile('${p.id}', true)" class="tap-btn px-2 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 text-[10px] font-black" title="Entrar a este perfil">
+                  Entrar
+                </button>
+                <button type="button" onclick="toggleAdminEditProfile('${p.id}')" class="tap-btn p-1.5 rounded-lg border ${isEditing ? 'bg-sky-500/25 border-sky-400 text-sky-300' : 'bg-court-900 border-slate-700 text-slate-300 hover:text-white'}" title="Editar perfil">
+                  <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                </button>
+                ${!isMainAdmin ? `<button type="button" onclick="deleteUserProfile('${p.id}')" class="tap-btn p-1.5 rounded-lg bg-rose-950/60 hover:bg-rose-900/70 border border-rose-500/40 text-rose-300" title="Eliminar perfil"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>` : ''}
+              </div>
+            </div>
+        `;
+
+        if (isEditing) {
+          rowHtml += `
+            <div class="pt-2 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-1.5">
+              <input id="admin-edit-name-${p.id}" type="text" maxlength="24" value="${p.name}" ${isMainAdmin ? 'readonly' : ''}
+                class="bg-court-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-bold text-white focus:border-sky-400 focus:outline-none ${isMainAdmin ? 'opacity-60' : ''}" />
+              <input id="admin-edit-pass-${p.id}" type="text" maxlength="32" value="${p.password || ''}" placeholder="Nueva clave (vacío = sin clave)"
+                class="bg-court-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-white placeholder-slate-500 focus:border-sky-400 focus:outline-none" />
+              <div class="flex gap-1.5">
+                <select id="admin-edit-vis-${p.id}" class="flex-1 bg-court-900 border border-slate-700 rounded-lg px-2 py-1.5 text-[11px] font-bold text-sky-300 focus:outline-none">
+                  <option value="PRIVATE" ${!isPub ? 'selected' : ''}>🔒 Privado</option>
+                  <option value="PUBLIC" ${isPub ? 'selected' : ''}>🌐 Público</option>
+                </select>
+                <button type="button" onclick="adminSaveEditedProfile('${p.id}')" class="tap-btn px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-black text-xs">
+                  OK
+                </button>
+              </div>
+            </div>
+          `;
+        }
+
+        rowHtml += `</div>`;
+        return rowHtml;
+      }).join('');
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function toggleAdminEditProfile(profileId) {
+      adminEditingProfileId = (adminEditingProfileId === profileId) ? null : profileId;
+      renderSecurityAndAdminPanels();
+    }
+
+    function adminSaveEditedProfile(profileId) {
+      if (!isAdminProfile()) return;
+      const target = profilesRegistry.profiles.find(p => p.id === profileId);
+      if (!target) return;
+
+      const newName = (document.getElementById(`admin-edit-name-${profileId}`)?.value || '').trim();
+      const newPass = (document.getElementById(`admin-edit-pass-${profileId}`)?.value || '').trim();
+      const newVis = document.getElementById(`admin-edit-vis-${profileId}`)?.value || 'PRIVATE';
+
+      if (!newName) {
+        showToast('El nombre de usuario no puede quedar vacío');
+        return;
+      }
+      const duplicated = profilesRegistry.profiles.some(
+        p => p.id !== profileId && String(p.name || '').trim().toLowerCase() === newName.toLowerCase()
+      );
+      if (duplicated) {
+        showToast('Ya existe otro perfil con ese nombre');
+        return;
+      }
+      if (target.id === 'usr_principal' && !newPass) {
+        showToast('El administrador debe tener una contraseña');
+        return;
+      }
+
+      if (target.id !== 'usr_principal') target.name = newName;
+      target.password = newPass || null;
+      target.visibility = newVis;
+      adminEditingProfileId = null;
+      saveProfilesRegistry();
+      renderSecurityAndAdminPanels();
+      showToast(`✅ Perfil "${target.name}" actualizado`);
+    }
+
+    function adminCreateProfile() {
+      if (!isAdminProfile()) return;
+      const nameInput = document.getElementById('admin-new-prof-name');
+      const passInput = document.getElementById('admin-new-prof-pass');
+      const tplSelect = document.getElementById('admin-new-prof-template');
+      const visSelect = document.getElementById('admin-new-prof-visibility');
+
+      const rawName = (nameInput?.value || '').trim();
+      const rawPass = (passInput?.value || '').trim();
+      const visibility = visSelect ? visSelect.value : 'PRIVATE';
+
+      if (!rawName) {
+        showToast('Escribí un nombre para el nuevo perfil');
+        nameInput?.focus();
+        return;
+      }
+      const duplicated = profilesRegistry.profiles.some(
+        p => String(p.name || '').trim().toLowerCase() === rawName.toLowerCase()
+      );
+      if (duplicated) {
+        showToast('Ya existe un perfil con ese nombre');
+        nameInput?.focus();
+        return;
+      }
+
       const newId = 'usr_' + Date.now().toString(36);
       const colorIdx = profilesRegistry.profiles.length % PROFILE_COLORS.length;
       profilesRegistry.profiles.push({
         id: newId,
         name: rawName,
-        password: rawPwd || null,
+        password: rawPass || null,
         visibility,
         colorIdx,
         createdAt: new Date().toISOString()
       });
-      profilesRegistry.activeProfileId = newId;
       saveProfilesRegistry();
-      const initialState = templateSelect.value === 'EMPTY' ? getEmptyTemplateState(rawName) : getDefaultState();
+
+      const initialState = tplSelect?.value === 'EMPTY' ? getEmptyTemplateState(rawName) : getDefaultState();
       writeStore(PROFILE_DATA_PREFIX + newId, JSON.stringify(initialState));
-      nameInput.value = '';
-      if (pwdInput) pwdInput.value = '';
-      selectUserProfile(newId, true);
+
+      if (nameInput) nameInput.value = '';
+      if (passInput) passInput.value = '';
+      renderSecurityAndAdminPanels();
+      showToast(`✅ Usuario "${rawName}" creado`);
     }
 
     function deleteUserProfile(profileId) {
-      if (profileId === 'usr_principal' || profilesRegistry.profiles.length <= 1) return;
+      if (!isAdminProfile() || profileId === 'usr_principal' || profilesRegistry.profiles.length <= 1) return;
       const target = profilesRegistry.profiles.find(p => p.id === profileId);
       profilesRegistry.profiles = profilesRegistry.profiles.filter(p => p.id !== profileId);
       removeStore(PROFILE_DATA_PREFIX + profileId);
@@ -1424,6 +1761,7 @@
       }
       saveProfilesRegistry();
       renderProfilesGate();
+      renderSecurityAndAdminPanels();
       showToast(`Perfil "${target?.name || ''}" eliminado`);
     }
 
@@ -1475,7 +1813,8 @@
           liveFilter: state.liveFilter,
           currentSet: state.currentSet,
           scores: state.scores,
-          events: state.events
+          events: state.events,
+          savedMatches: Array.isArray(state.savedMatches) ? state.savedMatches : []
         };
         const serialized = JSON.stringify(toSave);
         writeStore(storageKey, serialized);
@@ -2206,6 +2545,13 @@
 
     function changeStatsProfileSource(sourceId) {
       viewingStatsProfileId = sourceId || 'SELF';
+      viewingStatsMatchId = 'CURRENT';
+      selectedReportPlayerId = null;
+      renderStats();
+    }
+
+    function changeStatsMatchSource(matchId) {
+      viewingStatsMatchId = matchId || 'CURRENT';
       selectedReportPlayerId = null;
       renderStats();
     }
@@ -2262,9 +2608,45 @@
       document.getElementById('stats-player-report-panel').classList.toggle('hidden', statsReportMode !== 'PLAYER');
     }
 
+    function syncStatsMatchSelector(savedMatchesList, currentLabel) {
+      const matchSel = document.getElementById('stats-match-selector');
+      if (!matchSel) return;
+      const list = Array.isArray(savedMatchesList) ? savedMatchesList : [];
+      if (viewingStatsMatchId !== 'CURRENT' && !list.some(m => m.id === viewingStatsMatchId)) {
+        viewingStatsMatchId = 'CURRENT';
+      }
+      let optsHtml = `<option value="CURRENT" ${viewingStatsMatchId === 'CURRENT' ? 'selected' : ''}>🟢 En curso: ${currentLabel}</option>`;
+      list.slice().reverse().forEach(m => {
+        const dateTag = m.finishedAt ? new Date(m.finishedAt).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' }) : '';
+        optsHtml += `<option value="${m.id}" ${viewingStatsMatchId === m.id ? 'selected' : ''}>📁 ${dateTag ? `[${dateTag}] ` : ''}${m.homeTeam} vs ${m.awayTeam} (${m.setsResult || ''})</option>`;
+      });
+      matchSel.innerHTML = optsHtml;
+    }
+
     function getViewedStatsDataset() {
       const activeProf = getActiveProfile();
       if (viewingStatsProfileId === 'SELF' || !activeProf || viewingStatsProfileId === activeProf.id) {
+        const savedList = Array.isArray(state.savedMatches) ? state.savedMatches : [];
+        const currentLabel = `${state.homeTeam || getActiveTeam().name} vs ${state.awayTeam || 'RIVAL'}`;
+        syncStatsMatchSelector(savedList, currentLabel);
+
+        if (viewingStatsMatchId !== 'CURRENT') {
+          const archived = savedList.find(m => m.id === viewingStatsMatchId);
+          if (archived) {
+            return {
+              ownerName: activeProf ? activeProf.name : 'defeadmin',
+              isReadOnly: true,
+              tournament: archived.tournament || 'Torneo',
+              stage: archived.stage || 'Fecha',
+              homeTeam: archived.homeTeam || 'Local',
+              awayTeam: archived.awayTeam || 'Rival',
+              scores: archived.scores || {},
+              roster: Array.isArray(archived.roster) ? archived.roster : [],
+              events: Array.isArray(archived.events) ? archived.events : []
+            };
+          }
+        }
+
         const activeTeamId = state.activeTeamId;
         const roster = getActiveRoster();
         const teamEvents = state.events.filter(e => !e.teamId || e.teamId === activeTeamId);
@@ -2289,6 +2671,27 @@
         if (raw) {
           const parsed = JSON.parse(raw);
           const teamObj = parsed.teams?.[parsed.activeTeamId] || Object.values(parsed.teams || {})[0];
+          const savedList = Array.isArray(parsed.savedMatches) ? parsed.savedMatches : [];
+          const currentLabel = `${parsed.homeTeam || teamObj?.name || 'Equipo'} vs ${parsed.awayTeam || 'RIVAL'}`;
+          syncStatsMatchSelector(savedList, currentLabel);
+
+          if (viewingStatsMatchId !== 'CURRENT') {
+            const archived = savedList.find(m => m.id === viewingStatsMatchId);
+            if (archived) {
+              return {
+                ownerName: ownerProf ? ownerProf.name : 'Perfil Público',
+                isReadOnly: true,
+                tournament: archived.tournament || 'Torneo',
+                stage: archived.stage || 'Fecha',
+                homeTeam: archived.homeTeam || 'Local',
+                awayTeam: archived.awayTeam || 'Rival',
+                scores: archived.scores || {},
+                roster: Array.isArray(archived.roster) ? archived.roster : [],
+                events: Array.isArray(archived.events) ? archived.events : []
+              };
+            }
+          }
+
           const roster = Array.isArray(teamObj?.roster) ? teamObj.roster : [];
           const allEvents = Array.isArray(parsed.events) ? parsed.events : [];
           const matchedEvents = allEvents.filter(e => !e.teamId || e.teamId === parsed.activeTeamId);
@@ -2306,6 +2709,7 @@
           };
         }
       } catch (e) {}
+      syncStatsMatchSelector([], 'Sin datos');
       return {
         ownerName: ownerProf ? ownerProf.name : 'Perfil Público',
         isReadOnly: true,
@@ -2644,6 +3048,7 @@
       syncMatchInputs();
       renderSavedTeamsSelector();
       syncSupabaseInputs();
+      renderSecurityAndAdminPanels();
       const team = getActiveTeam();
       const roster = team.roster;
       const onCourtCount = roster.filter(p => p.onCourt).length;
@@ -2876,6 +3281,89 @@
       showToast('🏐 Partido reiniciado a 0-0');
     }
 
+    function openFinishMatchModal() {
+      const box = document.getElementById('finish-match-summary-box');
+      if (box) {
+        const homeName = state.homeTeam || getActiveTeam().name;
+        const awayName = state.awayTeam || 'RIVAL';
+        const { homeSets, awaySets } = computeSetsWon();
+        const setsBreakdown = Object.entries(state.scores || {})
+          .filter(([_, sc]) => sc.home > 0 || sc.away > 0)
+          .map(([s, sc]) => `Set ${s}: ${sc.home}-${sc.away}`)
+          .join(' · ') || 'Sin puntos cargados';
+        box.innerHTML = `
+          <div class="flex items-center justify-between font-black text-white">
+            <span class="truncate">${homeName} vs ${awayName}</span>
+            <span class="px-2 py-0.5 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 shrink-0">Sets ${homeSets}-${awaySets}</span>
+          </div>
+          <div class="text-[11px] text-amber-300 font-semibold">${state.tournament || 'Torneo'} · ${state.stage || 'Fecha'}</div>
+          <div class="text-[11px] text-slate-400">${setsBreakdown}</div>
+          <div class="text-[11px] text-sky-300 font-bold pt-0.5">📊 ${state.events.length} acciones recolectadas</div>
+        `;
+      }
+      document.getElementById('finish-match-modal').classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeFinishMatchModal() {
+      document.getElementById('finish-match-modal').classList.add('hidden');
+    }
+
+    function resetCurrentMatchBoard() {
+      state.currentSet = '1';
+      state.scores = { '1': { home: 0, away: 0 }, '2': { home: 0, away: 0 }, '3': { home: 0, away: 0 }, '4': { home: 0, away: 0 }, '5': { home: 0, away: 0 } };
+      state.events = [];
+      state.selectedPlayerId = null;
+      viewingStatsMatchId = 'CURRENT';
+    }
+
+    async function finalizeAndSaveMatch() {
+      const hasScore = Object.values(state.scores || {}).some(sc => sc.home > 0 || sc.away > 0);
+      if (state.events.length === 0 && !hasScore) {
+        showToast('No hay datos cargados para guardar en este partido');
+        closeFinishMatchModal();
+        return;
+      }
+      if (!Array.isArray(state.savedMatches)) state.savedMatches = [];
+      const { homeSets, awaySets } = computeSetsWon();
+      const archivedMatch = {
+        id: 'match_' + Date.now().toString(36),
+        finishedAt: new Date().toISOString(),
+        tournament: state.tournament || 'Torneo',
+        stage: state.stage || 'Fecha',
+        homeTeam: state.homeTeam || getActiveTeam().name,
+        awayTeam: state.awayTeam || 'RIVAL',
+        setsResult: `${homeSets}-${awaySets}`,
+        scores: JSON.parse(JSON.stringify(state.scores)),
+        roster: JSON.parse(JSON.stringify(getActiveRoster())),
+        events: JSON.parse(JSON.stringify(state.events))
+      };
+      state.savedMatches.push(archivedMatch);
+      resetCurrentMatchBoard();
+      saveState();
+      updateScoreboardUI();
+      renderPlayersGrid();
+      closeFinishMatchModal();
+      switchTab('stats');
+      viewingStatsMatchId = archivedMatch.id;
+      renderStats();
+      const cfg = getSupabaseConfig();
+      if (cfg.url && cfg.anonKey) {
+        await pushToSupabase(false);
+      }
+      showToast('💾 Partido guardado en la base y tablero reiniciado');
+    }
+
+    function finalizeAndDiscardMatch() {
+      resetCurrentMatchBoard();
+      saveState();
+      updateScoreboardUI();
+      renderPlayersGrid();
+      closeFinishMatchModal();
+      switchTab('live');
+      showToast('🗑️ Datos eliminados · Marcador en 0-0');
+    }
+
     let toastTimeout;
     function showToast(msg) {
       const toast = document.getElementById('toast');
@@ -2889,6 +3377,7 @@
       initProfilesSystem();
       loadState();
       syncSupabaseInputs();
+      renderSecurityAndAdminPanels();
       const activeProf = getActiveProfile();
       if (activeProf) document.getElementById('active-user-badge').textContent = activeProf.name;
       updateScoreboardUI();
