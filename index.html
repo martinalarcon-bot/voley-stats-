@@ -3,6 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#090d16">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Vóley Stats">
+  <link id="pwa-manifest-link" rel="manifest">
+  <link id="pwa-apple-icon" rel="apple-touch-icon">
   <title>Vóley Stats Live — Rendimiento Integral</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -138,16 +145,22 @@
           </button>
         </div>
 
-        <button id="login-submit-btn" type="button" onclick="loginWithCredentials()" class="tap-btn w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-lg shadow-emerald-950/50">
+        <button id="login-submit-btn" type="button" onclick="loginWithCredentials()"
+          class="tap-btn w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-lg shadow-emerald-950/50">
           Iniciar Sesión →
         </button>
       </div>
 
-      <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+      <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-2 text-[11px] text-slate-400">
         <span id="gate-session-hint">Acceso privado por perfil</span>
-        <button type="button" id="gate-close-session-btn" onclick="logoutCurrentSession()" class="hidden tap-btn px-2.5 py-1 rounded-lg bg-rose-950/50 hover:bg-rose-900/60 border border-rose-500/30 text-rose-300 font-bold">
-          Cerrar sesión
-        </button>
+        <div class="flex items-center gap-1.5">
+          <button type="button" id="gate-install-app-btn" onclick="triggerInstallPWA()" class="hidden tap-btn px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 font-black">
+            📲 Instalar App
+          </button>
+          <button type="button" id="gate-close-session-btn" onclick="logoutCurrentSession()" class="hidden tap-btn px-2.5 py-1 rounded-lg bg-rose-950/50 hover:bg-rose-900/60 border border-rose-500/30 text-rose-300 font-bold">
+            Cerrar sesión
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -310,11 +323,4 @@
                 <span class="text-base font-black leading-none">++</span>
                 <span class="text-[10px] font-bold mt-1">Perfecta</span>
               </button>
-              <button onclick="recordAction('REC_DEF', '+', 'Rec/Def Positiva', 0)" class="tap-btn flex flex-col items-center justify-center py-2.5 px-1 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/40 text-sky-300">
-                <span class="text-base font-black leading-none">+</span>
-                <span class="text-[10px] font-bold mt-1">Positiva</span>
-              </button>
-              <button onclick="recordAction('REC_DEF', '-', 'Rec/Def Vendida', 0)" class="tap-btn flex flex-col items-center justify-center py-2.5 px-1 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300">
-                <span class="text-base font-black leading-none">−</span>
-                <span class="text-[10px] font-bold mt-1">Vendida</span>
-              </but
+              <button onclick="recordActi
