@@ -114,9 +114,15 @@
             <option value="EMPTY">Plantel vacío</option>
           </select>
         </div>
-        <input id="new-profile-password" type="password" maxlength="32" placeholder="Contraseña opcional (dejar vacío para acceso libre)"
-          onkeydown="if(event.key==='Enter') createUserProfile()"
-          class="w-full bg-court-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-white placeholder-slate-500 focus:border-emerald-400 focus:outline-none" />
+        <div class="flex gap-1.5">
+          <input id="new-profile-password" type="password" maxlength="32" placeholder="Contraseña opcional (dejar vacío para acceso libre)"
+            onkeydown="if(event.key==='Enter') createUserProfile()"
+            class="flex-1 min-w-0 bg-court-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-white placeholder-slate-500 focus:border-emerald-400 focus:outline-none" />
+          <select id="new-profile-visibility" class="bg-court-950 border border-slate-700 rounded-xl px-2 py-2 text-[11px] font-bold text-sky-300 focus:border-sky-400 focus:outline-none" title="Visibilidad de tus informes">
+            <option value="PUBLIC">🌐 Público</option>
+            <option value="PRIVATE">🔒 Privado</option>
+          </select>
+        </div>
         <button onclick="createUserProfile()" class="tap-btn w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-950/50">
           Crear Perfil y Entrar
         </button>
@@ -338,98 +344,167 @@
 
     <!-- VISTA 2: RENDIMIENTO -->
     <section id="view-stats" class="hidden space-y-4">
-      <div class="flex items-center justify-between bg-court-900 border border-slate-800 rounded-xl p-2.5">
-        <span class="text-xs font-bold text-slate-300">Filtrar estadísticas:</span>
-        <select id="stats-set-filter" onchange="renderStats()" class="bg-court-800 border border-slate-700 text-xs font-bold text-sky-400 rounded-lg px-2.5 py-1.5 focus:outline-none">
-          <option value="ALL">Todo el Partido</option>
-          <option value="1">Set 1</option>
-          <option value="2">Set 2</option>
-          <option value="3">Set 3</option>
-          <option value="4">Set 4</option>
-          <option value="5">Set 5</option>
-        </select>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div class="bg-gradient-to-br from-violet-950/70 to-court-900 border border-violet-500/30 rounded-2xl p-3.5 shadow-lg">
-          <div class="flex items-center justify-between mb-2">
-            <div>
-              <span class="text-[10px] font-extrabold uppercase tracking-wider text-violet-400">Generación de Juego</span>
-              <h3 id="setter-card-title" class="text-base font-black text-white">Armador/a</h3>
-            </div>
-            <span class="px-2 py-0.5 rounded-md bg-violet-500/20 border border-violet-400/30 text-violet-300 text-[10px] font-bold">ARM</span>
-          </div>
-          <div class="grid grid-cols-3 gap-2 my-2.5">
-            <div class="bg-court-950/60 rounded-xl p-2 text-center border border-slate-800">
-              <div id="stat-setter-rating" class="text-lg font-black text-amber-300">0.00</div>
-              <div class="text-[10px] text-slate-400 leading-tight mt-0.5">Índice (0-3.0)</div>
-            </div>
-            <div class="bg-court-950/60 rounded-xl p-2 text-center border border-slate-800">
-              <div id="stat-setter-pos" class="text-lg font-black text-violet-300">0%</div>
-              <div class="text-[10px] text-slate-400 leading-tight mt-0.5">Positivo (★/+)</div>
-            </div>
-            <div class="bg-court-950/60 rounded-xl p-2 text-center border border-slate-800">
-              <div id="stat-setter-atk-eff" class="text-lg font-black text-emerald-400">0%</div>
-              <div class="text-[10px] text-slate-400 leading-tight mt-0.5">Cierre Ataque</div>
-            </div>
-          </div>
-          <p id="stat-setter-summary" class="text-[11px] text-slate-400">0 pelotas armadas · 0 errores de armado</p>
-        </div>
-
-        <div class="bg-gradient-to-br from-cyan-950/70 to-court-900 border border-cyan-500/30 rounded-2xl p-3.5 shadow-lg">
-          <div class="flex items-center justify-between mb-2">
-            <div>
-              <span class="text-[10px] font-extrabold uppercase tracking-wider text-cyan-400">Control y Primera Pelota</span>
-              <h3 id="libero-card-title" class="text-base font-black text-white">Líbero</h3>
-            </div>
-            <span class="px-2 py-0.5 rounded-md bg-cyan-500/20 border border-cyan-400/30 text-cyan-300 text-[10px] font-bold">LIB</span>
-          </div>
-          <div class="grid grid-cols-3 gap-2 my-2.5">
-            <div class="bg-court-950/60 rounded-xl p-2 text-center border border-slate-800">
-              <div id="stat-libero-rating" class="text-lg font-black text-emerald-400">0.00</div>
-              <div class="text-[10px] text-slate-400 leading-tight mt-0.5">Índice (0-3.0)</div>
-            </div>
-            <div class="bg-court-950/60 rounded-xl p-2 text-center border border-slate-800">
-              <div id="stat-libero-pos" class="text-lg font-black text-cyan-300">0%</div>
-              <div class="text-[10px] text-slate-400 leading-tight mt-0.5">Positiva (++/+)</div>
-            </div>
-            <div class="bg-court-950/60 rounded-xl p-2 text-center border border-slate-800">
-              <div id="stat-libero-perf" class="text-lg font-black text-sky-300">0%</div>
-              <div class="text-[10px] text-slate-400 leading-tight mt-0.5">Perfecta (++)</div>
-            </div>
-          </div>
-          <p id="stat-libero-summary" class="text-[11px] text-slate-400">0 recepciones/defensas · 0 errores</p>
-        </div>
-      </div>
-
-      <div class="bg-court-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
-        <div class="px-3.5 py-2.5 border-b border-slate-800 flex items-center justify-between">
-          <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-300">Planilla Completa</h3>
+      <!-- BARRA DE PRIVACIDAD Y FUENTE DEL INFORME -->
+      <div class="bg-court-900 border border-slate-800 rounded-2xl p-3 space-y-2.5 shadow-md">
+        <div class="flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-1.5">
-            <span class="text-[10px] text-slate-400">Ordenar:</span>
-            <select id="stats-sort-by" onchange="renderStats()" class="bg-court-800 border border-slate-700 text-[10px] font-bold text-slate-200 rounded px-1.5 py-1 focus:outline-none">
-              <option value="number"># Camiseta</option>
-              <option value="points">Puntos</option>
-              <option value="recRating">Índice Rec/Def</option>
-              <option value="setRating">Índice Armado</option>
+            <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Mis informes:</span>
+            <button id="toggle-my-visibility-btn" type="button" onclick="toggleMyReportsVisibility()"
+              class="tap-btn flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-black border bg-emerald-500/15 border-emerald-500/40 text-emerald-300">
+              🌐 Público (otros pueden ver)
+            </button>
+          </div>
+
+          <div class="flex items-center gap-1.5">
+            <span class="text-[10px] text-slate-400 font-bold">Viendo:</span>
+            <select id="stats-profile-source" onchange="changeStatsProfileSource(this.value)"
+              class="bg-court-950 border border-slate-700 text-xs font-bold text-amber-300 rounded-lg px-2 py-1 focus:outline-none max-w-[175px]">
             </select>
           </div>
         </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr class="bg-court-800/80 text-slate-400 text-[10px] uppercase tracking-wider border-b border-slate-700">
-                <th class="py-2.5 px-3 sticky left-0 bg-court-800 z-10">Jugador</th>
-                <th class="py-2.5 px-2 text-center">Pts</th>
-                <th class="py-2.5 px-2 text-center">Atq/Blq/Saq</th>
-                <th class="py-2.5 px-2 text-center text-cyan-300">Rec/Def (0-3)</th>
-                <th class="py-2.5 px-2 text-center text-cyan-300">% Pos</th>
-                <th class="py-2.5 px-2 text-center text-violet-300">Armado (0-3)</th>
-                <th class="py-2.5 px-2 text-center text-rose-400">Err</th>
-              </tr>
-            </thead>
-            <tbody id="stats-table-body" class="divide-y divide-slate-800/80"></tbody>
-          </table>
+
+        <div id="readonly-source-banner" class="hidden bg-amber-500/15 border border-amber-500/40 rounded-xl px-3 py-2 text-[11px] text-amber-200 flex items-center justify-between gap-2">
+          <span>👁️ <strong>Modo Solo Lectura:</strong> Estás viendo el informe público de <strong id="readonly-owner-name">otro perfil</strong>. Solo su creador puede editarlo.</span>
+          <button type="button" onclick="changeStatsProfileSource('SELF')" class="tap-btn px-2 py-1 rounded-lg bg-amber-500 text-slate-950 font-black text-[10px] shrink-0">Volver al mío</button>
+        </div>
+
+        <div class="flex items-center justify-between gap-2 pt-1 border-t border-slate-800/80">
+          <div class="flex items-center bg-court-950 border border-slate-800 rounded-xl p-0.5 text-[11px] font-black">
+            <button id="report-mode-match-btn" type="button" onclick="setStatsReportMode('MATCH')" class="px-2.5 py-1 rounded-lg bg-sky-600 text-white transition-colors">
+              📋 Por Partido
+            </button>
+            <button id="report-mode-player-btn" type="button" onclick="setStatsReportMode('PLAYER')" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition-colors">
+              👤 Por Jugador
+            </button>
+          </div>
+
+          <select id="stats-set-filter" onchange="renderStats()" class="bg-court-800 border border-slate-700 text-xs font-bold text-sky-400 rounded-lg px-2.5 py-1.5 focus:outline-none">
+            <option value="ALL">Todo el Partido</option>
+            <option value="1">Set 1</option>
+            <option value="2">Set 2</option>
+            <option value="3">Set 3</option>
+            <option value="4">Set 4</option>
+            <option value="5">Set 5</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- SUB-VISTA A: REPORTE POR PARTIDO -->
+      <div id="stats-match-report-panel" class="space-y-4">
+        <!-- TARJETA MVP DEL PARTIDO -->
+        <div class="bg-gradient-to-br from-amber-950/60 via-court-900 to-emerald-950/40 border border-amber-400/40 rounded-2xl p-3.5 shadow-lg">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <span class="text-[10px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1">
+                🏆 MVP del Partido (Impacto Integral)
+              </span>
+              <h3 id="mvp-player-name" class="text-lg font-black text-white mt-0.5">Sin acciones aún</h3>
+              <p id="mvp-player-breakdown" class="text-[11px] text-slate-300 mt-0.5">Registrá jugadas en vivo para calcular el MVP ponderado.</p>
+            </div>
+            <div class="text-right shrink-0 bg-court-950/80 border border-amber-400/40 rounded-xl px-2.5 py-1.5">
+              <div id="mvp-player-score" class="text-lg font-black text-amber-300 leading-none">0.0</div>
+              <div class="text-[9px] font-bold uppercase text-slate-400 mt-0.5">Índice MVP</div>
+            </div>
+          </div>
+          <div id="mvp-top3-strip" class="mt-2.5 pt-2 border-t border-amber-500/20 flex flex-wrap gap-1.5 text-[10px]"></div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="bg-gradient-to-br from-violet-950/70 to-court-900 border border-violet-500/30 rounded-2xl p-3.5 shadow-lg">
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-violet-400">Generación de Juego</span>
+                <h3 id="setter-card-title" class="text-base font-black text-white">Armador/a</h3>
+              </div>
+              <span class="px-2 py-0.5 rounded-md bg-violet-500/20 border border-violet-400/30 text-violet-300 text-[10px] font-bold">ARM</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2 my-2.5">
+              <div class="bg-court-950/60 rounded-xl p-2 text-center border border-slate-800">
+                <div id="stat-setter-rating" class="text-lg font-black text-amber-300">0.00</div>
+                <div class="text-[10px] text-slate-400 leading-tight mt-0.5">Índice (0-3.0)</div>
+              </div>
+              <div class="bg-court-950/60 rounded-xl p-2 text-center border border-slate-800">
+                <div id="stat-setter-pos" class="text-lg font-black text-violet-300">0%</div>
+                <div class="text-[10px] text-slate-400 leading-tight mt-0.5">Positivo (★/+)</div>
+              </div>
+              <div class="bg-court-950/60 rounded-xl p-2 text-center border border-slate-800">
+                <div id="stat-setter-atk-eff" class="text-lg font-black text-emerald-400">0%</div>
+                <div class="text-[10px] text-slate-400 leading-tight mt-0.5">Cierre Ataque</div>
+              </div>
+            </div>
+            <p id="stat-setter-summary" class="text-[11px] text-slate-400">0 pelotas armadas · 0 errores de armado</p>
+          </div>
+
+          <div class="bg-gradient-to-br from-cyan-950/70 to-court-900 border border-cyan-500/30 rounded-2xl p-3.5 shadow-lg">
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-cyan-400">Control y Primera Pelota</span>
+                <h3 id="libero-card-title" class="text-base font-black text-white">Líbero</h3>
+              </div>
+              <span class="px-2 py-0.5 rounded-md bg-cyan-500/20 border border-cyan-400/30 text-cyan-300 text-[10px] font-bold">LIB</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2 my-2.5">
+              <div class="bg-court-950/60 rounded-xl p-2 text-center border border-slate-800">
+                <div id="stat-libero-rating" class="text-lg font-black text-emerald-400">0.00</div>
+                <div class="text-[10px] text-slate-400 leading-tight mt-0.5">Índice (0-3.0)</div>
+              </div>
+              <div class="bg-court-950/60 rounded-xl p-2 text-center border border-slate-800">
+                <div id="stat-libero-pos" class="text-lg font-black text-cyan-300">0%</div>
+                <div class="text-[10px] text-slate-400 leading-tight mt-0.5">Positiva (++/+)</div>
+              </div>
+              <div class="bg-court-950/60 rounded-xl p-2 text-center border border-slate-800">
+                <div id="stat-libero-perf" class="text-lg font-black text-sky-300">0%</div>
+                <div class="text-[10px] text-slate-400 leading-tight mt-0.5">Perfecta (++)</div>
+              </div>
+            </div>
+            <p id="stat-libero-summary" class="text-[11px] text-slate-400">0 recepciones/defensas · 0 errores</p>
+          </div>
+        </div>
+
+        <div class="bg-court-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
+          <div class="px-3.5 py-2.5 border-b border-slate-800 flex items-center justify-between">
+            <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-300">Planilla Completa</h3>
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] text-slate-400">Ordenar:</span>
+              <select id="stats-sort-by" onchange="renderStats()" class="bg-court-800 border border-slate-700 text-[10px] font-bold text-slate-200 rounded px-1.5 py-1 focus:outline-none">
+                <option value="mvp">Índice MVP</option>
+                <option value="number"># Camiseta</option>
+                <option value="points">Puntos</option>
+                <option value="recRating">Índice Rec/Def</option>
+                <option value="setRating">Índice Armado</option>
+              </select>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-court-800/80 text-slate-400 text-[10px] uppercase tracking-wider border-b border-slate-700">
+                  <th class="py-2.5 px-3 sticky left-0 bg-court-800 z-10">Jugador</th>
+                  <th class="py-2.5 px-2 text-center text-amber-300">MVP</th>
+                  <th class="py-2.5 px-2 text-center">Pts</th>
+                  <th class="py-2.5 px-2 text-center">Atq/Blq/Saq</th>
+                  <th class="py-2.5 px-2 text-center text-cyan-300">Rec/Def (0-3)</th>
+                  <th class="py-2.5 px-2 text-center text-violet-300">Armado (0-3)</th>
+                  <th class="py-2.5 px-2 text-center text-rose-400">Err</th>
+                </tr>
+              </thead>
+              <tbody id="stats-table-body" class="divide-y divide-slate-800/80"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB-VISTA B: REPORTE INDIVIDUAL POR JUGADOR -->
+      <div id="stats-player-report-panel" class="hidden space-y-3">
+        <div class="bg-court-900 border border-slate-800 rounded-2xl p-3.5 space-y-3 shadow-lg">
+          <div class="flex items-center justify-between gap-2">
+            <label class="text-xs font-extrabold uppercase tracking-wider text-sky-400">Seleccionar Jugador/a:</label>
+            <select id="player-report-selector" onchange="renderPlayerIndividualReport()"
+              class="flex-1 max-w-[230px] bg-court-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-black text-white focus:border-sky-400 focus:outline-none">
+            </select>
+          </div>
+
+          <div id="player-individual-card" class="space-y-3"></div>
         </div>
       </div>
 
@@ -818,6 +893,9 @@
     let state = getDefaultState();
     let editingPlayerId = null;
     let pendingResetType = 'stats';
+    let statsReportMode = 'MATCH';
+    let viewingStatsProfileId = 'SELF';
+    let selectedReportPlayerId = null;
 
     const memoryStorage = {};
     function readStore(key) {
@@ -1090,7 +1168,7 @@
 
           profilesRegistry = {
             activeProfileId: defaultProfileId,
-            profiles: [{ id: defaultProfileId, name: 'defeadmin', password: 'Penna1610', colorIdx: 0, createdAt: new Date().toISOString() }]
+            profiles: [{ id: defaultProfileId, name: 'defeadmin', password: 'Penna1610', visibility: 'PUBLIC', colorIdx: 0, createdAt: new Date().toISOString() }]
           };
           writeStore(PROFILE_DATA_PREFIX + defaultProfileId, JSON.stringify(initialState));
           saveProfilesRegistry();
@@ -1099,8 +1177,11 @@
           if (mainProf && (mainProf.name === 'Principal (DBANF)' || mainProf.name === 'defeadmin')) {
             mainProf.name = 'defeadmin';
             mainProf.password = 'Penna1610';
-            saveProfilesRegistry();
           }
+          profilesRegistry.profiles.forEach(p => {
+            if (!p.visibility) p.visibility = 'PUBLIC';
+          });
+          saveProfilesRegistry();
         }
       } catch (e) {}
 
@@ -1136,6 +1217,7 @@
 
         const canDelete = profilesRegistry.profiles.length > 1 && prof.id !== 'usr_principal';
         const hasLock = Boolean(prof.password);
+        const isPublic = (prof.visibility || 'PUBLIC') === 'PUBLIC';
         return `
           <div class="flex items-center gap-2 bg-court-950/90 hover:bg-court-800 border border-slate-800 rounded-2xl p-2.5 transition-colors">
             <button onclick="selectUserProfile('${prof.id}')" class="tap-btn flex-1 flex items-center gap-3 text-left min-w-0">
@@ -1144,6 +1226,7 @@
                 <div class="text-sm font-black text-white truncate flex items-center gap-1.5">
                   <span>${prof.name}</span>
                   ${hasLock ? '<i data-lucide="lock" class="w-3 h-3 text-amber-400 shrink-0"></i>' : ''}
+                  <span class="px-1.5 py-0.2 rounded text-[9px] font-bold border ${isPublic ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-slate-800 border-slate-700 text-slate-400'}">${isPublic ? '🌐 Público' : '🔒 Privado'}</span>
                 </div>
                 <div class="text-[11px] text-slate-400 truncate">${summaryText}</div>
               </div>
@@ -1175,6 +1258,8 @@
 
       cancelPasswordPrompt();
       profilesRegistry.activeProfileId = profileId;
+      viewingStatsProfileId = 'SELF';
+      selectedReportPlayerId = null;
       saveProfilesRegistry();
 
       loadState();
@@ -1224,8 +1309,10 @@
       const nameInput = document.getElementById('new-profile-name');
       const templateSelect = document.getElementById('new-profile-template');
       const pwdInput = document.getElementById('new-profile-password');
+      const visSelect = document.getElementById('new-profile-visibility');
       const rawName = nameInput.value.trim();
       const rawPwd = pwdInput ? pwdInput.value.trim() : '';
+      const visibility = visSelect ? visSelect.value : 'PUBLIC';
       if (!rawName) {
         showToast('Escribí un nombre para el nuevo usuario');
         nameInput.focus();
@@ -1237,6 +1324,7 @@
         id: newId,
         name: rawName,
         password: rawPwd || null,
+        visibility,
         colorIdx,
         createdAt: new Date().toISOString()
       });
@@ -2006,13 +2094,347 @@
       const setRatingNum = setTotal > 0 ? (((setStar * 3) + (setPos * 2) + (setNeg * 1)) / setTotal) : 0;
       const setPosPct = setTotal > 0 ? Math.round(((setStar + setPos) / setTotal) * 100) : 0;
 
+      // Índice MVP Ponderado (equilibra puntos directos, armado libre/bueno y recepción/defensa positiva)
+      const mvpScoreNum =
+        (totalPts * 1.0) +
+        (recPerf * 0.60) +
+        (recPos * 0.30) +
+        (setStar * 0.55) +
+        (setPos * 0.25) +
+        (atkCont * 0.15) -
+        (totalErr * 0.75);
+
       return {
         totalPts, atkPts, atkCont, atkBlk, atkErr, blkPts, srvPts, srvErr, totalErr,
         recTotal, recPerf, recPos, recNeg, recErr, recRatingNum,
         recRating: recTotal > 0 ? recRatingNum.toFixed(2) : '0.00', recPosPct, recPerfPct,
         setTotal, setStar, setPos, setNeg, setErr, setRatingNum,
-        setRating: setTotal > 0 ? setRatingNum.toFixed(2) : '0.00', setPosPct
+        setRating: setTotal > 0 ? setRatingNum.toFixed(2) : '0.00', setPosPct,
+        mvpScoreNum, mvpScore: mvpScoreNum.toFixed(1),
+        totalActions: pEvents.length
       };
+    }
+
+    function toggleMyReportsVisibility() {
+      const activeProf = getActiveProfile();
+      if (!activeProf) return;
+      activeProf.visibility = (activeProf.visibility || 'PUBLIC') === 'PUBLIC' ? 'PRIVATE' : 'PUBLIC';
+      saveProfilesRegistry();
+      syncStatsVisibilityUI();
+      showToast(activeProf.visibility === 'PUBLIC'
+        ? '🌐 Tus informes ahora son Públicos (otros perfiles pueden verlos)'
+        : '🔒 Tus informes ahora son Privados (solo vos podés verlos)');
+    }
+
+    function changeStatsProfileSource(sourceId) {
+      viewingStatsProfileId = sourceId || 'SELF';
+      selectedReportPlayerId = null;
+      renderStats();
+    }
+
+    function setStatsReportMode(mode) {
+      statsReportMode = mode;
+      renderStats();
+    }
+
+    function syncStatsVisibilityUI() {
+      const activeProf = getActiveProfile();
+      const visBtn = document.getElementById('toggle-my-visibility-btn');
+      if (visBtn && activeProf) {
+        const isPub = (activeProf.visibility || 'PUBLIC') === 'PUBLIC';
+        visBtn.textContent = isPub ? '🌐 Público (otros ven)' : '🔒 Privado (solo vos)';
+        visBtn.className = isPub
+          ? 'tap-btn flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-black border bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+          : 'tap-btn flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-black border bg-slate-800 border-slate-700 text-slate-300';
+      }
+
+      const sourceSel = document.getElementById('stats-profile-source');
+      if (sourceSel && activeProf) {
+        const accessible = profilesRegistry.profiles.filter(p => p.id === activeProf.id || (p.visibility || 'PUBLIC') === 'PUBLIC');
+        if (viewingStatsProfileId !== 'SELF' && !accessible.some(p => p.id === viewingStatsProfileId)) {
+          viewingStatsProfileId = 'SELF';
+        }
+        sourceSel.innerHTML = accessible.map(p => {
+          const isMe = p.id === activeProf.id;
+          return `<option value="${isMe ? 'SELF' : p.id}" ${(isMe && viewingStatsProfileId === 'SELF') || viewingStatsProfileId === p.id ? 'selected' : ''}>${isMe ? `👤 Mi perfil (${p.name})` : `🌐 ${p.name} (Solo lectura)`}</option>`;
+        }).join('');
+      }
+
+      const isReadOnly = viewingStatsProfileId !== 'SELF';
+      const roBanner = document.getElementById('readonly-source-banner');
+      if (roBanner) {
+        roBanner.classList.toggle('hidden', !isReadOnly);
+        if (isReadOnly) {
+          const owner = profilesRegistry.profiles.find(p => p.id === viewingStatsProfileId);
+          document.getElementById('readonly-owner-name').textContent = owner ? owner.name : 'otro usuario';
+        }
+      }
+
+      const matchBtn = document.getElementById('report-mode-match-btn');
+      const playerBtn = document.getElementById('report-mode-player-btn');
+      if (matchBtn && playerBtn) {
+        matchBtn.className = statsReportMode === 'MATCH'
+          ? 'px-2.5 py-1 rounded-lg bg-sky-600 text-white transition-colors'
+          : 'px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition-colors';
+        playerBtn.className = statsReportMode === 'PLAYER'
+          ? 'px-2.5 py-1 rounded-lg bg-sky-600 text-white transition-colors'
+          : 'px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition-colors';
+      }
+      document.getElementById('stats-match-report-panel').classList.toggle('hidden', statsReportMode !== 'MATCH');
+      document.getElementById('stats-player-report-panel').classList.toggle('hidden', statsReportMode !== 'PLAYER');
+    }
+
+    function getViewedStatsDataset() {
+      const activeProf = getActiveProfile();
+      if (viewingStatsProfileId === 'SELF' || !activeProf || viewingStatsProfileId === activeProf.id) {
+        return {
+          ownerName: activeProf ? activeProf.name : 'defeadmin',
+          isReadOnly: false,
+          tournament: state.tournament,
+          stage: state.stage,
+          homeTeam: state.homeTeam || getActiveTeam().name,
+          awayTeam: state.awayTeam || 'RIVAL',
+          scores: state.scores,
+          roster: getActiveRoster(),
+          events: state.events.filter(e => !e.teamId || e.teamId === state.activeTeamId)
+        };
+      }
+      const ownerProf = profilesRegistry.profiles.find(p => p.id === viewingStatsProfileId);
+      try {
+        const raw = readStore(PROFILE_DATA_PREFIX + viewingStatsProfileId);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const teamObj = parsed.teams?.[parsed.activeTeamId] || Object.values(parsed.teams || {})[0];
+          const roster = Array.isArray(teamObj?.roster) ? teamObj.roster : [];
+          const events = (Array.isArray(parsed.events) ? parsed.events : []).filter(e => !e.teamId || e.teamId === parsed.activeTeamId);
+          return {
+            ownerName: ownerProf ? ownerProf.name : 'Perfil Público',
+            isReadOnly: true,
+            tournament: parsed.tournament || 'Torneo',
+            stage: parsed.stage || 'Fecha',
+            homeTeam: parsed.homeTeam || teamObj?.name || 'Equipo',
+            awayTeam: parsed.awayTeam || 'RIVAL',
+            scores: parsed.scores || {},
+            roster,
+            events
+          };
+        }
+      } catch (e) {}
+      return {
+        ownerName: ownerProf ? ownerProf.name : 'Perfil Público',
+        isReadOnly: true,
+        tournament: '',
+        stage: '',
+        homeTeam: 'Equipo',
+        awayTeam: 'RIVAL',
+        scores: {},
+        roster: [],
+        events: []
+      };
+    }
+
+    function renderStats() {
+      syncStatsVisibilityUI();
+      const filterSet = document.getElementById('stats-set-filter').value;
+      const sortBy = document.getElementById('stats-sort-by').value;
+      const dataset = getViewedStatsDataset();
+      const roster = dataset.roster;
+      const filteredEvents = filterSet === 'ALL' ? dataset.events : dataset.events.filter(e => e.set === filterSet);
+
+      const enriched = roster.map(p => ({ player: p, stats: computePlayerStats(p.id, filteredEvents) }));
+
+      // Cálculo de MVP del partido
+      const rankedByMvp = [...enriched].filter(item => item.stats.totalActions > 0).sort((a, b) => b.stats.mvpScoreNum - a.stats.mvpScoreNum);
+      if (rankedByMvp.length > 0) {
+        const mvp = rankedByMvp[0];
+        const roleInfo = ROLE_CONFIG[mvp.player.role] || ROLE_CONFIG.PTA;
+        document.getElementById('mvp-player-name').textContent = `#${mvp.player.number} ${mvp.player.name} (${roleInfo.name})`;
+        document.getElementById('mvp-player-score').textContent = mvp.stats.mvpScore;
+        const parts = [];
+        if (mvp.stats.totalPts > 0) parts.push(`${mvp.stats.totalPts} pts`);
+        if (mvp.stats.recTotal > 0) parts.push(`Rec/Def ${mvp.stats.recRating} (${mvp.stats.recPosPct}% pos)`);
+        if (mvp.stats.setTotal > 0) parts.push(`Armado ${mvp.stats.setRating} (${mvp.stats.setStar} ★)`);
+        parts.push(`${mvp.stats.totalErr} err`);
+        document.getElementById('mvp-player-breakdown').textContent = parts.join(' · ');
+        document.getElementById('mvp-top3-strip').innerHTML = rankedByMvp.slice(0, 3).map((item, idx) => {
+          const medal = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : '🥉');
+          return `<span class="px-2 py-0.5 rounded-md bg-court-950/80 border border-slate-800 text-slate-200 font-bold">${medal} #${item.player.number} ${formatShortName(item.player.name)} <span class="text-amber-300">(${item.stats.mvpScore})</span></span>`;
+        }).join('');
+      } else {
+        document.getElementById('mvp-player-name').textContent = 'Sin acciones registradas aún';
+        document.getElementById('mvp-player-score').textContent = '0.0';
+        document.getElementById('mvp-player-breakdown').textContent = 'Registrá jugadas en vivo para calcular el MVP ponderado.';
+        document.getElementById('mvp-top3-strip').innerHTML = '';
+      }
+
+      const setters = roster.filter(p => p.role === 'ARM');
+      const setterIds = new Set(setters.map(s => s.id));
+      const setterEvents = filteredEvents.filter(e => setterIds.has(e.playerId) || e.category === 'SET');
+      let sStar = 0, sPos = 0, sNeg = 0, sErr = 0;
+      setterEvents.filter(e => e.category === 'SET').forEach(e => {
+        if (e.quality === '★') sStar++; else if (e.quality === '+') sPos++; else if (e.quality === '-') sNeg++; else if (e.quality === '=') sErr++;
+      });
+      const sTotal = sStar + sPos + sNeg + sErr;
+      document.getElementById('setter-card-title').textContent = setters.length > 0 ? setters.map(s => `#${s.number} ${formatShortName(s.name)}`).join(' / ') : 'Armador/a';
+      document.getElementById('stat-setter-rating').textContent = sTotal > 0 ? (((sStar * 3) + (sPos * 2) + (sNeg * 1)) / sTotal).toFixed(2) : '0.00';
+      document.getElementById('stat-setter-pos').textContent = `${sTotal > 0 ? Math.round(((sStar + sPos) / sTotal) * 100) : 0}%`;
+      const teamAtkEvents = filteredEvents.filter(e => e.category === 'ATK');
+      const teamAtkPts = teamAtkEvents.filter(e => e.quality === 'PT').length;
+      document.getElementById('stat-setter-atk-eff').textContent = `${teamAtkEvents.length > 0 ? Math.round((teamAtkPts / teamAtkEvents.length) * 100) : 0}%`;
+      document.getElementById('stat-setter-summary').textContent = `${sTotal} pelotas armadas (${sStar} libres 1v1) · ${sErr} errores de armado`;
+
+      const liberos = roster.filter(p => p.role === 'LIB');
+      const liberoIds = new Set(liberos.map(l => l.id));
+      let lPerf = 0, lPos = 0, lNeg = 0, lErr = 0;
+      filteredEvents.filter(e => liberoIds.has(e.playerId) && e.category === 'REC_DEF').forEach(e => {
+        if (e.quality === '++') lPerf++; else if (e.quality === '+') lPos++; else if (e.quality === '-') lNeg++; else if (e.quality === '=') lErr++;
+      });
+      const lTotal = lPerf + lPos + lNeg + lErr;
+      document.getElementById('libero-card-title').textContent = liberos.length > 0 ? liberos.map(l => `#${l.number} ${formatShortName(l.name)}`).join(' / ') : 'Líbero';
+      document.getElementById('stat-libero-rating').textContent = lTotal > 0 ? (((lPerf * 3) + (lPos * 2) + (lNeg * 1)) / lTotal).toFixed(2) : '0.00';
+      document.getElementById('stat-libero-pos').textContent = `${lTotal > 0 ? Math.round(((lPerf + lPos) / lTotal) * 100) : 0}%`;
+      document.getElementById('stat-libero-perf').textContent = `${lTotal > 0 ? Math.round((lPerf / lTotal) * 100) : 0}%`;
+      document.getElementById('stat-libero-summary').textContent = `${lTotal} recepciones/defensas · ${lErr} errores`;
+
+      enriched.sort((a, b) => {
+        if (sortBy === 'mvp') return b.stats.mvpScoreNum - a.stats.mvpScoreNum;
+        if (sortBy === 'points') return b.stats.totalPts - a.stats.totalPts;
+        if (sortBy === 'recRating') return b.stats.recRatingNum - a.stats.recRatingNum;
+        if (sortBy === 'setRating') return b.stats.setRatingNum - a.stats.setRatingNum;
+        return parseInt(a.player.number, 10) - parseInt(b.player.number, 10);
+      });
+
+      document.getElementById('stats-table-body').innerHTML = enriched.map(({ player, stats }) => {
+        const roleInfo = ROLE_CONFIG[player.role] || ROLE_CONFIG.PTA;
+        return `
+          <tr onclick="openPlayerIndividualFromTable('${player.id}')" class="hover:bg-court-800/70 cursor-pointer" title="Tocá para ver reporte individual">
+            <td class="py-2.5 px-3 sticky left-0 bg-court-900 z-10">
+              <div class="flex items-center gap-1.5">
+                <span class="font-black text-white">#${player.number}</span>
+                <span class="font-semibold text-slate-200 truncate max-w-[105px]">${formatShortName(player.name)}</span>
+                <span class="px-1 py-0.2 rounded text-[9px] font-black border ${roleInfo.badgeBg}">${roleInfo.label}</span>
+              </div>
+            </td>
+            <td class="py-2.5 px-2 text-center font-black text-amber-300">${stats.mvpScore}</td>
+            <td class="py-2.5 px-2 text-center font-black text-emerald-400">${stats.totalPts}</td>
+            <td class="py-2.5 px-2 text-center text-slate-300 font-mono text-[11px]">${stats.atkPts}/${stats.blkPts}/${stats.srvPts}</td>
+            <td class="py-2.5 px-2 text-center font-bold text-cyan-300">${stats.recTotal > 0 ? stats.recRating : '—'} <span class="text-[9px] text-slate-500">(${stats.recTotal})</span></td>
+            <td class="py-2.5 px-2 text-center font-bold text-violet-300">${stats.setTotal > 0 ? stats.setRating : '—'} <span class="text-[9px] text-slate-500">(${stats.setTotal})</span></td>
+            <td class="py-2.5 px-2 text-center font-bold text-rose-400">${stats.totalErr}</td>
+          </tr>
+        `;
+      }).join('');
+
+      renderPlayerIndividualReport();
+    }
+
+    function openPlayerIndividualFromTable(playerId) {
+      selectedReportPlayerId = playerId;
+      setStatsReportMode('PLAYER');
+    }
+
+    function renderPlayerIndividualReport() {
+      const selector = document.getElementById('player-report-selector');
+      const card = document.getElementById('player-individual-card');
+      if (!selector || !card) return;
+
+      const dataset = getViewedStatsDataset();
+      const roster = dataset.roster;
+      if (roster.length === 0) {
+        selector.innerHTML = '<option value="">Sin jugadores</option>';
+        card.innerHTML = '<p class="text-xs text-slate-400">No hay jugadores cargados en este plantel.</p>';
+        return;
+      }
+
+      if (!selectedReportPlayerId || !roster.some(p => p.id === selectedReportPlayerId)) {
+        selectedReportPlayerId = roster[0].id;
+      }
+      if (selector.value !== selectedReportPlayerId) {
+        selector.innerHTML = roster.map(p => `<option value="${p.id}" ${p.id === selectedReportPlayerId ? 'selected' : ''}>#${p.number} ${p.name} (${p.role})</option>`).join('');
+      } else {
+        selectedReportPlayerId = selector.value;
+      }
+
+      const player = roster.find(p => p.id === selectedReportPlayerId) || roster[0];
+      const filterSet = document.getElementById('stats-set-filter').value;
+      const filteredEvents = filterSet === 'ALL' ? dataset.events : dataset.events.filter(e => e.set === filterSet);
+      const st = computePlayerStats(player.id, filteredEvents);
+      const roleInfo = ROLE_CONFIG[player.role] || ROLE_CONFIG.PTA;
+      const atkTotal = st.atkPts + st.atkCont + st.atkBlk + st.atkErr;
+      const atkEffPct = atkTotal > 0 ? Math.round(((st.atkPts - st.atkBlk - st.atkErr) / atkTotal) * 100) : 0;
+
+      const setsBreakdown = ['1', '2', '3', '4', '5'].map(sNum => {
+        const sEvents = dataset.events.filter(e => e.set === sNum && e.playerId === player.id);
+        if (sEvents.length === 0) return '';
+        const sSt = computePlayerStats(player.id, sEvents);
+        return `
+          <div class="flex items-center justify-between bg-court-950/80 border border-slate-800 rounded-xl px-3 py-1.5 text-[11px]">
+            <span class="font-black text-amber-300">Set ${sNum}</span>
+            <span class="text-slate-300">${sSt.totalPts} pts · Rec ${sSt.recTotal > 0 ? sSt.recRating : '—'} · Arm ${sSt.setTotal > 0 ? sSt.setRating : '—'} · ${sSt.totalErr} err</span>
+            <span class="font-black text-emerald-400">MVP ${sSt.mvpScore}</span>
+          </div>
+        `;
+      }).filter(Boolean).join('');
+
+      card.innerHTML = `
+        <div class="flex items-center justify-between gap-2 bg-court-950 border border-slate-800 rounded-2xl p-3">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="text-lg font-black text-white">#${player.number} ${player.name}</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-black border ${roleInfo.badgeBg}">${roleInfo.name}</span>
+            </div>
+            <div class="text-[11px] text-slate-400 mt-0.5">${dataset.homeTeam} vs ${dataset.awayTeam} · ${st.totalActions} intervenciones</div>
+          </div>
+          <div class="text-right shrink-0 bg-amber-500/15 border border-amber-400/40 rounded-xl px-3 py-1.5">
+            <div class="text-xl font-black text-amber-300 leading-none">${st.mvpScore}</div>
+            <div class="text-[9px] font-bold uppercase text-amber-200/80 mt-0.5">Índice MVP</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div class="bg-court-950/70 border border-slate-800 rounded-xl p-2.5 text-center">
+            <div class="text-lg font-black text-emerald-400">${st.totalPts}</div>
+            <div class="text-[10px] text-slate-400">Puntos Totales</div>
+            <div class="text-[9px] text-slate-500 mt-0.5">${st.atkPts}A · ${st.blkPts}B · ${st.srvPts}S</div>
+          </div>
+          <div class="bg-court-950/70 border border-slate-800 rounded-xl p-2.5 text-center">
+            <div class="text-lg font-black text-amber-300">${atkEffPct}%</div>
+            <div class="text-[10px] text-slate-400">Efic. Ataque</div>
+            <div class="text-[9px] text-slate-500 mt-0.5">${st.atkPts}/${atkTotal} (${st.atkCont} cont)</div>
+          </div>
+          <div class="bg-court-950/70 border border-slate-800 rounded-xl p-2.5 text-center">
+            <div class="text-lg font-black text-cyan-300">${st.recTotal > 0 ? st.recRating : '—'}</div>
+            <div class="text-[10px] text-slate-400">Rec/Def (0-3)</div>
+            <div class="text-[9px] text-slate-500 mt-0.5">${st.recPosPct}% pos (${st.recPerf}++)</div>
+          </div>
+          <div class="bg-court-950/70 border border-slate-800 rounded-xl p-2.5 text-center">
+            <div class="text-lg font-black text-violet-300">${st.setTotal > 0 ? st.setRating : '—'}</div>
+            <div class="text-[10px] text-slate-400">Armado (0-3)</div>
+            <div class="text-[9px] text-slate-500 mt-0.5">${st.setPosPct}% pos (${st.setStar}★)</div>
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Desglose por Set</div>
+          ${setsBreakdown || '<p class="text-xs text-slate-500 italic">Sin acciones registradas para este jugador en el filtro actual.</p>'}
+        </div>
+      `;
+    }
+
+    function computeMvpRanking(roster, filteredEvents) {
+      return roster
+        .map(p => ({ player: p, stats: computePlayerStats(p.id, filteredEvents) }))
+        .filter(item => item.stats.totalTouches > 0)
+        .sort((a, b) => b.stats.mvpScore - a.stats.mvpScore || b.stats.totalPts - a.stats.totalPts);
+    }
+
+    function formatMvpHighlights(stats) {
+      const parts = [];
+      if (stats.totalPts > 0) parts.push(`${stats.totalPts} pts`);
+      if (stats.setTotal > 0) parts.push(`${stats.setStar}★/${stats.setPos}+ armado (${stats.setRating})`);
+      if (stats.recTotal > 0) parts.push(`${stats.recPerf}++/${stats.recPos}+ rec/def (${stats.recRating})`);
+      if (stats.totalErr > 0) parts.push(`${stats.totalErr} err`);
+      return parts.length > 0 ? parts.join(' · ') : `${stats.totalTouches} intervenciones`;
     }
 
     function renderStats() {
@@ -2021,6 +2443,40 @@
       const roster = getActiveRoster();
       const teamEvents = state.events.filter(e => !e.teamId || e.teamId === state.activeTeamId);
       const filteredEvents = filterSet === 'ALL' ? teamEvents : teamEvents.filter(e => e.set === filterSet);
+
+      // Render tarjeta MVP del Partido
+      const mvpRanking = computeMvpRanking(roster, filteredEvents);
+      const mvpNameEl = document.getElementById('mvp-player-name');
+      const mvpBadgeEl = document.getElementById('mvp-role-badge');
+      const mvpBreakEl = document.getElementById('mvp-breakdown');
+      const mvpScoreEl = document.getElementById('mvp-score-value');
+      const mvpRunnersEl = document.getElementById('mvp-runners-up');
+
+      if (mvpRanking.length > 0) {
+        const top = mvpRanking[0];
+        const roleInfo = ROLE_CONFIG[top.player.role] || ROLE_CONFIG.PTA;
+        mvpNameEl.textContent = `#${top.player.number} ${top.player.name}`;
+        mvpBadgeEl.textContent = roleInfo.label;
+        mvpBadgeEl.className = `px-1.5 py-0.2 rounded text-[9px] font-black border ${roleInfo.badgeBg}`;
+        mvpScoreEl.textContent = top.stats.mvpScore.toFixed(1);
+        mvpBreakEl.textContent = formatMvpHighlights(top.stats);
+
+        if (mvpRanking.length > 1) {
+          mvpRunnersEl.classList.remove('hidden');
+          mvpRunnersEl.innerHTML = `<span class="font-bold text-amber-300/90">Podio:</span> ` + mvpRanking.slice(1, 3).map((item, idx) =>
+            `<span class="px-2 py-0.5 rounded-md bg-court-950/70 border border-slate-800">${idx + 2}° #${item.player.number} ${formatShortName(item.player.name)} (${item.stats.mvpScore.toFixed(1)})</span>`
+          ).join('');
+        } else {
+          mvpRunnersEl.classList.add('hidden');
+        }
+      } else {
+        mvpNameEl.textContent = 'Esperando acciones...';
+        mvpBadgeEl.textContent = '—';
+        mvpBadgeEl.className = 'px-1.5 py-0.2 rounded text-[9px] font-black border bg-slate-800 border-slate-700 text-slate-300';
+        mvpScoreEl.textContent = '0.0';
+        mvpBreakEl.textContent = 'Suma puntos directos + armados (★/+) + rec/def (++/+) − errores';
+        mvpRunnersEl.classList.add('hidden');
+      }
 
       const setters = roster.filter(p => p.role === 'ARM');
       const setterIds = new Set(setters.map(s => s.id));
@@ -2053,6 +2509,7 @@
 
       const enriched = roster.map(p => ({ player: p, stats: computePlayerStats(p.id, filteredEvents) }));
       enriched.sort((a, b) => {
+        if (sortBy === 'mvp') return b.stats.mvpScore - a.stats.mvpScore;
         if (sortBy === 'points') return b.stats.totalPts - a.stats.totalPts;
         if (sortBy === 'recRating') return b.stats.recRatingNum - a.stats.recRatingNum;
         if (sortBy === 'setRating') return b.stats.setRatingNum - a.stats.setRatingNum;
@@ -2202,15 +2659,49 @@
 
     function copyWhatsAppSummary() {
       const filterSet = document.getElementById('stats-set-filter').value;
-      const roster = getActiveRoster();
-      const homeName = state.homeTeam || getActiveTeam().name;
-      const awayName = state.awayTeam || 'RIVAL';
-      const teamEvents = state.events.filter(e => !e.teamId || e.teamId === state.activeTeamId);
-      const filteredEvents = filterSet === 'ALL' ? teamEvents : teamEvents.filter(e => e.set === filterSet);
+      const dataset = getViewedStatsDataset();
+      const roster = dataset.roster;
+      const homeName = dataset.homeTeam;
+      const awayName = dataset.awayTeam;
+      const filteredEvents = filterSet === 'ALL' ? dataset.events : dataset.events.filter(e => e.set === filterSet);
+
+      if (statsReportMode === 'PLAYER' && selectedReportPlayerId) {
+        const player = roster.find(p => p.id === selectedReportPlayerId);
+        if (player) {
+          const st = computePlayerStats(player.id, filteredEvents);
+          let pText = `🏐 *INFORME INDIVIDUAL — #${player.number} ${player.name} (${player.role})*\n`;
+          pText += `🏟️ ${homeName} vs ${awayName}`;
+          if (dataset.tournament || dataset.stage) pText += ` (${dataset.tournament || ''} ${dataset.stage || ''})`;
+          pText += `\n🏆 *Índice MVP:* ${st.mvpScore} pts\n`;
+          pText += `🔥 *Puntos:* ${st.totalPts} (${st.atkPts} Ataque / ${st.blkPts} Bloqueo / ${st.srvPts} Ace)\n`;
+          if (st.recTotal > 0) pText += `🛡️ *Rec/Def:* ${st.recRating} (${st.recPosPct}% pos · ${st.recPerf}++ / ${st.recPos}+ / ${st.recNeg}- / ${st.recErr}=)\n`;
+          if (st.setTotal > 0) pText += `🎯 *Armado:* ${st.setRating} (${st.setPosPct}% pos · ${st.setStar}★ / ${st.setPos}+ / ${st.setNeg}- / ${st.setErr}=)\n`;
+          pText += `⚠️ *Errores totales:* ${st.totalErr}\n`;
+
+          const textarea = document.createElement('textarea');
+          textarea.value = pText;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.select();
+          try { document.execCommand('copy'); showToast(`✅ Informe de #${player.number} copiado para WhatsApp`); } catch (err) {}
+          document.body.removeChild(textarea);
+          return;
+        }
+      }
+
       let text = `🏐 *RESUMEN: ${homeName} vs ${awayName}*\n`;
-      if (state.tournament || state.stage) text += `🏆 ${state.tournament || ''}${state.tournament && state.stage ? ' · ' : ''}${state.stage || ''}\n`;
-      const setsSummary = Object.entries(state.scores).filter(([_, sc]) => sc.home > 0 || sc.away > 0).map(([s, sc]) => `Set ${s}: ${sc.home}-${sc.away}`).join(' | ');
+      if (dataset.tournament || dataset.stage) text += `🏆 ${dataset.tournament || ''}${dataset.tournament && dataset.stage ? ' · ' : ''}${dataset.stage || ''}\n`;
+      const setsSummary = Object.entries(dataset.scores || {}).filter(([_, sc]) => sc.home > 0 || sc.away > 0).map(([s, sc]) => `Set ${s}: ${sc.home}-${sc.away}`).join(' | ');
       if (setsSummary) text += `📊 Marcador: ${setsSummary}\n`;
+
+      const rankedMvp = roster.map(p => ({ p, st: computePlayerStats(p.id, filteredEvents) }))
+        .filter(x => x.st.totalActions > 0)
+        .sort((a, b) => b.st.mvpScoreNum - a.st.mvpScoreNum);
+      if (rankedMvp.length > 0) {
+        text += `⭐ *MVP:* #${rankedMvp[0].p.number} ${formatShortName(rankedMvp[0].p.name)} (${rankedMvp[0].p.role} · Índice ${rankedMvp[0].st.mvpScore})\n`;
+      }
+
       text += `\n🔥 *Rendimiento ${homeName}:*\n`;
       roster.forEach(p => {
         const st = computePlayerStats(p.id, filteredEvents);
@@ -2218,7 +2709,7 @@
           text += `• #${p.number} ${formatShortName(p.name)} (${p.role}): ${st.totalPts} pts (${st.atkPts}A/${st.blkPts}B/${st.srvPts}S)`;
           if (st.recTotal > 0) text += ` | Rec/Def: ${st.recRating}`;
           if (st.setTotal > 0) text += ` | Arm: ${st.setRating}`;
-          text += `\n`;
+          text += ` | MVP: ${st.mvpScore}\n`;
         }
       });
       const textarea = document.createElement('textarea');
@@ -2232,9 +2723,10 @@
     }
 
     function exportCSV() {
-      const headers = ['Torneo', 'Instancia', 'Local', 'Rival', 'Set', 'Hora', 'Numero', 'Jugador', 'Rol', 'Fundamento', 'Calidad', 'Descripcion', 'ImpactoMarcador'];
-      const rows = state.events.map(e => [
-        `"${state.tournament || ''}"`, `"${state.stage || ''}"`, `"${state.homeTeam || ''}"`, `"${state.awayTeam || ''}"`,
+      const dataset = getViewedStatsDataset();
+      const headers = ['AutorInforme', 'Torneo', 'Instancia', 'Local', 'Rival', 'Set', 'Hora', 'Numero', 'Jugador', 'Rol', 'Fundamento', 'Calidad', 'Descripcion', 'ImpactoMarcador'];
+      const rows = dataset.events.map(e => [
+        `"${dataset.ownerName || ''}"`, `"${dataset.tournament || ''}"`, `"${dataset.stage || ''}"`, `"${dataset.homeTeam || ''}"`, `"${dataset.awayTeam || ''}"`,
         e.set, e.timestamp, e.playerNumber, `"${e.playerName}"`, e.playerRole, e.category, e.quality, `"${e.label}"`, e.scoreDelta
       ].join(','));
       const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows].join('\n');
