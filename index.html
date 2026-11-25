@@ -119,12 +119,18 @@
             onkeydown="if(event.key==='Enter') createUserProfile()"
             class="flex-1 min-w-0 bg-court-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-white placeholder-slate-500 focus:border-emerald-400 focus:outline-none" />
           <select id="new-profile-visibility" class="bg-court-950 border border-slate-700 rounded-xl px-2 py-2 text-[11px] font-bold text-sky-300 focus:border-sky-400 focus:outline-none" title="Visibilidad de tus informes">
+            <option value="PRIVATE" selected>🔒 Privado</option>
             <option value="PUBLIC">🌐 Público</option>
-            <option value="PRIVATE">🔒 Privado</option>
           </select>
         </div>
         <button onclick="createUserProfile()" class="tap-btn w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-950/50">
           Crear Perfil y Entrar
+        </button>
+      </div>
+      <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+        <span>¿Ya tenés sesión abierta?</span>
+        <button type="button" id="gate-close-session-btn" onclick="logoutCurrentSession()" class="tap-btn px-2.5 py-1 rounded-lg bg-rose-950/50 hover:bg-rose-900/60 border border-rose-500/30 text-rose-300 font-bold">
+          Cerrar sesión
         </button>
       </div>
     </div>
@@ -152,6 +158,11 @@
       <button onclick="openUserGate()" class="tap-btn flex items-center gap-1 px-2 py-1 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/40 text-sky-300 text-[10px] font-black shrink-0 max-w-[105px]" title="Cambiar de usuario">
         <i data-lucide="user-circle" class="w-3.5 h-3.5 shrink-0"></i>
         <span id="active-user-badge" class="truncate">Usuario</span>
+      </button>
+
+      <button onclick="logoutCurrentSession()" class="tap-btn flex items-center gap-1 px-2 py-1 rounded-lg bg-rose-950/60 hover:bg-rose-900/70 border border-rose-500/40 text-rose-300 text-[10px] font-black shrink-0" title="Cerrar sesión">
+        <i data-lucide="log-out" class="w-3.5 h-3.5 shrink-0"></i>
+        <span class="hidden sm:inline">Cerrar sesión</span>
       </button>
 
       <div id="sets-won-badge" class="text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-lg bg-court-800 border border-slate-700 text-slate-300 shrink-0">
@@ -1083,66 +1094,6 @@
       }
     }
 
-    function saveSupabaseConfig() {
-      const rawUrl = (document.getElementById('supabase-url-input')?.value || DEFAULT_SUPABASE_URL).replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
-      const rawKey = (document.getElementById('supabase-key-input')?.value || '').trim();
-      writeStore(SUPABASE_CONFIG_KEY, JSON.stringify({ url: rawUrl, anonKey: rawKey }));
-      syncSupabaseInputs();
-      if (rawUrl && rawKey) {
-        pullFromSupabase(true);
-      }
-    }
-
-    function getCloudRowId() {
-      const prof = getActiveProfile();
-      return prof ? `profile_${prof.id}` : 'profile_usr_principal';
-    }
-
-    async function pushToSupabase(notify = false) {
-      const cfg = getSupabaseConfig();
-      if (!cfg.url || !cfg.anonKey) {
-        if (notify) showToast('Pegá tu Anon Key de Supabase para sincronizar');
-        return;
-      }
-      const rowId = getCloudRowId();
-      const prof = getActiveProfile();
-      const payloadData = {
-        tournament: state.tournament,
-        savedTournaments: state.savedTournaments,
-        stage: state.stage,
-        homeTeam: state.homeTeam,
-        awayTeam: state.awayTeam,
-        activeTeamId: state.activeTeamId,
-        teams: state.teams,
-        liveFilter: state.liveFilter,
-        currentSet: state.currentSet,
-        scores: state.scores,
-        events: state.events
-      };
-      try {
-        const res = await fetch(`${cfg.url}/rest/v1/club_state?on_conflict=id`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': cfg.anonKey,
-            'Authorization': `Bearer ${cfg.anonKey}`,
-            'Prefer': 'resolution=merge-duplicates,return=minimal'
-          },
-          body: JSON.stringify({
-            id: rowId,
-            payload: payloadData,
-            updated_by: prof ? prof.name : 'defeadmin',
-            updated_at: new Date().toISOString()
-          })
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        if (notify) showToast('☁️ Subido a Supabase');
-      } catch (e) {
-        console.warn('Error subiendo a Supabase:', e);
-        if (notify) showToast('⚠️ Revisá tabla club_state y policies en Supabase');
-      }
-    }
-
     async function pullFromSupabase(silentIfEmpty = false) {
       const cfg = getSupabaseConfig();
       if (!cfg.url || !cfg.anonKey) {
@@ -1223,6 +1174,7 @@
     const PROFILES_INDEX_KEY = 'voley_stats_profiles_v1';
     const PROFILE_DATA_PREFIX = 'voley_stats_user_data_';
     const GLOBAL_BACKUP_KEY = 'voley_stats_global_backup_v1';
+    const SESSION_ACTIVE_KEY = 'voley_stats_session_active_v1';
     const PROFILE_COLORS = [
       'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
       'bg-sky-500/20 text-sky-300 border-sky-500/40',
@@ -1260,7 +1212,9 @@
     }
 
     function initProfilesSystem() {
+      let hasActiveSession = false;
       try {
+        hasActiveSession = readStore(SESSION_ACTIVE_KEY) === '1';
         const rawIndex = readStore(PROFILES_INDEX_KEY);
         if (rawIndex) profilesRegistry = JSON.parse(rawIndex);
 
@@ -1271,7 +1225,7 @@
 
           profilesRegistry = {
             activeProfileId: defaultProfileId,
-            profiles: [{ id: defaultProfileId, name: 'defeadmin', password: 'Penna1610', visibility: 'PUBLIC', colorIdx: 0, createdAt: new Date().toISOString() }]
+            profiles: [{ id: defaultProfileId, name: 'defeadmin', password: 'Penna1610', visibility: 'PRIVATE', colorIdx: 0, createdAt: new Date().toISOString() }]
           };
           writeStore(PROFILE_DATA_PREFIX + defaultProfileId, JSON.stringify(initialState));
           saveProfilesRegistry();
@@ -1282,14 +1236,22 @@
             mainProf.password = 'Penna1610';
           }
           profilesRegistry.profiles.forEach(p => {
-            if (!p.visibility) p.visibility = 'PUBLIC';
+            if (!p.visibility) p.visibility = 'PRIVATE';
           });
           saveProfilesRegistry();
         }
       } catch (e) {}
 
       renderProfilesGate();
-      document.getElementById('user-gate-overlay').classList.remove('hidden');
+      const gateEl = document.getElementById('user-gate-overlay');
+      const gateLogoutBtn = document.getElementById('gate-close-session-btn');
+      if (gateLogoutBtn) gateLogoutBtn.classList.toggle('hidden', !hasActiveSession);
+
+      if (hasActiveSession && getActiveProfile()) {
+        gateEl.classList.add('hidden');
+      } else {
+        gateEl.classList.remove('hidden');
+      }
     }
 
     function saveProfilesRegistry() {
@@ -1320,7 +1282,7 @@
 
         const canDelete = profilesRegistry.profiles.length > 1 && prof.id !== 'usr_principal';
         const hasLock = Boolean(prof.password);
-        const isPublic = (prof.visibility || 'PUBLIC') === 'PUBLIC';
+        const isPublic = (prof.visibility || 'PRIVATE') === 'PUBLIC';
         return `
           <div class="flex items-center gap-2 bg-court-950/90 hover:bg-court-800 border border-slate-800 rounded-2xl p-2.5 transition-colors">
             <button onclick="selectUserProfile('${prof.id}')" class="tap-btn flex-1 flex items-center gap-3 text-left min-w-0">
@@ -1363,6 +1325,7 @@
       profilesRegistry.activeProfileId = profileId;
       viewingStatsProfileId = 'SELF';
       selectedReportPlayerId = null;
+      writeStore(SESSION_ACTIVE_KEY, '1');
       saveProfilesRegistry();
 
       loadState();
@@ -1381,7 +1344,18 @@
       showToast(`👤 Perfil activo: ${profile.name}`);
     }
 
+    function logoutCurrentSession() {
+      removeStore(SESSION_ACTIVE_KEY);
+      cancelPasswordPrompt();
+      const gateLogoutBtn = document.getElementById('gate-close-session-btn');
+      if (gateLogoutBtn) gateLogoutBtn.classList.add('hidden');
+      openUserGate();
+      showToast('Sesión cerrada');
+    }
+
     function openUserGate() {
+      const gateLogoutBtn = document.getElementById('gate-close-session-btn');
+      if (gateLogoutBtn) gateLogoutBtn.classList.toggle('hidden', readStore(SESSION_ACTIVE_KEY) !== '1');
       renderProfilesGate();
       document.getElementById('user-gate-overlay').classList.remove('hidden');
     }
@@ -1415,7 +1389,7 @@
       const visSelect = document.getElementById('new-profile-visibility');
       const rawName = nameInput.value.trim();
       const rawPwd = pwdInput ? pwdInput.value.trim() : '';
-      const visibility = visSelect ? visSelect.value : 'PUBLIC';
+      const visibility = visSelect ? visSelect.value : 'PRIVATE';
       if (!rawName) {
         showToast('Escribí un nombre para el nuevo usuario');
         nameInput.focus();
@@ -2222,7 +2196,7 @@
     function toggleMyReportsVisibility() {
       const activeProf = getActiveProfile();
       if (!activeProf) return;
-      activeProf.visibility = (activeProf.visibility || 'PUBLIC') === 'PUBLIC' ? 'PRIVATE' : 'PUBLIC';
+      activeProf.visibility = (activeProf.visibility || 'PRIVATE') === 'PUBLIC' ? 'PRIVATE' : 'PUBLIC';
       saveProfilesRegistry();
       syncStatsVisibilityUI();
       showToast(activeProf.visibility === 'PUBLIC'
@@ -2245,7 +2219,7 @@
       const activeProf = getActiveProfile();
       const visBtn = document.getElementById('toggle-my-visibility-btn');
       if (visBtn && activeProf) {
-        const isPub = (activeProf.visibility || 'PUBLIC') === 'PUBLIC';
+        const isPub = (activeProf.visibility || 'PRIVATE') === 'PUBLIC';
         visBtn.textContent = isPub ? '🌐 Público (otros ven)' : '🔒 Privado (solo vos)';
         visBtn.className = isPub
           ? 'tap-btn flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-black border bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
@@ -2254,7 +2228,7 @@
 
       const sourceSel = document.getElementById('stats-profile-source');
       if (sourceSel && activeProf) {
-        const accessible = profilesRegistry.profiles.filter(p => p.id === activeProf.id || (p.visibility || 'PUBLIC') === 'PUBLIC');
+        const accessible = profilesRegistry.profiles.filter(p => p.id === activeProf.id || (p.visibility || 'PRIVATE') === 'PUBLIC');
         if (viewingStatsProfileId !== 'SELF' && !accessible.some(p => p.id === viewingStatsProfileId)) {
           viewingStatsProfileId = 'SELF';
         }
@@ -2291,6 +2265,12 @@
     function getViewedStatsDataset() {
       const activeProf = getActiveProfile();
       if (viewingStatsProfileId === 'SELF' || !activeProf || viewingStatsProfileId === activeProf.id) {
+        const activeTeamId = state.activeTeamId;
+        const roster = getActiveRoster();
+        const teamEvents = state.events.filter(e => !e.teamId || e.teamId === activeTeamId);
+        // Si no hay eventos con teamId coincidente (por ejemplo tras importar/renombrar un equipo),
+        // mostramos los eventos del perfil para no dejar en cero las jugadas cargadas.
+        const eventsToUse = teamEvents.length > 0 ? teamEvents : state.events;
         return {
           ownerName: activeProf ? activeProf.name : 'defeadmin',
           isReadOnly: false,
@@ -2299,8 +2279,8 @@
           homeTeam: state.homeTeam || getActiveTeam().name,
           awayTeam: state.awayTeam || 'RIVAL',
           scores: state.scores,
-          roster: getActiveRoster(),
-          events: state.events.filter(e => !e.teamId || e.teamId === state.activeTeamId)
+          roster,
+          events: eventsToUse
         };
       }
       const ownerProf = profilesRegistry.profiles.find(p => p.id === viewingStatsProfileId);
@@ -2310,7 +2290,9 @@
           const parsed = JSON.parse(raw);
           const teamObj = parsed.teams?.[parsed.activeTeamId] || Object.values(parsed.teams || {})[0];
           const roster = Array.isArray(teamObj?.roster) ? teamObj.roster : [];
-          const events = (Array.isArray(parsed.events) ? parsed.events : []).filter(e => !e.teamId || e.teamId === parsed.activeTeamId);
+          const allEvents = Array.isArray(parsed.events) ? parsed.events : [];
+          const matchedEvents = allEvents.filter(e => !e.teamId || e.teamId === parsed.activeTeamId);
+          const events = matchedEvents.length > 0 ? matchedEvents : allEvents;
           return {
             ownerName: ownerProf ? ownerProf.name : 'Perfil Público',
             isReadOnly: true,
@@ -2337,113 +2319,235 @@
       };
     }
 
+    function computePlayerStatsForItem(player, eventsList) {
+      const pEvents = eventsList.filter(e =>
+        e.playerId === player.id ||
+        (String(e.playerNumber || '').trim() === String(player.number || '').trim() &&
+         String(e.playerName || '').trim().toLowerCase() === String(player.name || '').trim().toLowerCase())
+      );
+      let atkPts = 0, atkCont = 0, atkBlk = 0, atkErr = 0;
+      let blkPts = 0, srvPts = 0, srvErr = 0;
+      let recPerf = 0, recPos = 0, recNeg = 0, recErr = 0;
+      let setStar = 0, setPos = 0, setNeg = 0, setErr = 0;
+
+      pEvents.forEach(e => {
+        if (e.category === 'ATK') {
+          if (e.quality === 'PT') atkPts++;
+          else if (e.quality === '+') atkCont++;
+          else if (e.quality === 'BLK') atkBlk++;
+          else if (e.quality === 'ERR') atkErr++;
+        } else if (e.category === 'BLK' && e.quality === 'PT') blkPts++;
+        else if (e.category === 'SRV') {
+          if (e.quality === 'ACE') srvPts++;
+          else if (e.quality === 'ERR') srvErr++;
+        } else if (e.category === 'REC_DEF') {
+          if (e.quality === '++') recPerf++;
+          else if (e.quality === '+') recPos++;
+          else if (e.quality === '-') recNeg++;
+          else if (e.quality === '=') recErr++;
+        } else if (e.category === 'SET') {
+          if (e.quality === '★') setStar++;
+          else if (e.quality === '+') setPos++;
+          else if (e.quality === '-') setNeg++;
+          else if (e.quality === '=') setErr++;
+        }
+      });
+
+      const totalPts = atkPts + blkPts + srvPts;
+      const totalErr = atkBlk + atkErr + srvErr + recErr + setErr;
+      const recTotal = recPerf + recPos + recNeg + recErr;
+      const recRatingNum = recTotal > 0 ? (((recPerf * 3) + (recPos * 2) + (recNeg * 1)) / recTotal) : 0;
+      const recPosPct = recTotal > 0 ? Math.round(((recPerf + recPos) / recTotal) * 100) : 0;
+      const recPerfPct = recTotal > 0 ? Math.round((recPerf / recTotal) * 100) : 0;
+
+      const setTotal = setStar + setPos + setNeg + setErr;
+      const setRatingNum = setTotal > 0 ? (((setStar * 3) + (setPos * 2) + (setNeg * 1)) / setTotal) : 0;
+      const setPosPct = setTotal > 0 ? Math.round(((setStar + setPos) / setTotal) * 100) : 0;
+
+      const mvpScoreNum =
+        (totalPts * 1.0) +
+        (recPerf * 0.60) +
+        (recPos * 0.30) +
+        (setStar * 0.55) +
+        (setPos * 0.25) +
+        (atkCont * 0.15) -
+        (totalErr * 0.75);
+
+      return {
+        totalPts, atkPts, atkCont, atkBlk, atkErr, blkPts, srvPts, srvErr, totalErr,
+        recTotal, recPerf, recPos, recNeg, recErr, recRatingNum,
+        recRating: recTotal > 0 ? recRatingNum.toFixed(2) : '0.00', recPosPct, recPerfPct,
+        setTotal, setStar, setPos, setNeg, setErr, setRatingNum,
+        setRating: setTotal > 0 ? setRatingNum.toFixed(2) : '0.00', setPosPct,
+        mvpScoreNum, mvpScore: mvpScoreNum.toFixed(1),
+        totalActions: pEvents.length,
+        totalTouches: pEvents.length
+      };
+    }
+
+    function computePlayerStats(playerId, eventsList) {
+      const dataset = getViewedStatsDataset();
+      const playerObj = (dataset.roster || []).find(p => p.id === playerId) || { id: playerId, number: '', name: '' };
+      return computePlayerStatsForItem(playerObj, eventsList);
+    }
+
     function renderStats() {
       syncStatsVisibilityUI();
       const filterSet = document.getElementById('stats-set-filter').value;
       const sortBy = document.getElementById('stats-sort-by').value;
       const dataset = getViewedStatsDataset();
-      const roster = dataset.roster;
-      const filteredEvents = filterSet === 'ALL' ? dataset.events : dataset.events.filter(e => e.set === filterSet);
+      const roster = [...(dataset.roster || [])];
 
-      const enriched = roster.map(p => ({ player: p, stats: computePlayerStats(p.id, filteredEvents) }));
-
-      // Cálculo de MVP del partido
-      const rankedByMvp = [...enriched].filter(item => item.stats.totalActions > 0).sort((a, b) => b.stats.mvpScoreNum - a.stats.mvpScoreNum);
-      const mvpRoleBadge = document.getElementById('mvp-role-badge');
-      if (rankedByMvp.length > 0) {
-        const mvp = rankedByMvp[0];
-        const roleInfo = ROLE_CONFIG[mvp.player.role] || ROLE_CONFIG.PTA;
-        document.getElementById('mvp-player-name').textContent = `#${mvp.player.number} ${mvp.player.name}`;
-        if (mvpRoleBadge) {
-          mvpRoleBadge.textContent = roleInfo.label;
-          mvpRoleBadge.className = `px-1.5 py-0.2 rounded text-[9px] font-black border ${roleInfo.badgeBg}`;
+      // Si algún evento pertenece a un jugador que no figura en el roster actual, lo sumamos virtualmente
+      // para que ninguna jugada cargada quede sin reflejarse en Rendimiento.
+      const knownIds = new Set(roster.map(p => p.id));
+      const extraPlayersMap = new Map();
+      (dataset.events || []).forEach(ev => {
+        if (!knownIds.has(ev.playerId) && !extraPlayersMap.has(ev.playerId)) {
+          extraPlayersMap.set(ev.playerId, {
+            id: ev.playerId,
+            number: ev.playerNumber || '?',
+            name: ev.playerName || `Jugador #${ev.playerNumber || '?'}`,
+            role: ROLE_CONFIG[ev.playerRole] ? ev.playerRole : 'PTA',
+            onCourt: false
+          });
         }
-        document.getElementById('mvp-player-score').textContent = mvp.stats.mvpScore;
-        const parts = [];
-        if (mvp.stats.totalPts > 0) parts.push(`${mvp.stats.totalPts} pts`);
-        if (mvp.stats.recTotal > 0) parts.push(`Rec/Def ${mvp.stats.recRating} (${mvp.stats.recPosPct}% pos)`);
-        if (mvp.stats.setTotal > 0) parts.push(`Armado ${mvp.stats.setRating} (${mvp.stats.setStar} ★)`);
-        parts.push(`${mvp.stats.totalErr} err`);
-        document.getElementById('mvp-player-breakdown').textContent = parts.join(' · ');
-        document.getElementById('mvp-top3-strip').innerHTML = rankedByMvp.slice(0, 3).map((item, idx) => {
-          const medal = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : '🥉');
-          return `<span class="px-2 py-0.5 rounded-md bg-court-950/80 border border-slate-800 text-slate-200 font-bold">${medal} #${item.player.number} ${formatShortName(item.player.name)} <span class="text-amber-300">(${item.stats.mvpScore})</span></span>`;
-        }).join('');
+      });
+      extraPlayersMap.forEach(extraPlayer => roster.push(extraPlayer));
+
+      const filteredEvents = filterSet === 'ALL'
+        ? (dataset.events || [])
+        : (dataset.events || []).filter(e => String(e.set) === String(filterSet));
+
+      const enriched = roster.map(p => ({ player: p, stats: computePlayerStatsForItem(p, filteredEvents) }));
+
+      const withActions = enriched.filter(x => x.stats.totalActions > 0);
+      const mvpCandidates = (withActions.length > 0 ? withActions : enriched)
+        .slice()
+        .sort((a, b) => b.stats.mvpScoreNum - a.stats.mvpScoreNum || b.stats.totalPts - a.stats.totalPts);
+
+      const mvpNameEl = document.getElementById('mvp-player-name');
+      const mvpRoleEl = document.getElementById('mvp-role-badge');
+      const mvpBreakdownEl = document.getElementById('mvp-player-breakdown');
+      const mvpScoreEl = document.getElementById('mvp-player-score');
+      const mvpTop3El = document.getElementById('mvp-top3-strip');
+
+      if (withActions.length === 0 || mvpCandidates.length === 0) {
+        if (mvpNameEl) mvpNameEl.textContent = 'Esperando acciones...';
+        if (mvpRoleEl) {
+          mvpRoleEl.textContent = '—';
+          mvpRoleEl.className = 'px-1.5 py-0.2 rounded text-[9px] font-black border bg-slate-800 border-slate-700 text-slate-300';
+        }
+        if (mvpBreakdownEl) mvpBreakdownEl.textContent = 'Registrá jugadas en vivo para calcular el MVP ponderado.';
+        if (mvpScoreEl) mvpScoreEl.textContent = '0.0';
+        if (mvpTop3El) mvpTop3El.innerHTML = '';
       } else {
-        document.getElementById('mvp-player-name').textContent = 'Sin acciones registradas aún';
-        if (mvpRoleBadge) {
-          mvpRoleBadge.textContent = '—';
-          mvpRoleBadge.className = 'px-1.5 py-0.2 rounded text-[9px] font-black border bg-slate-800 border-slate-700 text-slate-300';
+        const top = mvpCandidates[0];
+        const topRoleInfo = ROLE_CONFIG[top.player.role] || ROLE_CONFIG.PTA;
+        if (mvpNameEl) mvpNameEl.textContent = `#${top.player.number} ${top.player.name}`;
+        if (mvpRoleEl) {
+          mvpRoleEl.textContent = topRoleInfo.label;
+          mvpRoleEl.className = `px-1.5 py-0.2 rounded text-[9px] font-black border ${topRoleInfo.badgeBg}`;
         }
-        document.getElementById('mvp-player-score').textContent = '0.0';
-        document.getElementById('mvp-player-breakdown').textContent = 'Registrá jugadas en vivo para calcular el MVP ponderado.';
-        document.getElementById('mvp-top3-strip').innerHTML = '';
+        if (mvpScoreEl) mvpScoreEl.textContent = top.stats.mvpScore;
+        if (mvpBreakdownEl) {
+          const parts = [`${top.stats.totalPts} pts`];
+          if (top.stats.recPerf + top.stats.recPos > 0) parts.push(`${top.stats.recPerf + top.stats.recPos} rec/def pos`);
+          if (top.stats.setStar + top.stats.setPos > 0) parts.push(`${top.stats.setStar + top.stats.setPos} armados pos`);
+          if (top.stats.totalErr > 0) parts.push(`${top.stats.totalErr} err`);
+          mvpBreakdownEl.textContent = parts.join(' · ');
+        }
+        if (mvpTop3El) {
+          mvpTop3El.innerHTML = mvpCandidates.slice(0, 3).map((item, idx) => {
+            const medal = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : '🥉');
+            return `<span class="px-2 py-0.5 rounded-md bg-court-950/80 border border-slate-800 text-slate-200 font-bold">${medal} #${item.player.number} ${formatShortName(item.player.name)} (${item.stats.mvpScore})</span>`;
+          }).join('');
+        }
       }
 
-      const setters = roster.filter(p => p.role === 'ARM');
-      const setterIds = new Set(setters.map(s => s.id));
-      const setterEvents = filteredEvents.filter(e => setterIds.has(e.playerId) || e.category === 'SET');
-      let sStar = 0, sPos = 0, sNeg = 0, sErr = 0;
-      setterEvents.filter(e => e.category === 'SET').forEach(e => {
-        if (e.quality === '★') sStar++; else if (e.quality === '+') sPos++; else if (e.quality === '-') sNeg++; else if (e.quality === '=') sErr++;
+      const setters = enriched.filter(x => x.player.role === 'ARM');
+      let setTotalBalls = 0, setPosBalls = 0, setStarBalls = 0, setErrBalls = 0, setWeightedSum = 0;
+      setters.forEach(({ stats }) => {
+        setTotalBalls += stats.setTotal;
+        setPosBalls += stats.setStar + stats.setPos;
+        setStarBalls += stats.setStar;
+        setErrBalls += stats.setErr;
+        setWeightedSum += stats.setRatingNum * stats.setTotal;
       });
-      const sTotal = sStar + sPos + sNeg + sErr;
-      document.getElementById('setter-card-title').textContent = setters.length > 0 ? setters.map(s => `#${s.number} ${formatShortName(s.name)}`).join(' / ') : 'Armador/a';
-      document.getElementById('stat-setter-rating').textContent = sTotal > 0 ? (((sStar * 3) + (sPos * 2) + (sNeg * 1)) / sTotal).toFixed(2) : '0.00';
-      document.getElementById('stat-setter-pos').textContent = `${sTotal > 0 ? Math.round(((sStar + sPos) / sTotal) * 100) : 0}%`;
-      const teamAtkEvents = filteredEvents.filter(e => e.category === 'ATK');
-      const teamAtkPts = teamAtkEvents.filter(e => e.quality === 'PT').length;
-      document.getElementById('stat-setter-atk-eff').textContent = `${teamAtkEvents.length > 0 ? Math.round((teamAtkPts / teamAtkEvents.length) * 100) : 0}%`;
-      document.getElementById('stat-setter-summary').textContent = `${sTotal} pelotas armadas (${sStar} libres 1v1) · ${sErr} errores de armado`;
+      const setterRating = setTotalBalls > 0 ? (setWeightedSum / setTotalBalls).toFixed(2) : '0.00';
+      const setterPosPct = setTotalBalls > 0 ? Math.round((setPosBalls / setTotalBalls) * 100) : 0;
+      const atkTotalTeam = enriched.reduce((acc, { stats }) => acc + stats.atkPts + stats.atkCont + stats.atkBlk + stats.atkErr, 0);
+      const atkPtsTeam = enriched.reduce((acc, { stats }) => acc + stats.atkPts, 0);
+      const atkClosePct = atkTotalTeam > 0 ? Math.round((atkPtsTeam / atkTotalTeam) * 100) : 0;
 
-      const liberos = roster.filter(p => p.role === 'LIB');
-      const liberoIds = new Set(liberos.map(l => l.id));
-      let lPerf = 0, lPos = 0, lNeg = 0, lErr = 0;
-      filteredEvents.filter(e => liberoIds.has(e.playerId) && e.category === 'REC_DEF').forEach(e => {
-        if (e.quality === '++') lPerf++; else if (e.quality === '+') lPos++; else if (e.quality === '-') lNeg++; else if (e.quality === '=') lErr++;
+      document.getElementById('setter-card-title').textContent = setters.length === 1
+        ? `#${setters[0].player.number} ${formatShortName(setters[0].player.name)}`
+        : 'Armador/a';
+      document.getElementById('stat-setter-rating').textContent = setterRating;
+      document.getElementById('stat-setter-pos').textContent = `${setterPosPct}%`;
+      document.getElementById('stat-setter-atk-eff').textContent = `${atkClosePct}%`;
+      document.getElementById('stat-setter-summary').textContent =
+        `${setTotalBalls} pelotas armadas (${setStarBalls}★) · ${setErrBalls} errores de armado`;
+
+      const liberos = enriched.filter(x => x.player.role === 'LIB');
+      let libTotalRec = 0, libPosRec = 0, libPerfRec = 0, libErrRec = 0, libWeightedSum = 0;
+      liberos.forEach(({ stats }) => {
+        libTotalRec += stats.recTotal;
+        libPosRec += stats.recPerf + stats.recPos;
+        libPerfRec += stats.recPerf;
+        libErrRec += stats.recErr;
+        libWeightedSum += stats.recRatingNum * stats.recTotal;
       });
-      const lTotal = lPerf + lPos + lNeg + lErr;
-      document.getElementById('libero-card-title').textContent = liberos.length > 0 ? liberos.map(l => `#${l.number} ${formatShortName(l.name)}`).join(' / ') : 'Líbero';
-      document.getElementById('stat-libero-rating').textContent = lTotal > 0 ? (((lPerf * 3) + (lPos * 2) + (lNeg * 1)) / lTotal).toFixed(2) : '0.00';
-      document.getElementById('stat-libero-pos').textContent = `${lTotal > 0 ? Math.round(((lPerf + lPos) / lTotal) * 100) : 0}%`;
-      document.getElementById('stat-libero-perf').textContent = `${lTotal > 0 ? Math.round((lPerf / lTotal) * 100) : 0}%`;
-      document.getElementById('stat-libero-summary').textContent = `${lTotal} recepciones/defensas · ${lErr} errores`;
+      const liberoRating = libTotalRec > 0 ? (libWeightedSum / libTotalRec).toFixed(2) : '0.00';
+      const liberoPosPct = libTotalRec > 0 ? Math.round((libPosRec / libTotalRec) * 100) : 0;
+      const liberoPerfPct = libTotalRec > 0 ? Math.round((libPerfRec / libTotalRec) * 100) : 0;
 
-      enriched.sort((a, b) => {
-        if (sortBy === 'mvp') return b.stats.mvpScoreNum - a.stats.mvpScoreNum;
-        if (sortBy === 'points') return b.stats.totalPts - a.stats.totalPts;
+      document.getElementById('libero-card-title').textContent = liberos.length === 1
+        ? `#${liberos[0].player.number} ${formatShortName(liberos[0].player.name)}`
+        : 'Líbero';
+      document.getElementById('stat-libero-rating').textContent = liberoRating;
+      document.getElementById('stat-libero-pos').textContent = `${liberoPosPct}%`;
+      document.getElementById('stat-libero-perf').textContent = `${liberoPerfPct}%`;
+      document.getElementById('stat-libero-summary').textContent =
+        `${libTotalRec} recepciones/defensas · ${libErrRec} errores`;
+
+      const sorted = [...enriched].sort((a, b) => {
+        if (sortBy === 'number') return (parseInt(a.player.number, 10) || 999) - (parseInt(b.player.number, 10) || 999);
+        if (sortBy === 'points') return b.stats.totalPts - a.stats.totalPts || b.stats.mvpScoreNum - a.stats.mvpScoreNum;
         if (sortBy === 'recRating') return b.stats.recRatingNum - a.stats.recRatingNum;
         if (sortBy === 'setRating') return b.stats.setRatingNum - a.stats.setRatingNum;
-        return parseInt(a.player.number, 10) - parseInt(b.player.number, 10);
+        return b.stats.mvpScoreNum - a.stats.mvpScoreNum || b.stats.totalPts - a.stats.totalPts;
       });
 
-      document.getElementById('stats-table-body').innerHTML = enriched.map(({ player, stats }) => {
+      const tbody = document.getElementById('stats-table-body');
+      tbody.innerHTML = sorted.map(({ player, stats }) => {
         const roleInfo = ROLE_CONFIG[player.role] || ROLE_CONFIG.PTA;
         return `
-          <tr onclick="openPlayerIndividualFromTable('${player.id}')" class="hover:bg-court-800/70 cursor-pointer" title="Tocá para ver reporte individual">
-            <td class="py-2.5 px-3 sticky left-0 bg-court-900 z-10">
-              <div class="flex items-center gap-1.5">
-                <span class="font-black text-white">#${player.number}</span>
-                <span class="font-semibold text-slate-200 truncate max-w-[105px]">${formatShortName(player.name)}</span>
-                <span class="px-1 py-0.2 rounded text-[9px] font-black border ${roleInfo.badgeBg}">${roleInfo.label}</span>
-              </div>
+          <tr onclick="openPlayerReportFromRow('${player.id}')" class="hover:bg-court-800/70 cursor-pointer transition-colors">
+            <td class="py-2 px-3 sticky left-0 bg-court-900 z-10 font-bold text-slate-100 whitespace-nowrap">
+              <span class="text-slate-400 mr-1">#${player.number}</span>
+              <span>${formatShortName(player.name)}</span>
+              <span class="ml-1 px-1 py-0.2 rounded text-[9px] font-black border ${roleInfo.badgeBg}">${roleInfo.label}</span>
             </td>
-            <td class="py-2.5 px-2 text-center font-black text-amber-300">${stats.mvpScore}</td>
-            <td class="py-2.5 px-2 text-center font-black text-emerald-400">${stats.totalPts}</td>
-            <td class="py-2.5 px-2 text-center text-slate-300 font-mono text-[11px]">${stats.atkPts}/${stats.blkPts}/${stats.srvPts}</td>
-            <td class="py-2.5 px-2 text-center font-bold text-cyan-300">${stats.recTotal > 0 ? stats.recRating : '—'} <span class="text-[9px] text-slate-500">(${stats.recTotal})</span></td>
-            <td class="py-2.5 px-2 text-center font-bold text-violet-300">${stats.setTotal > 0 ? stats.setRating : '—'} <span class="text-[9px] text-slate-500">(${stats.setTotal})</span></td>
-            <td class="py-2.5 px-2 text-center font-bold text-rose-400">${stats.totalErr}</td>
+            <td class="py-2 px-2 text-center font-black text-amber-300">${stats.mvpScore}</td>
+            <td class="py-2 px-2 text-center font-black text-emerald-400">${stats.totalPts}</td>
+            <td class="py-2 px-2 text-center text-slate-300 whitespace-nowrap">${stats.atkPts}/${stats.blkPts}/${stats.srvPts}</td>
+            <td class="py-2 px-2 text-center font-bold text-cyan-300">${stats.recTotal > 0 ? stats.recRating : '—'}</td>
+            <td class="py-2 px-2 text-center font-bold text-violet-300">${stats.setTotal > 0 ? stats.setRating : '—'}</td>
+            <td class="py-2 px-2 text-center font-bold text-rose-400">${stats.totalErr}</td>
           </tr>
         `;
       }).join('');
 
-      renderPlayerIndividualReport();
+      if (statsReportMode === 'PLAYER') {
+        renderPlayerIndividualReport();
+      }
     }
 
-    function openPlayerIndividualFromTable(playerId) {
+    function openPlayerReportFromRow(playerId) {
       selectedReportPlayerId = playerId;
-      setStatsReportMode('PLAYER');
+      statsReportMode = 'PLAYER';
+      renderStats();
     }
 
     function renderPlayerIndividualReport() {
