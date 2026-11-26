@@ -1543,12 +1543,23 @@ VELEZ
       if (state.activeRosterId) {
         state.rosters = (state.rosters || []).filter((r) => r.id !== state.activeRosterId);
       }
-      state.activeRosterId = '';
-      state.teamName = '';
-      state.rosterGender = '';
-      state.rosterCategory = '';
-      state.opponent = '';
-      state.roster = [];
+
+      const nextRoster = (state.rosters || [])[0] || null;
+      if (nextRoster) {
+        state.activeRosterId = nextRoster.id;
+        state.teamName = nextRoster.name || '';
+        state.rosterGender = nextRoster.gender || '';
+        state.rosterCategory = nextRoster.category || '';
+        state.roster = (nextRoster.players || []).map((p) => ({ ...p }));
+      } else {
+        state.activeRosterId = '';
+        state.teamName = '';
+        state.rosterGender = '';
+        state.rosterCategory = '';
+        state.opponent = '';
+        state.roster = [];
+      }
+
       saveState();
       renderAll();
       showToast('Plantel eliminado.');
@@ -1966,19 +1977,29 @@ VELEZ
       }
 
       if (!Array.isArray(state.rosters)) state.rosters = [];
-      let firstImportedId = null;
 
+      // Si hay planteles guardados pero activeRosterId no coincide o apuntaba a uno borrado, tomar uno válido
+      if (state.rosters.length > 0 && !state.rosters.some((r) => r.id === state.activeRosterId)) {
+        const firstValid = state.rosters[0];
+        state.activeRosterId = firstValid.id;
+        state.teamName = firstValid.name || '';
+        state.rosterGender = firstValid.gender || '';
+        state.rosterCategory = firstValid.category || '';
+        state.roster = (firstValid.players || []).map((p) => ({ ...p }));
+      } else if (state.rosters.length === 0 && state.activeRosterId) {
+        state.activeRosterId = '';
+      }
+
+      let firstImportedId = '';
       detectedTeamsBuffer.forEach((team, index) => {
-        const existingIdx = state.rosters.findIndex(
-          (r) => r.name.toLowerCase() === team.name.toLowerCase() && (r.gender || '') === gender && (r.category || '') === category
-        );
-        const rosterId = existingIdx >= 0 ? state.rosters[existingIdx].id : ('roster_' + Date.now() + '_' + index);
+        const rosterId = 'roster_' + team.name.toLowerCase().replace(/[^a-z0-9]/g, '') + '_' + (gender || 'gen').toLowerCase() + '_' + (category || 'cat').toLowerCase().replace(/\s+/g, '_');
+        const existingIdx = state.rosters.findIndex((r) => r.id === rosterId);
         const rosterObj = {
           id: rosterId,
           name: team.name,
           gender,
           category,
-          players: team.players.map((p) => ({ ...p }))
+          players: (team.players || []).map((p) => ({ ...p }))
         };
 
         if (existingIdx >= 0) state.rosters[existingIdx] = rosterObj;
