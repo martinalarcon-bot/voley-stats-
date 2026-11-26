@@ -52,7 +52,7 @@
 
         if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
           const swCode = `
-            const CACHE_NAME = 'voley-stats-live-cache-v350';
+            const CACHE_NAME = 'voley-stats-live-cache-130502';
             self.addEventListener('install', (event) => {
               self.skipWaiting();
             });
@@ -115,7 +115,7 @@
         <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-2xl">🏐</div>
         <div>
           <span class="inline-block rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300">PWA · Cancha &amp; Nube</span>
-          <span id="login-version-badge" class="ml-1.5 inline-block rounded-full border border-slate-700 bg-slate-800/90 px-2 py-0.5 text-[10px] font-extrabold tracking-wider text-slate-300">v3.5.0</span>
+          <span id="login-version-badge" class="ml-1.5 inline-block rounded-full border border-slate-700 bg-slate-800/90 px-2 py-0.5 text-[10px] font-extrabold tracking-wider text-slate-300">13.05.02</span>
           <h1 class="text-xl font-black tracking-tight text-white">Vóley Stats Live</h1>
         </div>
       </div>
@@ -832,10 +832,10 @@ VELEZ
     const STORAGE_KEY_CLOUD = 'voley_stats_supabase_cfg_v3';
     const STORAGE_KEY_PENDING_SYNC = 'voley_stats_pending_sync_v3';
     const STORAGE_KEY_PROFE_USERS = 'voley_stats_profe_users_v3';
-    const APP_VERSION = 'v3.5.0';
+    const APP_VERSION = '13.05.02';
 
     const DEFAULT_SUPABASE_URL = 'https://aevmoxgnptjreycgniks.supabase.co';
-    const DEFAULT_SUPABASE_ANON_KEY = '';
+    const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_4fNdq9CWVz6yfhLGC3ewZA_s9qxjNrS';
 
     const PRESET_PROFILES = [
       { username: 'defeadmin', label: 'defeadmin', role: 'Admin Club', requirePass: false }
