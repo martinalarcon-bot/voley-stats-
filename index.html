@@ -7,7 +7,84 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Vóley Stats Live" />
+  <link id="dynamic-pwa-manifest" rel="manifest" href="" />
   <title>Vóley Stats Live — Control de Partido y Rendimiento</title>
+  <script>
+    (function setupSingleFilePwa() {
+      try {
+        const svgIcon = encodeURIComponent(
+          `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">` +
+          `<rect width="512" height="512" rx="112" fill="#090d16"/>` +
+          `<circle cx="256" cy="256" r="168" fill="#10b981" fill-opacity="0.18" stroke="#10b981" stroke-width="18"/>` +
+          `<text x="256" y="315" font-size="210" text-anchor="middle" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif">🏐</text>` +
+          `</svg>`
+        );
+        const iconDataUrl = `data:image/svg+xml,${svgIcon}`;
+        const manifestObj = {
+          name: 'Vóley Stats Live',
+          short_name: 'Vóley Stats',
+          description: 'Control de partido de vóley, planteles y estadísticas en vivo.',
+          start_url: './',
+          scope: './',
+          display: 'standalone',
+          orientation: 'portrait',
+          background_color: '#090d16',
+          theme_color: '#090d16',
+          icons: [
+            {
+              src: iconDataUrl,
+              sizes: '192x192',
+              type: 'image/svg+xml',
+              purpose: 'any maskable'
+            },
+            {
+              src: iconDataUrl,
+              sizes: '512x512',
+              type: 'image/svg+xml',
+              purpose: 'any maskable'
+            }
+          ]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
+        const manifestUrl = URL.createObjectURL(manifestBlob);
+        const manifestLink = document.getElementById('dynamic-pwa-manifest');
+        if (manifestLink) manifestLink.setAttribute('href', manifestUrl);
+
+        if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
+          const swCode = `
+            const CACHE_NAME = 'voley-stats-live-cache-v350';
+            self.addEventListener('install', (event) => {
+              self.skipWaiting();
+            });
+            self.addEventListener('activate', (event) => {
+              event.waitUntil(
+                caches.keys().then((keys) => Promise.all(
+                  keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
+                )).then(() => self.clients.claim())
+              );
+            });
+            self.addEventListener('fetch', (event) => {
+              if (event.request.method !== 'GET') return;
+              event.respondWith(
+                fetch(event.request)
+                  .then((resp) => {
+                    const copy = resp.clone();
+                    caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)).catch(() => {});
+                    return resp;
+                  })
+                  .catch(() => caches.match(event.request))
+              );
+            });
+          `;
+          const swBlob = new Blob([swCode], { type: 'application/javascript' });
+          const swUrl = URL.createObjectURL(swBlob);
+          navigator.serviceWorker.register(swUrl, { scope: './' }).catch(() => {});
+        }
+      } catch (e) {
+        // Fallback silencioso si el navegador restringe blob URLs
+      }
+    })();
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
