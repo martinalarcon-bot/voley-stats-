@@ -645,13 +645,56 @@
             <p class="text-[11px] text-slate-400">Cambiá puestos al instante o tocá ✏️ para editar nombre/número</p>
           </div>
           <div class="flex items-center gap-1.5 shrink-0">
-            <button id="btn-clear-roster" type="button" onclick="clearCurrentRoster()" class="tap-btn px-2.5 py-1.5 rounded-xl bg-rose-950/60 hover:bg-rose-900/70 border border-rose-500/40 text-rose-300 font-bold text-xs flex items-center gap-1" title="Eliminar todos los jugadores del plantel actual para cargar uno nuevo">
-              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            <button id="btn-clear-roster" type="button" onclick="handleRosterPrimaryAction()" class="tap-btn px-2.5 py-1.5 rounded-xl bg-rose-950/60 hover:bg-rose-900/70 border border-rose-500/40 text-rose-300 font-bold text-xs flex items-center gap-1" title="Eliminar todos los jugadores del plantel actual para cargar uno nuevo">
+              <i id="btn-clear-roster-icon" data-lucide="trash-2" class="w-3.5 h-3.5"></i>
               <span id="btn-clear-roster-label">Eliminar plantel</span>
             </button>
-            <button type="button" onclick="addPlayer()" class="tap-btn px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs">
+            <button type="button" onclick="toggleManualPlayerForm()" class="tap-btn px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs">
               + Agregar
             </button>
+          </div>
+        </div>
+
+        <!-- CARGA MANUAL DE EQUIPO Y JUGADORES -->
+        <div id="manual-roster-builder" class="bg-court-950/90 border border-emerald-500/35 rounded-xl p-2.5 mt-2 space-y-2">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-[11px] font-black text-emerald-300">✍️ Carga Manual de Equipo y Jugadores</span>
+            <button type="button" onclick="toggleManualPlayerForm()" class="text-[10px] font-bold text-slate-400 hover:text-white">Mostrar / Ocultar</button>
+          </div>
+          <div id="manual-roster-builder-body" class="space-y-2">
+            <div class="grid grid-cols-2 gap-1.5">
+              <input id="manual-team-name" type="text" placeholder="Nombre de tu equipo (ej. DBANF)"
+                onchange="applyManualTeamNames()"
+                class="bg-court-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-bold text-emerald-300 placeholder-slate-500 focus:border-emerald-400 focus:outline-none" />
+              <input id="manual-rival-name" type="text" placeholder="Nombre del rival (ej. Ciudad)"
+                onchange="applyManualTeamNames()"
+                class="bg-court-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-bold text-rose-300 placeholder-slate-500 focus:border-rose-400 focus:outline-none" />
+            </div>
+            <div class="grid grid-cols-12 gap-1.5">
+              <input id="manual-player-num" type="text" maxlength="3" placeholder="#"
+                onkeydown="if(event.key==='Enter') addManualPlayerFromForm()"
+                class="col-span-2 bg-court-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs font-black text-white text-center placeholder-slate-500 focus:border-emerald-400 focus:outline-none" />
+              <input id="manual-player-name" type="text" maxlength="40" placeholder="Nombre y apellido del jugador..."
+                onkeydown="if(event.key==='Enter') addManualPlayerFromForm()"
+                class="col-span-6 bg-court-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-white placeholder-slate-500 focus:border-emerald-400 focus:outline-none" />
+              <select id="manual-player-role"
+                class="col-span-4 bg-court-900 border border-slate-700 rounded-lg px-1.5 py-1.5 text-[11px] font-bold text-slate-200 focus:border-emerald-400 focus:outline-none">
+                <option value="PTA">PTA · Punta</option>
+                <option value="ARM">ARM · Armador</option>
+                <option value="CEN">CEN · Central</option>
+                <option value="OPU">OPU · Opuesto</option>
+                <option value="LIB">LIB · Líbero</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <label class="flex items-center gap-1.5 text-[11px] text-slate-300 font-semibold cursor-pointer">
+                <input id="manual-player-oncourt" type="checkbox" checked class="rounded border-slate-600 bg-court-900 text-emerald-500 focus:ring-0" />
+                <span>Titular en cancha</span>
+              </label>
+              <button type="button" onclick="addManualPlayerFromForm()" class="tap-btn px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs">
+                + Sumar al plantel
+              </button>
+            </div>
           </div>
         </div>
 
@@ -672,32 +715,32 @@
             <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-500/30">Auto-Detector</span>
           </div>
 
-          <div class="flex gap-1.5">
-            <input id="torneomax-url-input" type="url" placeholder="https://metrovoley.com.ar/matches/... o feva.torneomax.com/..."
-              class="flex-1 min-w-0 bg-court-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:border-emerald-400 focus:outline-none" />
-            <button onclick="handleTorneoMaxUrlImport()" class="tap-btn px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shrink-0">Leer Link</button>
+        <div class="bg-court-950/70 border border-slate-800 rounded-xl p-2.5 space-y-2 mt-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <label class="block text-[11px] font-bold text-slate-300">📋 Importar pegando desde FeVA TorneoMax / MetroVoley / JSON</label>
+            <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-500/30">Reconoce 2 Equipos</span>
           </div>
 
-          <div id="paste-importer-box" class="pt-1.5 border-t border-slate-800/80 space-y-2">
+          <div id="paste-importer-box" class="space-y-2">
             <div class="flex items-center justify-between gap-2">
-              <span class="text-[10px] text-slate-400">Pegá el texto de la web (<kbd class="px-1 py-0.2 bg-slate-800 rounded text-slate-300">Ctrl+A</kbd> → <kbd class="px-1 py-0.2 bg-slate-800 rounded text-slate-300">Ctrl+C</kbd>) o JSON:</span>
+              <span class="text-[10px] text-slate-400">Abrí la ficha del partido, hacé <kbd class="px-1 py-0.2 bg-slate-800 rounded text-slate-300">Ctrl+A</kbd> → <kbd class="px-1 py-0.2 bg-slate-800 rounded text-slate-300">Ctrl+C</kbd> y pegalo acá:</span>
               <button onclick="togglePasteHelper()" class="text-[10px] font-bold text-sky-400 hover:underline shrink-0">¿Cómo funciona?</button>
             </div>
             <div id="paste-helper-tip" class="hidden text-[11px] bg-sky-950/50 border border-sky-500/30 text-sky-200 rounded-lg p-2.5 leading-relaxed">
-              Los sitios <strong>feva.torneomax.com</strong> y <strong>metrovoley.com.ar</strong> bloquean la lectura directa desde apps externas (CORS). Abrí el link, hacé <kbd class="px-1 bg-slate-800 rounded">Ctrl+A</kbd> y <kbd class="px-1 bg-slate-800 rounded">Ctrl+C</kbd>, y pegalo acá abajo.
+              Los sitios <strong>feva.torneomax.com</strong> y <strong>metrovoley.com.ar</strong> bloquean la lectura directa por link (CORS). Al pegar toda la página (<kbd class="px-1 bg-slate-800 rounded">Ctrl+A</kbd> y <kbd class="px-1 bg-slate-800 rounded">Ctrl+C</kbd>), el detector separa automáticamente los <strong>dos equipos</strong> y sus listas de jugadores para que elijas cuál es el tuyo.
             </div>
 
             <div class="flex items-center gap-1.5">
               <button type="button" onclick="loadMetroVoleyExample()" class="tap-btn flex-1 py-1.5 px-2 rounded-lg bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-[10px] font-bold text-amber-300 truncate">
-                📋 Pegar plantilla ejemplo MetroVoley Sub 12
+                📋 Pegar ejemplo con 2 equipos (MetroVoley)
               </button>
               <button type="button" onclick="clearImporterFields()" class="tap-btn py-1.5 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[10px] font-bold text-slate-400">
                 Limpiar cuadro
               </button>
             </div>
 
-            <textarea id="torneomax-raw-text" rows="4" oninput="analyzePastedContent()"
-              placeholder="Pegá acá toda la página de FeVA / MetroVoley o el bloque JSON..."
+            <textarea id="torneomax-raw-text" rows="5" oninput="analyzePastedContent()"
+              placeholder="Pegá acá toda la página de FeVA / MetroVoley (con ambos equipos) o un bloque JSON..."
               class="w-full bg-court-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200 placeholder-slate-500 focus:border-emerald-400 focus:outline-none font-mono"></textarea>
 
             <div id="detected-match-preview" class="hidden bg-emerald-950/40 border border-emerald-500/40 rounded-xl p-2.5 space-y-2">
@@ -706,8 +749,8 @@
                 <span id="detected-players-count" class="text-[10px] font-bold text-slate-300">0 jugadores</span>
               </div>
               <div id="detected-meta-summary" class="text-[11px] text-slate-300 space-y-0.5"></div>
-              <div id="detected-team-picker" class="hidden pt-1 border-t border-emerald-500/20">
-                <label class="block text-[10px] font-bold text-amber-300 mb-1">Se detectaron 2 equipos. ¿Cuál es tu equipo propio?</label>
+              <div id="detected-team-picker" class="hidden pt-1.5 border-t border-emerald-500/20 space-y-1.5">
+                <label class="block text-[10px] font-bold text-amber-300">Se detectaron 2 planteles. Elegí cuál es tu equipo propio (el otro queda como rival):</label>
                 <div class="grid grid-cols-2 gap-1.5" id="detected-team-buttons"></div>
               </div>
             </div>
@@ -720,7 +763,7 @@
             </div>
 
             <button onclick="parseAndImportTeam()" class="tap-btn w-full py-2.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs shadow-md">
-              ⚡ Procesar y Cargar Equipo / Partido
+              ⚡ Cargar Equipo y Rival Seleccionados
             </button>
           </div>
         </div>
@@ -2193,15 +2236,51 @@
         clearTimeout(clearRosterConfirmTimer);
         clearRosterConfirmTimer = null;
       }
+      updateRosterPrimaryActionButton();
+    }
+
+    function updateRosterPrimaryActionButton() {
+      const roster = getActiveRoster();
+      const btn = document.getElementById('btn-clear-roster');
       const lbl = document.getElementById('btn-clear-roster-label');
-      if (lbl) lbl.textContent = 'Eliminar plantel';
+      const icon = document.getElementById('btn-clear-roster-icon');
+      if (!btn || !lbl) return;
+
+      if (roster.length === 0) {
+        btn.className = 'tap-btn px-2.5 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/40 text-sky-300 font-bold text-xs flex items-center gap-1';
+        btn.title = 'Cargar un nuevo plantel manualmente o pegando desde TorneoMax / MetroVoley';
+        lbl.textContent = 'Cargar plantel';
+        if (icon) icon.setAttribute('data-lucide', 'user-plus');
+      } else {
+        btn.className = 'tap-btn px-2.5 py-1.5 rounded-xl bg-rose-950/60 hover:bg-rose-900/70 border border-rose-500/40 text-rose-300 font-bold text-xs flex items-center gap-1';
+        btn.title = 'Eliminar todos los jugadores del plantel actual para cargar uno nuevo';
+        lbl.textContent = clearRosterConfirmArmed ? 'Confirmás borrar este plantel?' : 'Eliminar plantel';
+        if (icon) icon.setAttribute('data-lucide', 'trash-2');
+      }
+    }
+
+    function handleRosterPrimaryAction() {
+      const roster = getActiveRoster();
+      if (roster.length === 0) {
+        const builderBody = document.getElementById('manual-roster-builder-body');
+        if (builderBody) builderBody.classList.remove('hidden');
+        const numInput = document.getElementById('manual-player-num');
+        const teamInput = document.getElementById('manual-team-name');
+        if (teamInput && !teamInput.value.trim()) {
+          teamInput.focus();
+        } else if (numInput) {
+          numInput.focus();
+        }
+        showToast('Completá el equipo o pegá la lista abajo');
+        return;
+      }
+      clearCurrentRoster();
     }
 
     function clearCurrentRoster() {
-      const lbl = document.getElementById('btn-clear-roster-label');
       if (!clearRosterConfirmArmed) {
         clearRosterConfirmArmed = true;
-        if (lbl) lbl.textContent = 'Confirmás borrar este plantel?';
+        updateRosterPrimaryActionButton();
         clearRosterConfirmTimer = setTimeout(() => {
           resetClearRosterConfirmUI();
         }, 4000);
@@ -2215,7 +2294,78 @@
       saveState();
       renderRoster();
       renderPlayersGrid();
-      showToast('🗑️ Plantel vaciado · Listo para nueva carga');
+      showToast('🗑️ Plantel vaciado · Usá "Cargar plantel" para crear uno nuevo');
+    }
+
+    function toggleManualPlayerForm() {
+      const body = document.getElementById('manual-roster-builder-body');
+      if (!body) return;
+      body.classList.toggle('hidden');
+      if (!body.classList.contains('hidden')) {
+        const numInput = document.getElementById('manual-player-num');
+        if (numInput) numInput.focus();
+      }
+    }
+
+    function applyManualTeamNames() {
+      const teamInp = document.getElementById('manual-team-name');
+      const rivalInp = document.getElementById('manual-rival-name');
+      if (teamInp && teamInp.value.trim()) {
+        const newHome = teamInp.value.trim();
+        state.homeTeam = newHome;
+        const team = getActiveTeam();
+        if (team) team.name = newHome;
+      }
+      if (rivalInp && rivalInp.value.trim()) {
+        state.awayTeam = rivalInp.value.trim();
+      }
+      saveState();
+      syncMatchInputs();
+      updateScoreboardUI();
+      renderRoster();
+    }
+
+    function addManualPlayerFromForm() {
+      applyManualTeamNames();
+      const roster = getActiveRoster();
+      const numEl = document.getElementById('manual-player-num');
+      const nameEl = document.getElementById('manual-player-name');
+      const roleEl = document.getElementById('manual-player-role');
+      const courtEl = document.getElementById('manual-player-oncourt');
+
+      const name = (nameEl ? nameEl.value : '').trim();
+      if (!name) {
+        showToast('Ingresá el nombre del jugador');
+        if (nameEl) nameEl.focus();
+        return;
+      }
+
+      const rawNum = (numEl ? numEl.value : '').trim();
+      const num = rawNum || String(roster.length + 1);
+      const role = roleEl && ROLE_CONFIG[roleEl.value] ? roleEl.value : 'PTA';
+      const onCourt = courtEl ? Boolean(courtEl.checked) : roster.filter(p => p.onCourt).length < 7;
+
+      roster.push({
+        id: 'pl_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 5),
+        number: num,
+        name,
+        role,
+        onCourt
+      });
+
+      if (numEl) numEl.value = '';
+      if (nameEl) {
+        nameEl.value = '';
+        nameEl.focus();
+      }
+      if (courtEl) {
+        courtEl.checked = roster.filter(p => p.onCourt).length < 7;
+      }
+
+      saveState();
+      renderRoster();
+      renderPlayersGrid();
+      showToast(`✅ #${num} ${name} agregado`);
     }
 
     function syncMatchInputs() {
@@ -2285,6 +2435,59 @@
       showToast('Torneo quitado de la lista');
     }
 
+    function openMatchModal(focusField = '') {
+      const modal = document.getElementById('match-modal');
+      const mTor = document.getElementById('modal-tournament');
+      const mStg = document.getElementById('modal-stage');
+      const mHome = document.getElementById('modal-home');
+      const mAway = document.getElementById('modal-away');
+      if (!modal) return;
+
+      if (mTor) mTor.value = state.tournament || '';
+      if (mStg) mStg.value = state.stage || '';
+      if (mHome) mHome.value = state.homeTeam || '';
+      if (mAway) mAway.value = state.awayTeam || '';
+
+      modal.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+
+      if (focusField === 'away' && mAway) {
+        setTimeout(() => { mAway.focus(); mAway.select(); }, 40);
+      } else if (focusField === 'home' && mHome) {
+        setTimeout(() => { mHome.focus(); mHome.select(); }, 40);
+      }
+    }
+
+    function closeMatchModal() {
+      const modal = document.getElementById('match-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function saveMatchModal() {
+      const mTor = document.getElementById('modal-tournament');
+      const mStg = document.getElementById('modal-stage');
+      const mHome = document.getElementById('modal-home');
+      const mAway = document.getElementById('modal-away');
+
+      if (mTor) state.tournament = mTor.value.trim() || state.tournament;
+      if (mStg) state.stage = mStg.value.trim() || state.stage;
+      if (mHome && mHome.value.trim()) {
+        state.homeTeam = mHome.value.trim();
+        const team = getActiveTeam();
+        if (team) team.name = state.homeTeam;
+      }
+      if (mAway && mAway.value.trim()) {
+        state.awayTeam = mAway.value.trim();
+      }
+
+      saveState();
+      syncMatchInputs();
+      updateScoreboardUI();
+      renderRoster();
+      closeMatchModal();
+      showToast('✅ Datos del partido actualizados');
+    }
+
     function renderSavedTeamsSelector() {
       // Mantiene sincronizada la etiqueta del plantel activo si existe el selector
     }
@@ -2295,6 +2498,15 @@
       const team = getActiveTeam();
       const roster = getActiveRoster();
       const onCourtCount = roster.filter(p => p.onCourt).length;
+
+      const manualTeamEl = document.getElementById('manual-team-name');
+      const manualRivalEl = document.getElementById('manual-rival-name');
+      if (manualTeamEl && document.activeElement !== manualTeamEl) {
+        manualTeamEl.value = team?.name || state.homeTeam || '';
+      }
+      if (manualRivalEl && document.activeElement !== manualRivalEl) {
+        manualRivalEl.value = state.awayTeam || '';
+      }
 
       const panelTitle = document.getElementById('roster-panel-title');
       const courtCounter = document.getElementById('roster-court-counter');
@@ -2317,7 +2529,7 @@
         }
 
         if (roster.length === 0) {
-          listContainer.innerHTML = `<div class="text-center py-4 text-xs text-slate-400 bg-court-950/60 border border-dashed border-slate-800 rounded-xl">Plantel vacío. Usá <strong>+ Agregar</strong> o importá una lista abajo.</div>`;
+          listContainer.innerHTML = `<div class="text-center py-4 text-xs text-slate-400 bg-court-950/60 border border-dashed border-slate-800 rounded-xl">Plantel vacío. Cargá jugadores arriba o pegá la lista de MetroVoley / TorneoMax abajo.</div>`;
         } else {
           listContainer.innerHTML = roster.map(p => {
             const roleInfo = ROLE_CONFIG[p.role] || ROLE_CONFIG.PTA;
@@ -3260,6 +3472,7 @@
 
     // --- IMPORTADOR DE PLANTELES / PARTIDOS (TORNEOMAX / METROVOLEY / TEXTO / JSON) ---
     let detectedImportCache = null;
+    let selectedDetectedTeamIndex = 0;
 
     function togglePasteHelper() {
       const tip = document.getElementById('paste-helper-tip');
@@ -3267,7 +3480,6 @@
     }
 
     function clearImporterFields() {
-      const urlInput = document.getElementById('torneomax-url-input');
       const rawText = document.getElementById('torneomax-raw-text');
       const preview = document.getElementById('detected-match-preview');
       const picker = document.getElementById('detected-team-picker');
@@ -3275,7 +3487,6 @@
       const homeInput = document.getElementById('new-team-name-input');
       const awayInput = document.getElementById('new-opponent-name-input');
 
-      if (urlInput) urlInput.value = '';
       if (rawText) rawText.value = '';
       if (homeInput) homeInput.value = '';
       if (awayInput) awayInput.value = '';
@@ -3283,6 +3494,7 @@
       if (picker) picker.classList.add('hidden');
       if (teamBtns) teamBtns.innerHTML = '';
       detectedImportCache = null;
+      selectedDetectedTeamIndex = 0;
       showToast('Cuadro de importación limpiado');
     }
 
@@ -3290,20 +3502,27 @@
       const sampleText = [
         'Torneo: Copa Argentina Sub 12 · Fecha 2',
         'DBANF vs AGRARIO CERRITO',
+        'DBANF',
         '#1 Benicio Rodriguez Sambran - PTA',
         '#2 Facundo Herrero Barbieri - PTA',
         '#3 Santiago Facundo Marcial - LIB',
         '#4 Bruno Ezequiel Chiarot - CEN',
         '#5 Francisco Pelc Fernandez - OPU',
         '#8 Fidel Alarcon Andreozzi - ARM',
-        '#9 Valentin Rao - PTA'
+        '#9 Valentin Rao - PTA',
+        'AGRARIO CERRITO',
+        '#1 Mateo Gomez - ARM',
+        '#4 Lucas Fernandez - PTA',
+        '#7 Tomas Silva - CEN',
+        '#10 Nicolas Ruiz - OPU',
+        '#12 Julian Castro - LIB'
       ].join('\n');
 
       const rawText = document.getElementById('torneomax-raw-text');
       if (rawText) {
         rawText.value = sampleText;
         analyzePastedContent();
-        showToast('Plantilla de ejemplo cargada');
+        showToast('Ejemplo con 2 equipos cargado');
       }
     }
 
@@ -3316,9 +3535,46 @@
       return 'PTA';
     }
 
+    function parsePlayerLineCandidate(line) {
+      // Soporta formatos: "#8 Fidel Alarcon - ARM", "8 Fidel Alarcon", "8\tFidel Alarcon\tArmador"
+      const normalized = line.replace(/\t+/g, ' - ').trim();
+      const playerMatch = normalized.match(/^#?(\d{1,3})\s*[\.\-\)\:]?\s*([A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s.'-]+?)(?:\s*[\-\(\[\|]\s*([A-Za-zÁÉÍÓÚÜÑáéíóúüñ\/\s]+)\s*[\)\]]?)?$/);
+      if (!playerMatch) return null;
+
+      const num = playerMatch[1].trim();
+      let name = playerMatch[2].trim();
+      let rolePart = playerMatch[3] ? playerMatch[3].trim() : '';
+
+      if (!rolePart) {
+        const trailingRole = name.match(/\b(ARM|LIB|PTA|CEN|OPU|ARMADOR|LIBERO|LÍBERO|CENTRAL|OPUESTO|PUNTA)\b$/i);
+        if (trailingRole) {
+          rolePart = trailingRole[1];
+          name = name.replace(/\b(ARM|LIB|PTA|CEN|OPU|ARMADOR|LIBERO|LÍBERO|CENTRAL|OPUESTO|PUNTA)\b$/i, '').replace(/[\-\s]+$/, '').trim();
+        }
+      }
+
+      if (name.length < 2) return null;
+      return {
+        number: num,
+        name,
+        role: inferRoleFromText(rolePart)
+      };
+    }
+
+    function isLikelyTeamHeaderLine(line) {
+      if (!line || line.length < 2 || line.length > 45) return false;
+      if (/^#?\d/.test(line)) return false;
+      if (/^(torneo|competencia|fecha|instancia|set|sets|parciales|árbitro|arbitro|cancha|estadio|jugadores|plantel|titulares|suplentes|n°|nro|número|nombre|posición|posicion|local|visitante)$/i.test(line)) return false;
+      if (/\b(vs\.?|contra)\b/i.test(line)) return false;
+      if (line.includes(':') || line.includes('http')) return false;
+      return /[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]{2,}/.test(line);
+    }
+
     function parseRosterLines(rawContent = '') {
       const trimmed = String(rawContent || '').trim();
-      if (!trimmed) return { players: [], teamsDetected: [], tournament: '', stage: '' };
+      if (!trimmed) {
+        return { players: [], teamRosters: [], teamsDetected: [], tournament: '', stage: '' };
+      }
 
       // Intentar parseo JSON primero
       if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
@@ -3332,9 +3588,11 @@
             role: ROLE_CONFIG[String(item.role ?? item.posicion ?? '').toUpperCase()] ? String(item.role ?? item.posicion).toUpperCase() : inferRoleFromText(item.role ?? item.posicion ?? ''),
             onCourt: typeof item.onCourt === 'boolean' ? item.onCourt : idx < 7
           })).filter(p => p.name);
+          const tName = typeof parsed.team === 'string' ? parsed.team : (typeof parsed.homeTeam === 'string' ? parsed.homeTeam : '');
           return {
             players,
-            teamsDetected: [],
+            teamRosters: tName ? [{ name: tName, players }] : [],
+            teamsDetected: tName ? [tName] : [],
             tournament: typeof parsed.tournament === 'string' ? parsed.tournament : '',
             stage: typeof parsed.stage === 'string' ? parsed.stage : ''
           };
@@ -3342,10 +3600,14 @@
       }
 
       const lines = trimmed.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-      const players = [];
       const teamsDetected = [];
       let tournament = '';
       let stage = '';
+
+      // Agrupar jugadores por bloques de equipo cuando el texto trae 2 planteles
+      const buckets = [];
+      let currentBucket = { name: '', players: [] };
+      let pendingTeamName = '';
 
       lines.forEach(line => {
         const lower = line.toLowerCase();
@@ -3358,7 +3620,6 @@
           return;
         }
 
-        // Detectar enfrentamiento "Equipo A vs Equipo B"
         const vsMatch = line.match(/^(.+?)\s+(?:vs\.?|v\.?|contra)\s+(.+?)$/i);
         if (vsMatch && !line.startsWith('#') && !/^\d+[\s\-\.)]/.test(line)) {
           const t1 = vsMatch[1].trim();
@@ -3368,34 +3629,52 @@
           return;
         }
 
-        // Detectar líneas de jugador: "#8 Fidel Alarcon - ARM" o "8. Juan Perez (LIB)" o "10 Maria Lopez"
-        const playerMatch = line.match(/^#?(\d{1,3})\s*[\.\-\)\:]?\s*([A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s.'-]+?)(?:\s*[\-\(\[\|]\s*([A-Za-zÁÉÍÓÚÜÑáéíóúüñ\/]+)\s*[\)\]]?)?$/);
-        if (playerMatch) {
-          const num = playerMatch[1].trim();
-          let name = playerMatch[2].trim();
-          let rolePart = playerMatch[3] ? playerMatch[3].trim() : '';
-
-          if (!rolePart) {
-            const trailingRole = name.match(/\b(ARM|LIB|PTA|CEN|OPU)\b$/i);
-            if (trailingRole) {
-              rolePart = trailingRole[1];
-              name = name.replace(/\b(ARM|LIB|PTA|CEN|OPU)\b$/i, '').replace(/[\-\s]+$/, '').trim();
+        const parsedPlayer = parsePlayerLineCandidate(line);
+        if (parsedPlayer) {
+          if (pendingTeamName) {
+            if (currentBucket.players.length > 0) {
+              buckets.push(currentBucket);
             }
+            currentBucket = { name: pendingTeamName, players: [] };
+            pendingTeamName = '';
           }
+          currentBucket.players.push({
+            id: 'imp_' + Date.now().toString(36) + '_' + buckets.length + '_' + currentBucket.players.length,
+            number: parsedPlayer.number,
+            name: parsedPlayer.name,
+            role: parsedPlayer.role,
+            onCourt: currentBucket.players.length < 7
+          });
+          return;
+        }
 
-          if (name.length >= 2) {
-            players.push({
-              id: 'imp_' + Date.now().toString(36) + '_' + players.length,
-              number: num,
-              name,
-              role: inferRoleFromText(rolePart),
-              onCourt: players.length < 7
-            });
-          }
+        if (isLikelyTeamHeaderLine(line)) {
+          pendingTeamName = line;
         }
       });
 
-      return { players, teamsDetected, tournament, stage };
+      if (currentBucket.players.length > 0) {
+        buckets.push(currentBucket);
+      }
+
+      // Asignar nombres de equipos detectados en "A vs B" si los bloques no tenían encabezado propio
+      buckets.forEach((b, idx) => {
+        if (!b.name && teamsDetected[idx]) {
+          b.name = teamsDetected[idx];
+        }
+        if (b.name && !teamsDetected.includes(b.name)) {
+          teamsDetected.push(b.name);
+        }
+      });
+
+      const primaryPlayers = buckets[0] ? buckets[0].players : [];
+      return {
+        players: primaryPlayers,
+        teamRosters: buckets,
+        teamsDetected,
+        tournament,
+        stage
+      };
     }
 
     function analyzePastedContent() {
@@ -3412,41 +3691,110 @@
       const parsed = parseRosterLines(rawTextEl.value);
       detectedImportCache = parsed;
 
-      const hasInfo = parsed.players.length > 0 || parsed.teamsDetected.length > 0 || Boolean(parsed.tournament) || Boolean(parsed.stage);
+      const totalPlayers = parsed.teamRosters.reduce((acc, b) => acc + b.players.length, 0);
+      const hasInfo = totalPlayers > 0 || parsed.teamsDetected.length > 0 || Boolean(parsed.tournament) || Boolean(parsed.stage);
       previewEl.classList.toggle('hidden', !hasInfo);
       if (!hasInfo) return;
 
-      if (countEl) countEl.textContent = `${parsed.players.length} jugador${parsed.players.length === 1 ? '' : 'es'}`;
+      if (countEl) {
+        countEl.textContent = parsed.teamRosters.length >= 2
+          ? `${parsed.teamRosters.length} equipos · ${totalPlayers} jug.`
+          : `${totalPlayers} jugador${totalPlayers === 1 ? '' : 'es'}`;
+      }
 
       const metaLines = [];
       if (parsed.tournament) metaLines.push(`<div>🏆 Torneo: <strong class="text-white">${parsed.tournament}</strong></div>`);
       if (parsed.stage) metaLines.push(`<div>📅 Fecha/Instancia: <strong class="text-amber-300">${parsed.stage}</strong></div>`);
-      if (parsed.teamsDetected.length >= 2) {
+      if (parsed.teamRosters.length >= 2) {
+        metaLines.push(`<div>🆚 Planteles detectados: <strong class="text-emerald-300">${parsed.teamRosters[0].name || 'Equipo 1'} (${parsed.teamRosters[0].players.length})</strong> vs <strong class="text-rose-300">${parsed.teamRosters[1].name || 'Equipo 2'} (${parsed.teamRosters[1].players.length})</strong></div>`);
+      } else if (parsed.teamsDetected.length >= 2) {
         metaLines.push(`<div>🆚 Cruce: <strong class="text-emerald-300">${parsed.teamsDetected[0]}</strong> vs <strong class="text-rose-300">${parsed.teamsDetected[1]}</strong></div>`);
       }
       if (metaEl) metaEl.innerHTML = metaLines.join('') || '<div class="text-slate-400">Jugadores listos para importar al plantel activo.</div>';
 
-      if (parsed.teamsDetected.length >= 2 && pickerEl && btnsEl) {
+      const teamNamesForButtons = parsed.teamRosters.length >= 2
+        ? [parsed.teamRosters[0].name || 'Equipo 1', parsed.teamRosters[1].name || 'Equipo 2']
+        : parsed.teamsDetected.slice(0, 2);
+
+      if (teamNamesForButtons.length >= 2 && pickerEl && btnsEl) {
         pickerEl.classList.remove('hidden');
-        btnsEl.innerHTML = parsed.teamsDetected.slice(0, 2).map((tName, idx) => {
-          const oppName = parsed.teamsDetected[idx === 0 ? 1 : 0] || '';
+        btnsEl.innerHTML = teamNamesForButtons.map((tName, idx) => {
+          const oppName = teamNamesForButtons[idx === 0 ? 1 : 0] || '';
           const escHome = tName.replace(/'/g, "\\'");
           const escAway = oppName.replace(/'/g, "\\'");
-          return `<button type="button" onclick="selectDetectedTeam('${escHome}', '${escAway}')" class="tap-btn py-1.5 px-2 rounded-lg bg-court-900 hover:bg-emerald-950 border border-slate-700 hover:border-emerald-500/50 text-[11px] font-bold text-white truncate">${tName}</button>`;
+          const isSelected = selectedDetectedTeamIndex === idx;
+          const pCount = parsed.teamRosters[idx] ? ` (${parsed.teamRosters[idx].players.length})` : '';
+          return `<button type="button" onclick="selectDetectedTeam('${escHome}', '${escAway}', ${idx})" class="tap-btn py-1.5 px-2 rounded-lg border text-[11px] font-bold truncate ${
+            isSelected
+              ? 'bg-emerald-600/30 border-emerald-400 text-emerald-200'
+              : 'bg-court-900 hover:bg-emerald-950 border-slate-700 text-white'
+          }">${tName}${pCount}</button>`;
         }).join('');
-        if (homeInput && !homeInput.value.trim()) homeInput.value = parsed.teamsDetected[0];
-        if (awayInput && !awayInput.value.trim()) awayInput.value = parsed.teamsDetected[1];
+        if (homeInput) homeInput.value = teamNamesForButtons[selectedDetectedTeamIndex] || teamNamesForButtons[0];
+        if (awayInput) awayInput.value = teamNamesForButtons[selectedDetectedTeamIndex === 0 ? 1 : 0] || '';
       } else if (pickerEl) {
         pickerEl.classList.add('hidden');
+        if (homeInput && teamNamesForButtons[0] && !homeInput.value.trim()) {
+          homeInput.value = teamNamesForButtons[0];
+        }
       }
     }
 
-    function selectDetectedTeam(homeName, awayName) {
+    function selectDetectedTeam(homeName, awayName, teamIndex = 0) {
+      selectedDetectedTeamIndex = teamIndex;
       const homeInput = document.getElementById('new-team-name-input');
       const awayInput = document.getElementById('new-opponent-name-input');
       if (homeInput && homeName) homeInput.value = homeName;
       if (awayInput && awayName) awayInput.value = awayName;
-      showToast(`Equipo propio seleccionado: ${homeName}`);
+      analyzePastedContent();
+      showToast(`Equipo propio: ${homeName}`);
+    }
+
+    function parseAndImportTeam() {
+      const rawTextEl = document.getElementById('torneomax-raw-text');
+      const homeInput = document.getElementById('new-team-name-input');
+      const awayInput = document.getElementById('new-opponent-name-input');
+
+      const parsed = parseRosterLines(rawTextEl ? rawTextEl.value : '');
+      const customHome = (homeInput ? homeInput.value : '').trim();
+      const customAway = (awayInput ? awayInput.value : '').trim();
+
+      const chosenBucket = parsed.teamRosters[selectedDetectedTeamIndex] || parsed.teamRosters[0] || null;
+      const chosenPlayers = chosenBucket ? chosenBucket.players : parsed.players;
+
+      const teamName = customHome || (chosenBucket && chosenBucket.name) || parsed.teamsDetected[0] || state.homeTeam || 'Equipo Importado';
+      const opponentName = customAway || parsed.teamsDetected[selectedDetectedTeamIndex === 0 ? 1 : 0] || '';
+
+      if (chosenPlayers.length === 0 && !customHome && !parsed.tournament && !parsed.stage) {
+        showToast('Pegá una lista de jugadores, texto o JSON para importar');
+        return;
+      }
+
+      const team = getActiveTeam();
+      if (team) {
+        team.name = teamName;
+        if (chosenPlayers.length > 0) {
+          team.roster = chosenPlayers.map((p, idx) => ({
+            ...p,
+            id: 'imp_' + Date.now().toString(36) + '_' + idx,
+            onCourt: idx < 7
+          }));
+          state.selectedPlayerId = null;
+          editingPlayerId = null;
+        }
+      }
+
+      state.homeTeam = teamName;
+      if (opponentName) state.awayTeam = opponentName;
+      if (parsed.tournament) state.tournament = parsed.tournament;
+      if (parsed.stage) state.stage = parsed.stage;
+
+      saveState();
+      syncMatchInputs();
+      updateScoreboardUI();
+      renderRoster();
+      renderPlayersGrid();
+      showToast(`⚡ Cargado: ${teamName} (${chosenPlayers.length} jugadores)`);
     }
 
     async function handleTorneoMaxUrlImport() {
@@ -3481,46 +3829,6 @@
       if (tip) tip.classList.remove('hidden');
       if (rawText) rawText.focus();
       showToast('La web bloquea lectura directa: copiá y pegá el texto abajo');
-    }
-
-    function parseAndImportTeam() {
-      const rawTextEl = document.getElementById('torneomax-raw-text');
-      const homeInput = document.getElementById('new-team-name-input');
-      const awayInput = document.getElementById('new-opponent-name-input');
-
-      const parsed = parseRosterLines(rawTextEl ? rawTextEl.value : '');
-      const customHome = (homeInput ? homeInput.value : '').trim();
-      const customAway = (awayInput ? awayInput.value : '').trim();
-
-      const teamName = customHome || parsed.teamsDetected[0] || state.homeTeam || 'Equipo Importado';
-      const opponentName = customAway || parsed.teamsDetected[1] || '';
-
-      if (parsed.players.length === 0 && !customHome && !parsed.tournament && !parsed.stage) {
-        showToast('Pegá una lista de jugadores, texto o JSON para importar');
-        return;
-      }
-
-      const team = getActiveTeam();
-      if (team) {
-        team.name = teamName;
-        if (parsed.players.length > 0) {
-          team.roster = parsed.players;
-          state.selectedPlayerId = null;
-          editingPlayerId = null;
-        }
-      }
-
-      state.homeTeam = teamName;
-      if (opponentName) state.awayTeam = opponentName;
-      if (parsed.tournament) state.tournament = parsed.tournament;
-      if (parsed.stage) state.stage = parsed.stage;
-
-      saveState();
-      syncMatchInputs();
-      updateScoreboardUI();
-      renderRoster();
-      renderPlayersGrid();
-      showToast(`⚡ Importado: ${teamName} (${parsed.players.length} jugadores)`);
     }
 
     // --- SOPORTE PWA (INSTALABLE EN CELULAR, TABLET Y ESCRITORIO) ---
