@@ -38,7 +38,7 @@
         <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-2xl">🏐</div>
         <div>
           <span class="inline-block rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300">PWA · Cancha &amp; Nube</span>
-          <span id="login-version-badge" class="ml-1.5 inline-block rounded-full border border-slate-700 bg-slate-800/90 px-2 py-0.5 text-[10px] font-extrabold tracking-wider text-slate-300">v3.4.0</span>
+          <span id="login-version-badge" class="ml-1.5 inline-block rounded-full border border-slate-700 bg-slate-800/90 px-2 py-0.5 text-[10px] font-extrabold tracking-wider text-slate-300">v3.5.0</span>
           <h1 class="text-xl font-black tracking-tight text-white">Vóley Stats Live</h1>
         </div>
       </div>
@@ -361,6 +361,42 @@
 
           <div id="player-detail-panel" class="rounded-2xl border border-slate-800 bg-slate-950/70 p-3.5 text-xs text-slate-400">
             Tocá cualquier fila de jugador en la tabla para ver su desglose individual.
+          </div>
+        </div>
+
+        <!-- BIBLIOTECA / ARCHIVO POR EQUIPO -->
+        <div id="team-library-card" class="rounded-3xl border border-slate-800 bg-slate-900/90 p-4 sm:p-5 shadow-xl space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 class="text-base font-black text-white">📚 Biblioteca / Archivo por Equipo</h2>
+              <p class="text-xs text-slate-400">Consultá los partidos guardados organizados por equipo y su MVP automático.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <label for="library-team-filter" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Equipo:</label>
+              <select id="library-team-filter" onchange="renderTeamLibrary()" class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs font-bold text-white">
+                <option value="ALL">Todos los equipos</option>
+              </select>
+            </div>
+          </div>
+          <div id="team-library-list" class="grid grid-cols-1 md:grid-cols-2 gap-2.5"></div>
+        </div>
+
+        <!-- PERFIL INDIVIDUAL DEL JUGADOR (POR PARTIDO, TOTALES Y MVP) -->
+        <div id="player-profile-card" class="rounded-3xl border border-sky-500/25 bg-slate-900/90 p-4 sm:p-5 shadow-xl space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 class="text-base font-black text-white">🏅 Perfil del Jugador · Totales, Por Partido y MVP</h2>
+              <p class="text-xs text-slate-400">Métricas acumuladas, convocatoria (convocado / no convocado), MVP automático y detalle partido a partido.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <label for="player-profile-selector" class="text-[10px] font-bold uppercase tracking-wider text-sky-300">Jugador:</label>
+              <select id="player-profile-selector" onchange="renderPlayerProfile(this.value)" class="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs font-bold text-white">
+                <option value="">Seleccionar jugador...</option>
+              </select>
+            </div>
+          </div>
+          <div id="player-profile-content" class="rounded-2xl border border-slate-800 bg-slate-950/75 p-4 text-xs text-slate-400">
+            Seleccioná un jugador (o tocá una fila de la tabla de arriba) para ver su perfil completo.
           </div>
         </div>
       </section>
@@ -719,7 +755,7 @@ VELEZ
     const STORAGE_KEY_CLOUD = 'voley_stats_supabase_cfg_v3';
     const STORAGE_KEY_PENDING_SYNC = 'voley_stats_pending_sync_v3';
     const STORAGE_KEY_PROFE_USERS = 'voley_stats_profe_users_v3';
-    const APP_VERSION = 'v3.4.0';
+    const APP_VERSION = 'v3.5.0';
 
     const DEFAULT_SUPABASE_URL = 'https://aevmoxgnptjreycgniks.supabase.co';
     const DEFAULT_SUPABASE_ANON_KEY = '';
@@ -1510,28 +1546,220 @@ VELEZ
           </div>
           <div class="flex items-center gap-1.5">
             <select onchange="changePlayerRole('${escapeAttr(p.id)}', this.value)" class="rounded-xl border border-slate-700 bg-slate-900 px-2 py-1 text-[11px] font-bold text-slate-200">
+              <option value="" ${!p.role ? 'selected' : ''}>Sin puesto</option>
               <option value="PTA" ${p.role === 'PTA' ? 'selected' : ''}>PTA</option>
               <option value="OPU" ${p.role === 'OPU' ? 'selected' : ''}>OPU</option>
               <option value="CEN" ${p.role === 'CEN' ? 'selected' : ''}>CEN</option>
               <option value="ARM" ${p.role === 'ARM' ? 'selected' : ''}>ARM</option>
               <option value="LIB" ${p.role === 'LIB' ? 'selected' : ''}>LIB</option>
             </select>
-            <button type="button" onclick="togglePlayerOnCourt('${escapeAttr(p.id)}')" class="rounded-xl border ${p.onCourt ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300' : 'border-slate-700 bg-slate-900 text-slate-400'} px-2.5 py-1 text-[11px] font-bold">
-              ${p.onCourt ? 'Titular' : 'Banco'}
-            </button>
+            <select aria-label="Estado de convocatoria" onchange="changePlayerAttendanceStatus('${escapeAttr(p.id)}', this.value)" class="rounded-xl border ${getPlayerAttendanceBadgeClass(p)} px-2 py-1 text-[11px] font-bold focus:outline-none">
+              <option value="titular" ${getPlayerAttendanceStatus(p) === 'titular' ? 'selected' : ''}>Titular</option>
+              <option value="banco" ${getPlayerAttendanceStatus(p) === 'banco' ? 'selected' : ''}>Banco</option>
+              <option value="no_convocado" ${getPlayerAttendanceStatus(p) === 'no_convocado' ? 'selected' : ''}>No convocado</option>
+            </select>
             <button type="button" onclick="removePlayerFromRoster('${escapeAttr(p.id)}')" class="rounded-xl border border-rose-500/30 bg-rose-500/10 px-2 py-1 text-[11px] font-bold text-rose-300">✕</button>
           </div>
         </div>
       `).join('');
     }
 
-    function handlePrimaryRosterAction() {
-      if ((state.roster || []).length === 0) {
-        document.getElementById('paste-roster-textarea')?.focus();
-        document.getElementById('bulk-importer-box')?.scrollIntoView({ behavior: 'smooth' });
-      } else {
-        document.getElementById('confirm-delete-roster-modal')?.classList.remove('hidden');
+    function getPlayerAttendanceStatus(player) {
+      if (!player) return 'banco';
+      if (player.attendanceStatus === 'titular' || player.attendanceStatus === 'banco' || player.attendanceStatus === 'no_convocado') {
+        return player.attendanceStatus;
       }
+      return player.onCourt ? 'titular' : 'banco';
+    }
+
+    function getPlayerAttendanceBadgeClass(player) {
+      const st = getPlayerAttendanceStatus(player);
+      if (st === 'titular') return 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300';
+      if (st === 'no_convocado') return 'border-rose-500/40 bg-rose-500/15 text-rose-300';
+      return 'border-slate-700 bg-slate-900 text-slate-300';
+    }
+
+    function changePlayerAttendanceStatus(playerId, statusVal) {
+      const p = (state.roster || []).find((pl) => pl.id === playerId);
+      if (!p) return;
+      const clean = (statusVal === 'titular' || statusVal === 'banco' || statusVal === 'no_convocado') ? statusVal : 'banco';
+      p.attendanceStatus = clean;
+      p.onCourt = clean === 'titular';
+      syncActiveRosterToCollection();
+      saveState();
+      renderRoster();
+      renderLivePlayersGrid();
+    }
+
+    function removePlayerFromRoster(playerId) {
+      state.roster = (state.roster || []).filter((p) => p.id !== playerId);
+      if (selectedPlayerId === playerId) selectedPlayerId = null;
+      syncActiveRosterToCollection();
+      saveState();
+      renderRoster();
+      renderLivePlayersGrid();
+    }
+
+    function changePlayerNumber(playerId, newNum) {
+      const n = parseInt(newNum, 10);
+      const p = (state.roster || []).find((pl) => pl.id === playerId);
+      if (!p || !Number.isFinite(n) || n < 1) return;
+      p.number = n;
+      syncActiveRosterToCollection();
+      saveState();
+      renderRoster();
+      renderLivePlayersGrid();
+    }
+
+    function changePlayerName(playerId, newName) {
+      const clean = String(newName || '').trim();
+      const p = (state.roster || []).find((pl) => pl.id === playerId);
+      if (!p || !clean) return;
+      p.name = clean;
+      syncActiveRosterToCollection();
+      saveState();
+      renderRoster();
+      renderLivePlayersGrid();
+    }
+
+    function changePlayerRole(playerId, newRole) {
+      const p = (state.roster || []).find((pl) => pl.id === playerId);
+      if (!p) return;
+      p.role = String(newRole || '').trim();
+      syncActiveRosterToCollection();
+      saveState();
+      renderRoster();
+      renderLivePlayersGrid();
+    }
+
+    function syncActiveRosterToCollection() {
+      if (!Array.isArray(state.rosters)) state.rosters = [];
+      if (!state.activeRosterId && state.teamName) {
+        state.activeRosterId = 'roster_' + state.teamName.toLowerCase().replace(/[^a-z0-9]/g, '') + '_' + Date.now();
+      }
+      if (!state.activeRosterId) return;
+      const idx = state.rosters.findIndex((r) => r.id === state.activeRosterId);
+      const rosterObj = {
+        id: state.activeRosterId,
+        name: state.teamName || 'Plantel',
+        gender: state.rosterGender || '',
+        category: state.rosterCategory || '',
+        players: (state.roster || []).map((p) => ({ ...p }))
+      };
+      if (idx >= 0) state.rosters[idx] = rosterObj;
+      else state.rosters.push(rosterObj);
+    }
+
+    function switchActiveRoster(rosterId) {
+      const found = (state.rosters || []).find((r) => r.id === rosterId);
+      if (!found) return;
+      state.activeRosterId = found.id;
+      state.teamName = found.name || '';
+      state.rosterGender = found.gender || '';
+      state.rosterCategory = found.category || '';
+      state.roster = (found.players || []).map((p) => ({ ...p }));
+      selectedPlayerId = null;
+      saveState();
+      renderAll();
+    }
+
+    function createNewEmptyRoster() {
+      const newId = 'roster_' + Date.now();
+      const newRoster = {
+        id: newId,
+        name: 'NUEVO PLANTEL',
+        gender: '',
+        category: '',
+        players: []
+      };
+      if (!Array.isArray(state.rosters)) state.rosters = [];
+      state.rosters.push(newRoster);
+      state.activeRosterId = newId;
+      state.teamName = newRoster.name;
+      state.rosterGender = '';
+      state.rosterCategory = '';
+      state.roster = [];
+      selectedPlayerId = null;
+      saveState();
+      renderAll();
+      focusManualPlayerInput();
+    }
+
+    function updateCurrentRosterTeamName(val) {
+      state.teamName = String(val || '').trim().toUpperCase();
+      syncActiveRosterToCollection();
+      saveState();
+      updateHeaderUI();
+      renderRoster();
+    }
+
+    function updateCurrentRosterMeta() {
+      state.rosterGender = (document.getElementById('manual-roster-gender')?.value || '').trim();
+      state.rosterCategory = (document.getElementById('manual-roster-category')?.value || '').trim();
+      syncActiveRosterToCollection();
+      saveState();
+      renderRoster();
+    }
+
+    function focusManualPlayerInput() {
+      document.getElementById('manual-roster-box')?.classList.remove('hidden');
+      document.getElementById('manual-player-num')?.focus();
+    }
+
+    function addManualPlayer(e) {
+      e.preventDefault();
+      const numRaw = document.getElementById('manual-player-num')?.value;
+      const nameVal = (document.getElementById('manual-player-name')?.value || '').trim();
+      const roleVal = (document.getElementById('manual-player-role')?.value || 'PTA').trim();
+      const teamVal = (document.getElementById('manual-team-name')?.value || '').trim().toUpperCase();
+
+      if (teamVal) state.teamName = teamVal;
+      if (!state.teamName) {
+        showToast('Ingresá primero el nombre del equipo.');
+        document.getElementById('manual-team-name')?.focus();
+        return;
+      }
+
+      const num = parseInt(numRaw, 10);
+      if (!Number.isFinite(num) || num < 1) {
+        showToast('Ingresá un número de camiseta válido.');
+        document.getElementById('manual-player-num')?.focus();
+        return;
+      }
+      if (!nameVal) {
+        showToast('Ingresá el nombre y apellido del jugador.');
+        document.getElementById('manual-player-name')?.focus();
+        return;
+      }
+
+      if (!Array.isArray(state.roster)) state.roster = [];
+      state.roster.push({
+        id: 'pl_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        number: num,
+        name: nameVal,
+        role: roleVal,
+        attendanceStatus: 'banco',
+        onCourt: false
+      });
+
+      syncActiveRosterToCollection();
+      saveState();
+      renderRoster();
+      renderLivePlayersGrid();
+
+      document.getElementById('manual-player-num').value = '';
+      document.getElementById('manual-player-name').value = '';
+      document.getElementById('manual-player-num')?.focus();
+      showToast(`Sumado #${num} ${nameVal}`);
+    }
+
+    function handlePrimaryRosterAction() {
+      if (!state.roster || state.roster.length === 0) {
+        document.getElementById('bulk-importer-box')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        document.getElementById('paste-roster-textarea')?.focus();
+        return;
+      }
+      document.getElementById('confirm-delete-roster-modal')?.classList.remove('hidden');
     }
 
     function closeDeleteRosterModal() {
@@ -1540,12 +1768,13 @@ VELEZ
 
     function confirmDeleteCurrentRoster() {
       closeDeleteRosterModal();
-      if (state.activeRosterId) {
-        state.rosters = (state.rosters || []).filter((r) => r.id !== state.activeRosterId);
+      const deletedId = state.activeRosterId;
+      if (Array.isArray(state.rosters) && deletedId) {
+        state.rosters = state.rosters.filter((r) => r.id !== deletedId);
       }
 
-      const nextRoster = (state.rosters || [])[0] || null;
-      if (nextRoster) {
+      if (Array.isArray(state.rosters) && state.rosters.length > 0) {
+        const nextRoster = state.rosters[0];
         state.activeRosterId = nextRoster.id;
         state.teamName = nextRoster.name || '';
         state.rosterGender = nextRoster.gender || '';
@@ -1556,182 +1785,21 @@ VELEZ
         state.teamName = '';
         state.rosterGender = '';
         state.rosterCategory = '';
-        state.opponent = '';
         state.roster = [];
       }
 
+      selectedPlayerId = null;
       saveState();
       renderAll();
       showToast('Plantel eliminado.');
     }
 
-    function createNewEmptyRoster() {
-      const id = 'roster_' + Date.now();
-      const gender = (document.getElementById('manual-roster-gender')?.value || '').trim();
-      const category = (document.getElementById('manual-roster-category')?.value || '').trim();
-      const newObj = { id, name: 'Nuevo Equipo', gender, category, players: [] };
-      state.rosters.push(newObj);
-      state.activeRosterId = id;
-      state.teamName = newObj.name;
-      state.rosterGender = gender;
-      state.rosterCategory = category;
-      state.roster = [];
-      saveState();
-      renderAll();
-      focusManualPlayerInput();
-    }
-
-    function switchActiveRoster(rosterId) {
-      const found = (state.rosters || []).find((r) => r.id === rosterId);
-      if (!found) return;
-      state.activeRosterId = found.id;
-      state.teamName = found.name;
-      state.rosterGender = found.gender || '';
-      state.rosterCategory = found.category || '';
-      state.roster = (found.players || []).map((p) => ({ ...p }));
-      saveState();
-      renderAll();
-    }
-
-    function syncActiveRosterToCollection() {
-      if (!state.activeRosterId) {
-        state.activeRosterId = 'roster_' + Date.now();
-      }
-      const cleanName = (state.teamName || 'Equipo').trim();
-      const idx = (state.rosters || []).findIndex((r) => r.id === state.activeRosterId);
-      const entry = {
-        id: state.activeRosterId,
-        name: cleanName,
-        gender: state.rosterGender || '',
-        category: state.rosterCategory || '',
-        players: (state.roster || []).map((p) => ({ ...p }))
-      };
-      if (idx >= 0) state.rosters[idx] = entry;
-      else state.rosters.push(entry);
-    }
-
-    function updateCurrentRosterTeamName(val) {
-      state.teamName = val.trim();
-      syncActiveRosterToCollection();
-      saveState();
-      renderRoster();
-      updateHeaderUI();
-    }
-
-    function updateCurrentRosterMeta() {
-      const genderVal = (document.getElementById('manual-roster-gender')?.value || '').trim();
-      const categoryVal = (document.getElementById('manual-roster-category')?.value || '').trim();
-      state.rosterGender = genderVal;
-      state.rosterCategory = categoryVal;
-      syncActiveRosterToCollection();
-      saveState();
-      renderRoster();
-      populatePrepSelectors();
-    }
-
-    function focusManualPlayerInput() {
-      document.getElementById('manual-player-name')?.focus();
-    }
-
-    function addManualPlayer(e) {
-      e.preventDefault();
-      const numInput = document.getElementById('manual-player-num');
-      const nameInput = document.getElementById('manual-player-name');
-      const roleInput = document.getElementById('manual-player-role');
-
-      const num = parseInt(numInput?.value || '0', 10);
-      const name = (nameInput?.value || '').trim();
-      const role = (roleInput?.value || 'PTA').trim();
-
-      if (!num || num < 1 || num > 99) {
-        showToast('Ingresá un número de camiseta válido (1 a 99).');
-        numInput?.focus();
-        return;
-      }
-      if (!name) {
-        showToast('Ingresá el nombre y apellido del jugador.');
-        nameInput?.focus();
-        return;
-      }
-
-      if (!Array.isArray(state.roster)) state.roster = [];
-      const onCourtCount = state.roster.filter((p) => p.onCourt).length;
-      const newPlayer = {
-        id: 'pl_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-        number: num,
-        name,
-        role,
-        onCourt: onCourtCount < 6
-      };
-
-      state.roster.push(newPlayer);
-      syncActiveRosterToCollection();
-      saveState();
-      renderRoster();
-
-      if (numInput) numInput.value = String(num + 1);
-      if (nameInput) {
-        nameInput.value = '';
-        nameInput.focus();
-      }
-      showToast(`Sumado #${num} ${name} (${role}).`);
-    }
-
-    function changePlayerNumber(playerId, val) {
-      const parsed = parseInt(val, 10);
-      if (!parsed || parsed < 1 || parsed > 99) {
-        renderRoster();
-        return;
-      }
-      const p = (state.roster || []).find((pl) => pl.id === playerId);
-      if (!p) return;
-      p.number = parsed;
-      syncActiveRosterToCollection();
-      saveState();
-      renderLivePlayersGrid();
-    }
-
-    function changePlayerName(playerId, val) {
-      const clean = String(val || '').trim();
-      const p = (state.roster || []).find((pl) => pl.id === playerId);
-      if (!p) return;
-      if (!clean) {
-        renderRoster();
-        return;
-      }
-      p.name = clean;
-      syncActiveRosterToCollection();
-      saveState();
-      updateHeaderUI();
-      renderLivePlayersGrid();
-    }
-
-    function changePlayerRole(playerId, roleVal) {
-      const p = (state.roster || []).find((pl) => pl.id === playerId);
-      if (!p) return;
-      p.role = roleVal || 'PTA';
-      syncActiveRosterToCollection();
-      saveState();
-      renderLivePlayersGrid();
-    }
-
     function togglePlayerOnCourt(playerId) {
       const p = (state.roster || []).find((pl) => pl.id === playerId);
       if (!p) return;
-      p.onCourt = !p.onCourt;
-      syncActiveRosterToCollection();
-      saveState();
-      renderRoster();
-      renderLivePlayersGrid();
-    }
-
-    function removePlayerFromRoster(playerId) {
-      state.roster = (state.roster || []).filter((pl) => pl.id !== playerId);
-      if (selectedPlayerId === playerId) selectedPlayerId = null;
-      syncActiveRosterToCollection();
-      saveState();
-      renderRoster();
-      renderLivePlayersGrid();
+      const current = getPlayerAttendanceStatus(p);
+      const next = current === 'titular' ? 'banco' : (current === 'banco' ? 'no_convocado' : 'titular');
+      changePlayerAttendanceStatus(playerId, next);
     }
 
     function parseTwoTeamsFromText(rawText) {
@@ -1814,8 +1882,9 @@ VELEZ
               number: jerseyNum,
               name: playerName,
               age: ageValue,
-              role: 'PTA',
-              onCourt: currentTeam.players.length < 7
+              role: '',
+              attendanceStatus: null,
+              onCourt: null
             });
           }
           continue;
@@ -2026,6 +2095,7 @@ VELEZ
       renderAll();
 
       // Limpiar cuadro, previsualización y selectores de carga masiva para evitar duplicar cargas
+      const importedCount = detectedTeamsBuffer.length;
       const pasteArea = document.getElementById('paste-roster-textarea');
       const previewBox = document.getElementById('detected-teams-preview');
       const bulkGender = document.getElementById('bulk-roster-gender');
@@ -2107,6 +2177,390 @@ VELEZ
           sel.value = prevVal;
         }
       }
+      renderTeamLibrary();
+      populatePlayerProfileSelector();
+    }
+
+    function computeMatchPlayerStats(matchRoster, matchEvents) {
+      const map = new Map();
+      (matchRoster || []).forEach((p) => {
+        const att = getPlayerAttendanceStatus(p);
+        map.set(p.id, {
+          id: p.id,
+          number: p.number,
+          name: p.name,
+          role: p.role || '—',
+          attendanceStatus: att,
+          convocado: att !== 'no_convocado',
+          pts: 0,
+          atq: 0,
+          blq: 0,
+          saq: 0,
+          rec: 0,
+          def: 0,
+          arm: 0,
+          posActions: 0,
+          err: 0,
+          totalActions: 0,
+          mvpScore: 0
+        });
+      });
+
+      (matchEvents || []).forEach((ev) => {
+        if (!map.has(ev.playerId)) {
+          map.set(ev.playerId, {
+            id: ev.playerId,
+            number: ev.playerNumber || 0,
+            name: ev.playerName || 'Jugador',
+            role: '—',
+            attendanceStatus: 'titular',
+            convocado: true,
+            pts: 0, atq: 0, blq: 0, saq: 0, rec: 0, def: 0, arm: 0,
+            posActions: 0, err: 0, totalActions: 0, mvpScore: 0
+          });
+        }
+        const row = map.get(ev.playerId);
+        row.convocado = true;
+        row.totalActions += 1;
+        const sk = String(ev.skill || '').toLowerCase();
+        const q = String(ev.quality || '').toLowerCase();
+
+        if (q === 'excelente') {
+          row.pts += 1;
+          row.posActions += 1;
+          if (sk === 'ataque') row.atq += 1;
+          else if (sk === 'bloqueo') row.blq += 1;
+          else if (sk === 'saque') row.saq += 1;
+        } else if (q === 'error') {
+          row.err += 1;
+        } else {
+          row.posActions += 1;
+          if (sk === 'recepcion') row.rec += 1;
+          else if (sk === 'defensa') row.def += 1;
+          else if (sk === 'armado') row.arm += 1;
+        }
+      });
+
+      // Fórmula objetiva y automática de MVP:
+      // +3 pts por punto directo, +1 pt por acción positiva (sigue/adentro/toca/recepción/defensa/armado), -2 pts por error
+      const list = [...map.values()].map((r) => {
+        const nonPointPos = Math.max(0, r.posActions - r.pts);
+        const mvpScore = Number(((r.pts * 3) + (nonPointPos * 1) - (r.err * 2)).toFixed(1));
+        return { ...r, mvpScore };
+      });
+
+      let mvpId = null;
+      const contenders = list.filter((r) => r.totalActions > 0 || r.pts > 0);
+      if (contenders.length > 0) {
+        contenders.sort((a, b) => (b.mvpScore - a.mvpScore) || (b.pts - a.pts) || (a.err - b.err));
+        mvpId = contenders[0].id;
+      }
+
+      return { rows: list, mvpId };
+    }
+
+    function getAllMatchesForLibrary() {
+      const items = [];
+      (state.history || []).forEach((h, idx) => {
+        const computed = computeMatchPlayerStats(h.roster || [], h.events || []);
+        const mvpRow = computed.rows.find((r) => r.id === computed.mvpId) || null;
+        items.push({
+          sourceKey: `hist_${idx}`,
+          isLive: false,
+          date: h.date || 'Sin fecha',
+          teamName: h.teamName || 'Equipo',
+          opponent: h.opponent || 'Rival',
+          tournament: h.tournament || 'Torneo',
+          round: h.round || '',
+          scoreHome: h.scoreHome ?? 0,
+          scoreAway: h.scoreAway ?? 0,
+          roster: h.roster || [],
+          events: h.events || [],
+          mvpRow
+        });
+      });
+      if (state.matchActive) {
+        const computedLive = computeMatchPlayerStats(state.roster || [], state.events || []);
+        const mvpLive = computedLive.rows.find((r) => r.id === computedLive.mvpId) || null;
+        items.unshift({
+          sourceKey: 'live',
+          isLive: true,
+          date: 'En curso',
+          teamName: state.teamName || 'Equipo',
+          opponent: state.opponent || 'Rival',
+          tournament: state.tournament || 'Torneo',
+          round: state.round || '',
+          scoreHome: state.scoreHome ?? 0,
+          scoreAway: state.scoreAway ?? 0,
+          roster: state.roster || [],
+          events: state.events || [],
+          mvpRow: mvpLive
+        });
+      }
+      return items;
+    }
+
+    function renderTeamLibrary() {
+      const sel = document.getElementById('library-team-filter');
+      const container = document.getElementById('team-library-list');
+      if (!container) return;
+
+      const allMatches = getAllMatchesForLibrary();
+      const teamNames = [...new Set([
+        ...(state.rosters || []).map((r) => r.name).filter(Boolean),
+        ...allMatches.map((m) => m.teamName).filter(Boolean)
+      ])];
+
+      if (sel) {
+        const prev = sel.value || 'ALL';
+        sel.innerHTML = `<option value="ALL">Todos los equipos (${allMatches.length})</option>` +
+          teamNames.map((t) => {
+            const cnt = allMatches.filter((m) => m.teamName === t).length;
+            return `<option value="${escapeAttr(t)}">${escapeHtml(t)} (${cnt})</option>`;
+          }).join('');
+        if ([...sel.options].some((o) => o.value === prev)) sel.value = prev;
+      }
+
+      const activeFilter = sel ? sel.value : 'ALL';
+      const filtered = activeFilter === 'ALL'
+        ? allMatches
+        : allMatches.filter((m) => m.teamName === activeFilter);
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="col-span-full rounded-2xl border border-dashed border-slate-700 p-4 text-center text-xs text-slate-400">Todavía no hay partidos guardados en el archivo para este equipo.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map((m) => `
+        <div class="rounded-2xl border border-slate-800 bg-slate-950/85 p-3.5 flex flex-col justify-between gap-2">
+          <div class="space-y-1">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-black text-white">${escapeHtml(m.teamName)} <span class="text-slate-400 font-semibold">vs</span> ${escapeHtml(m.opponent)}</span>
+              <span class="rounded-lg border ${m.isLive ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300' : 'border-slate-700 bg-slate-900 text-slate-300'} px-2 py-0.5 text-[10px] font-extrabold">${escapeHtml(m.date)}</span>
+            </div>
+            <div class="text-[11px] text-slate-400">${escapeHtml(m.tournament)}${m.round ? ` · ${escapeHtml(m.round)}` : ''} · <strong class="text-emerald-400">${m.scoreHome} - ${m.scoreAway}</strong></div>
+            <div class="text-[11px] text-amber-300 font-semibold">
+              🏅 MVP automático: ${m.mvpRow ? `#${m.mvpRow.number} ${escapeHtml(m.mvpRow.name)} (${m.mvpRow.mvpScore} pts val.)` : 'Sin acciones aún'}
+            </div>
+          </div>
+          <div class="flex justify-end pt-1">
+            <button type="button" onclick="openMatchFromLibrary('${escapeAttr(m.sourceKey)}')" class="rounded-xl border border-sky-500/40 bg-sky-500/15 hover:bg-sky-500/25 px-3 py-1.5 text-[11px] font-extrabold text-sky-300">
+              Ver estadística del partido →
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openMatchFromLibrary(sourceKey) {
+      const sel = document.getElementById('stats-match-selector');
+      if (sel && [...sel.options].some((o) => o.value === sourceKey)) {
+        sel.value = sourceKey;
+        renderStats();
+        sel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    function populatePlayerProfileSelector(preferredId) {
+      const sel = document.getElementById('player-profile-selector');
+      if (!sel) return;
+
+      const playerMap = new Map();
+      const collectPlayer = (p, teamLabel) => {
+        if (!p || !p.id) return;
+        if (!playerMap.has(p.id)) {
+          playerMap.set(p.id, {
+            id: p.id,
+            number: p.number,
+            name: p.name,
+            team: teamLabel || state.teamName || 'Equipo'
+          });
+        }
+      };
+
+      (state.roster || []).forEach((p) => collectPlayer(p, state.teamName));
+      (state.rosters || []).forEach((r) => (r.players || []).forEach((p) => collectPlayer(p, r.name)));
+      getAllMatchesForLibrary().forEach((m) => (m.roster || []).forEach((p) => collectPlayer(p, m.teamName)));
+
+      const list = [...playerMap.values()].sort((a, b) => a.name.localeCompare(b.name, 'es'));
+      const targetId = preferredId || sel.value || (list[0] ? list[0].id : '');
+
+      if (list.length === 0) {
+        sel.innerHTML = `<option value="">Sin jugadores cargados</option>`;
+        renderPlayerProfile('');
+        return;
+      }
+
+      sel.innerHTML = list.map((p) => `<option value="${escapeAttr(p.id)}">#${p.number} ${escapeHtml(p.name)} (${escapeHtml(p.team)})</option>`).join('');
+      if (targetId && list.some((x) => x.id === targetId)) {
+        sel.value = targetId;
+        renderPlayerProfile(targetId);
+      } else {
+        renderPlayerProfile(list[0].id);
+      }
+    }
+
+    function renderPlayerProfile(playerId) {
+      const box = document.getElementById('player-profile-content');
+      if (!box) return;
+      if (!playerId) {
+        box.innerHTML = `Seleccioná un jugador para ver sus estadísticas por partido, totales y MVP.`;
+        return;
+      }
+
+      const matches = getAllMatchesForLibrary();
+      let playerMeta = null;
+      let totalPts = 0, totalAtq = 0, totalBlq = 0, totalSaq = 0, totalRec = 0, totalDef = 0, totalArm = 0, totalErr = 0, totalMvpScore = 0;
+      let mvpCount = 0;
+      let summonedMatches = 0;
+      let notSummonedMatches = 0;
+      const perMatchRows = [];
+
+      matches.forEach((m) => {
+        const inRoster = (m.roster || []).find((p) => p.id === playerId);
+        const computed = computeMatchPlayerStats(m.roster || [], m.events || []);
+        const row = computed.rows.find((r) => r.id === playerId);
+        const hasEvents = (m.events || []).some((e) => e.playerId === playerId);
+        const isMvp = Boolean(computed.mvpId && computed.mvpId === playerId && row && (row.totalActions > 0 || row.pts > 0));
+
+        if (!inRoster && !row && !hasEvents) return;
+
+        if (!playerMeta && row) {
+          playerMeta = { number: row.number, name: row.name, role: row.role, team: m.teamName };
+        }
+
+        const wasSummoned = row ? Boolean(row.convocado) : true;
+        if (wasSummoned) summonedMatches += 1;
+        else notSummonedMatches += 1;
+
+        const rPts = row ? row.pts : 0;
+        const rAtq = row ? row.atq : 0;
+        const rBlq = row ? row.blq : 0;
+        const rSaq = row ? row.saq : 0;
+        const rRec = row ? row.rec : 0;
+        const rDef = row ? row.def : 0;
+        const rArm = row ? row.arm : 0;
+        const rErr = row ? row.err : 0;
+        const rScore = row ? row.mvpScore : 0;
+
+        totalPts += rPts;
+        totalAtq += rAtq;
+        totalBlq += rBlq;
+        totalSaq += rSaq;
+        totalRec += rRec;
+        totalDef += rDef;
+        totalArm += rArm;
+        totalErr += rErr;
+        totalMvpScore = Number((totalMvpScore + rScore).toFixed(1));
+        if (isMvp) mvpCount += 1;
+
+        perMatchRows.push({
+          date: m.date,
+          matchup: `${m.teamName} vs ${m.opponent}`,
+          tournament: m.tournament,
+          statusLabel: wasSummoned ? (row?.attendanceStatus === 'titular' ? 'Titular' : 'Convocado') : 'No convocado',
+          pts: rPts,
+          atq: rAtq,
+          blq: rBlq,
+          saq: rSaq,
+          err: rErr,
+          mvpScore: rScore,
+          isMvp
+        });
+      });
+
+      if (!playerMeta) {
+        const fallbackRosterPlayer = (state.roster || []).find((p) => p.id === playerId);
+        if (fallbackRosterPlayer) {
+          playerMeta = {
+            number: fallbackRosterPlayer.number,
+            name: fallbackRosterPlayer.name,
+            role: fallbackRosterPlayer.role || '—',
+            team: state.teamName || 'Equipo'
+          };
+        }
+      }
+
+      if (!playerMeta) {
+        box.innerHTML = `No se encontraron registros para este jugador.`;
+        return;
+      }
+
+      box.innerHTML = `
+        <div class="space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
+            <div>
+              <div class="text-sm font-black text-white">#${playerMeta.number} ${escapeHtml(playerMeta.name)} <span class="text-xs font-semibold text-sky-300">· ${escapeHtml(playerMeta.role)} · ${escapeHtml(playerMeta.team)}</span></div>
+              <div class="text-[11px] text-slate-400">MVP automático: +3 por punto, +1 por acción positiva, -2 por error.</div>
+            </div>
+            <span class="rounded-xl border border-amber-500/40 bg-amber-500/15 px-3 py-1 text-xs font-black text-amber-300">
+              🏅 ${mvpCount} MVP${mvpCount === 1 ? '' : 's'}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            <div class="rounded-xl border border-slate-800 bg-slate-900/90 p-2.5">
+              <div class="text-[10px] font-bold uppercase text-slate-400">Puntos Totales</div>
+              <div class="text-lg font-black text-emerald-400">${totalPts}</div>
+            </div>
+            <div class="rounded-xl border border-slate-800 bg-slate-900/90 p-2.5">
+              <div class="text-[10px] font-bold uppercase text-slate-400">Errores Totales</div>
+              <div class="text-lg font-black text-rose-400">${totalErr}</div>
+            </div>
+            <div class="rounded-xl border border-slate-800 bg-slate-900/90 p-2.5">
+              <div class="text-[10px] font-bold uppercase text-slate-400">Convocados / No Conv.</div>
+              <div class="text-sm font-black text-sky-300 mt-0.5">${summonedMatches} <span class="text-slate-500">/</span> <span class="text-rose-300">${notSummonedMatches}</span></div>
+            </div>
+            <div class="rounded-xl border border-slate-800 bg-slate-900/90 p-2.5">
+              <div class="text-[10px] font-bold uppercase text-slate-400">Premios MVP</div>
+              <div class="text-lg font-black text-amber-300">${mvpCount}</div>
+            </div>
+            <div class="rounded-xl border border-slate-800 bg-slate-900/90 p-2.5 col-span-2 sm:col-span-1">
+              <div class="text-[10px] font-bold uppercase text-slate-400">Valoración Acum.</div>
+              <div class="text-lg font-black text-white">${totalMvpScore}</div>
+            </div>
+          </div>
+
+          <div class="text-[11px] text-slate-400">
+            Desglose acumulado: <strong class="text-slate-200">ATQ ${totalAtq}</strong> · <strong class="text-slate-200">BLQ ${totalBlq}</strong> · <strong class="text-slate-200">SAQ ${totalSaq}</strong> · <strong class="text-slate-200">REC ${totalRec}</strong> · <strong class="text-slate-200">DEF ${totalDef}</strong> · <strong class="text-slate-200">ARM ${totalArm}</strong>
+          </div>
+
+          <div class="overflow-x-auto rounded-xl border border-slate-800">
+            <table class="w-full text-left text-[11px]">
+              <thead class="bg-slate-900 text-[10px] font-extrabold uppercase text-slate-400">
+                <tr>
+                  <th class="py-2 px-2.5">Partido</th>
+                  <th class="py-2 px-2.5">Estado</th>
+                  <th class="py-2 px-2.5 text-center text-emerald-400">PTS</th>
+                  <th class="py-2 px-2.5 text-center">ATQ</th>
+                  <th class="py-2 px-2.5 text-center">BLQ</th>
+                  <th class="py-2 px-2.5 text-center">SAQ</th>
+                  <th class="py-2 px-2.5 text-center text-rose-400">ERR</th>
+                  <th class="py-2 px-2.5 text-center">Val.</th>
+                  <th class="py-2 px-2.5 text-center">MVP</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-800/80 bg-slate-950/60">
+                ${perMatchRows.length === 0
+                  ? `<tr><td colspan="9" class="py-4 text-center text-slate-400">Sin partidos registrados todavía.</td></tr>`
+                  : perMatchRows.map((pm) => `
+                    <tr>
+                      <td class="py-2 px-2.5 font-bold text-slate-200">${escapeHtml(pm.matchup)} <span class="text-slate-500 font-normal">(${escapeHtml(pm.date)})</span></td>
+                      <td class="py-2 px-2.5 text-slate-300">${escapeHtml(pm.statusLabel)}</td>
+                      <td class="py-2 px-2.5 text-center font-black text-emerald-400">${pm.pts}</td>
+                      <td class="py-2 px-2.5 text-center text-slate-300">${pm.atq}</td>
+                      <td class="py-2 px-2.5 text-center text-slate-300">${pm.blq}</td>
+                      <td class="py-2 px-2.5 text-center text-slate-300">${pm.saq}</td>
+                      <td class="py-2 px-2.5 text-center font-bold text-rose-400">${pm.err}</td>
+                      <td class="py-2 px-2.5 text-center text-slate-200">${pm.mvpScore}</td>
+                      <td class="py-2 px-2.5 text-center">${pm.isMvp ? '<span class="rounded bg-amber-500/20 border border-amber-500/40 px-1.5 py-0.5 text-[10px] font-black text-amber-300">🏅 MVP</span>' : '—'}</td>
+                    </tr>
+                  `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
     }
 
     function getSelectedMatchSourceForStats() {
@@ -2116,7 +2570,7 @@ VELEZ
         const h = (state.history || [])[idx];
         if (h) {
           return {
-            title: `${h.teamName || 'Local'} vs ${h.opponent || 'Rival'} (${h.tournament || 'Torneo'})`,
+            title: `${h.date || ''} · ${h.teamName || 'Local'} vs ${h.opponent || 'Rival'} (${h.scoreHome}-${h.scoreAway})`,
             roster: h.roster || [],
             events: h.events || []
           };
@@ -2124,8 +2578,8 @@ VELEZ
       }
       return {
         title: state.matchActive
-          ? `${state.teamName || 'Local'} vs ${state.opponent || 'Rival'} (${state.tournament || 'Torneo'})`
-          : 'Sin partido activo',
+          ? `En Vivo · ${state.teamName || 'Local'} vs ${state.opponent || 'Rival'} (${state.scoreHome}-${state.scoreAway})`
+          : 'Sin partido en vivo seleccionado',
         roster: state.roster || [],
         events: state.events || []
       };
@@ -2139,63 +2593,21 @@ VELEZ
 
       if (sub) sub.textContent = src.title;
 
-      const statsMap = new Map();
-      (src.roster || []).forEach((p) => {
-        statsMap.set(p.id, {
-          id: p.id,
-          number: p.number,
-          name: p.name,
-          role: p.role || 'PTA',
-          pts: 0,
-          atq: 0,
-          blq: 0,
-          saq: 0,
-          rec: 0,
-          def: 0,
-          arm: 0,
-          err: 0
-        });
-      });
-
+      const computed = computeMatchPlayerStats(src.roster || [], src.events || []);
       let totalPts = 0;
       let totalErr = 0;
       let totalPos = 0;
 
-      (src.events || []).forEach((ev) => {
-        if (!statsMap.has(ev.playerId)) {
-          statsMap.set(ev.playerId, {
-            id: ev.playerId,
-            number: ev.playerNumber || 0,
-            name: ev.playerName || 'Jugador',
-            role: 'PTA',
-            pts: 0, atq: 0, blq: 0, saq: 0, rec: 0, def: 0, arm: 0, err: 0
-          });
-        }
-        const row = statsMap.get(ev.playerId);
-        const sk = String(ev.skill || '').toLowerCase();
-        const q = String(ev.quality || '').toLowerCase();
-
-        if (q === 'excelente') {
-          row.pts += 1;
-          totalPts += 1;
-          totalPos += 1;
-          if (sk === 'ataque') row.atq += 1;
-          else if (sk === 'bloqueo') row.blq += 1;
-          else if (sk === 'saque') row.saq += 1;
-        } else if (q === 'error') {
-          row.err += 1;
-          totalErr += 1;
-        } else {
-          totalPos += 1;
-          if (sk === 'recepcion') row.rec += 1;
-          else if (sk === 'defensa') row.def += 1;
-          else if (sk === 'armado') row.arm += 1;
-        }
+      computed.rows.forEach((r) => {
+        totalPts += r.pts;
+        totalErr += r.err;
+        totalPos += r.posActions;
       });
 
-      const rows = [...statsMap.values()].sort((a, b) => (b.pts - a.pts) || (a.number - b.number));
+      const rows = [...computed.rows].sort((a, b) => (b.pts - a.pts) || (b.mvpScore - a.mvpScore) || (a.number - b.number));
       const totalActions = (src.events || []).length;
       const effPct = totalActions > 0 ? Math.round((totalPos / totalActions) * 100) : 0;
+      const mvpPlayer = rows.find((r) => r.id === computed.mvpId) || null;
 
       if (kpiBox) {
         kpiBox.innerHTML = `
@@ -2211,9 +2623,9 @@ VELEZ
             <div class="text-[10px] font-bold uppercase text-slate-400">Acciones Positivas</div>
             <div class="text-xl font-black text-sky-400">${effPct}%</div>
           </div>
-          <div class="rounded-2xl border border-slate-800 bg-slate-950/80 p-3">
-            <div class="text-[10px] font-bold uppercase text-slate-400">Total Toques</div>
-            <div class="text-xl font-black text-white">${totalActions}</div>
+          <div class="rounded-2xl border border-amber-500/30 bg-slate-950/80 p-3">
+            <div class="text-[10px] font-bold uppercase text-amber-300">MVP Automático</div>
+            <div class="text-xs font-black text-white truncate mt-1">${mvpPlayer ? `🏅 #${mvpPlayer.number} ${escapeHtml(mvpPlayer.name)}` : 'Sin acciones aún'}</div>
           </div>
         `;
       }
@@ -2222,10 +2634,12 @@ VELEZ
         if (rows.length === 0) {
           tbody.innerHTML = `<tr><td colspan="11" class="py-6 text-center text-slate-400">Sin datos estadísticos registrados todavía.</td></tr>`;
         } else {
-          tbody.innerHTML = rows.map((r) => `
+          tbody.innerHTML = rows.map((r) => {
+            const isMvp = r.id === computed.mvpId;
+            return `
             <tr onclick="showPlayerBreakdown('${escapeAttr(r.id)}')" class="cursor-pointer hover:bg-slate-800/50 transition">
               <td class="py-2.5 px-3 font-black text-white">#${r.number}</td>
-              <td class="py-2.5 px-3 font-bold text-slate-200">${escapeHtml(r.name)}</td>
+              <td class="py-2.5 px-3 font-bold text-slate-200">${escapeHtml(r.name)} ${isMvp ? '<span class="ml-1 rounded bg-amber-500/20 border border-amber-500/40 px-1.5 py-0.5 text-[9px] font-black text-amber-300">MVP</span>' : ''}</td>
               <td class="py-2.5 px-3 text-slate-400">${escapeHtml(r.role)}</td>
               <td class="py-2.5 px-3 text-center font-black text-emerald-400">${r.pts}</td>
               <td class="py-2.5 px-3 text-center text-slate-300">${r.atq}</td>
@@ -2236,19 +2650,28 @@ VELEZ
               <td class="py-2.5 px-3 text-center text-slate-300">${r.arm}</td>
               <td class="py-2.5 px-3 text-center font-bold text-rose-400">${r.err}</td>
             </tr>
-          `).join('');
+          `;
+          }).join('');
         }
       }
+      renderTeamLibrary();
+      populatePlayerProfileSelector();
     }
 
     function showPlayerBreakdown(playerId) {
       const panel = document.getElementById('player-detail-panel');
       if (!panel) return;
       const src = getSelectedMatchSourceForStats();
-      const p = (src.roster || []).find((pl) => pl.id === playerId);
-      const evs = (src.events || []).filter((e) => e.playerId === playerId);
-      if (!p) return;
-      panel.innerHTML = `<strong class="text-white">#${p.number} ${escapeHtml(p.name)}</strong> (${escapeHtml(p.role)}) · <span class="text-emerald-300">${evs.length} acciones registradas</span> en este partido.`;
+      const computed = computeMatchPlayerStats(src.roster || [], src.events || []);
+      const row = computed.rows.find((pl) => pl.id === playerId);
+      if (!row) return;
+      const isMvp = computed.mvpId === playerId;
+      panel.innerHTML = `<strong class="text-white">#${row.number} ${escapeHtml(row.name)}</strong> (${escapeHtml(row.role)}) · <span class="text-emerald-300">${row.totalActions} acciones</span> · Valoración MVP: <strong class="text-amber-300">${row.mvpScore}</strong> ${isMvp ? '🏅' : ''}`;
+      const profSel = document.getElementById('player-profile-selector');
+      if (profSel) {
+        profSel.value = playerId;
+        renderPlayerProfile(playerId);
+      }
     }
 
     function copyWhatsAppSummary() {
