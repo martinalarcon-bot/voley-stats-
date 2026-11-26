@@ -115,7 +115,7 @@
         <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-2xl">🏐</div>
         <div>
           <span class="inline-block rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300">PWA · Cancha &amp; Nube</span>
-          <span id="login-version-badge" class="ml-1.5 inline-block rounded-full border border-slate-700 bg-slate-800/90 px-2 py-0.5 text-[10px] font-extrabold tracking-wider text-slate-300">13.05.03</span>
+          <span id="login-version-badge" class="ml-1.5 inline-block rounded-full border border-slate-700 bg-slate-800/90 px-2 py-0.5 text-[10px] font-extrabold tracking-wider text-slate-300">13.05.04</span>
           <h1 class="text-xl font-black tracking-tight text-white">Vóley Stats Live</h1>
         </div>
       </div>
@@ -832,10 +832,10 @@ VELEZ
     const STORAGE_KEY_CLOUD = 'voley_stats_supabase_cfg_v3';
     const STORAGE_KEY_PENDING_SYNC = 'voley_stats_pending_sync_v3';
     const STORAGE_KEY_PROFE_USERS = 'voley_stats_profe_users_v3';
-    const APP_VERSION = '13.05.03';
+    const APP_VERSION = '13.05.04';
 
     const DEFAULT_SUPABASE_URL = 'https://aevmoxgnptjreycgniks.supabase.co';
-    const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_4fNdq9CWVz6yfhLGC3ewZA_s9qxjNrS';
+    const DEFAULT_SUPABASE_ANON_KEY = '';
 
     const PRESET_PROFILES = [
       { username: 'defeadmin', label: 'defeadmin', role: 'Admin Club', requirePass: false }
@@ -1510,9 +1510,11 @@ VELEZ
     function finalizeMatch(saveToHistory) {
       closeFinishMatchModal();
       if (saveToHistory && state.matchActive) {
+        const prof = getActiveProfile();
         state.history.unshift({
           id: 'match_' + Date.now(),
           date: new Date().toLocaleDateString('es-AR'),
+          createdBy: prof && prof.username ? prof.username : 'defeadmin',
           tournament: state.tournament,
           round: state.round,
           teamName: state.teamName,
@@ -2338,6 +2340,9 @@ VELEZ
         const mvpRow = computed.rows.find((r) => r.id === computed.mvpId) || null;
         items.push({
           sourceKey: `hist_${idx}`,
+          historyIndex: idx,
+          matchId: h.id || '',
+          createdBy: h.createdBy || '',
           isLive: false,
           date: h.date || 'Sin fecha',
           teamName: h.teamName || 'Equipo',
@@ -2356,6 +2361,9 @@ VELEZ
         const mvpLive = computedLive.rows.find((r) => r.id === computedLive.mvpId) || null;
         items.unshift({
           sourceKey: 'live',
+          historyIndex: -1,
+          matchId: '',
+          createdBy: '',
           isLive: true,
           date: 'En curso',
           teamName: state.teamName || 'Equipo',
@@ -2370,6 +2378,40 @@ VELEZ
         });
       }
       return items;
+    }
+
+    function canDeleteLibraryMatch(matchItem) {
+      if (!matchItem || matchItem.isLive) return false;
+      const prof = getActiveProfile();
+      const currentUser = String(prof?.username || '').trim().toLowerCase();
+      if (!currentUser) return false;
+      if (currentUser === 'defeadmin') return true;
+      const author = String(matchItem.createdBy || '').trim().toLowerCase();
+      return Boolean(author && author === currentUser);
+    }
+
+    function deleteLibraryMatch(historyIndex, matchId) {
+      if (!Array.isArray(state.history)) return;
+      const idx = (typeof historyIndex === 'number' && historyIndex >= 0 && historyIndex < state.history.length)
+        ? historyIndex
+        : state.history.findIndex((m) => m && m.id === matchId);
+
+      if (idx < 0 || !state.history[idx]) return;
+      const target = state.history[idx];
+      const itemCheck = {
+        isLive: false,
+        createdBy: target.createdBy || ''
+      };
+      if (!canDeleteLibraryMatch(itemCheck)) {
+        showToast('Solo el autor del partido o defeadmin puede borrar este registro.');
+        return;
+      }
+
+      state.history.splice(idx, 1);
+      saveState();
+      syncStatsMatchSelector();
+      renderStats();
+      showToast('Partido borrado de la biblioteca.');
     }
 
     function renderTeamLibrary() {
@@ -2410,12 +2452,17 @@ VELEZ
               <span class="text-xs font-black text-white">${escapeHtml(m.teamName)} <span class="text-slate-400 font-semibold">vs</span> ${escapeHtml(m.opponent)}</span>
               <span class="rounded-lg border ${m.isLive ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300' : 'border-slate-700 bg-slate-900 text-slate-300'} px-2 py-0.5 text-[10px] font-extrabold">${escapeHtml(m.date)}</span>
             </div>
-            <div class="text-[11px] text-slate-400">${escapeHtml(m.tournament)}${m.round ? ` · ${escapeHtml(m.round)}` : ''} · <strong class="text-emerald-400">${m.scoreHome} - ${m.scoreAway}</strong></div>
+            <div class="text-[11px] text-slate-400">${escapeHtml(m.tournament)}${m.round ? ` · ${escapeHtml(m.round)}` : ''} · <strong class="text-emerald-400">${m.scoreHome} - ${m.scoreAway}</strong>${m.createdBy ? ` · <span class="text-slate-500">Por ${escapeHtml(m.createdBy)}</span>` : ''}</div>
             <div class="text-[11px] text-amber-300 font-semibold">
               🏅 MVP automático: ${m.mvpRow ? `#${m.mvpRow.number} ${escapeHtml(m.mvpRow.name)} (${m.mvpRow.mvpScore} pts val.)` : 'Sin acciones aún'}
             </div>
           </div>
-          <div class="flex justify-end pt-1">
+          <div class="flex items-center justify-end gap-1.5 pt-1">
+            ${canDeleteLibraryMatch(m) ? `
+              <button type="button" onclick="deleteLibraryMatch(${m.historyIndex}, '${escapeAttr(m.matchId)}')" class="rounded-xl border border-rose-500/40 bg-rose-500/15 hover:bg-rose-500/25 px-2.5 py-1.5 text-[11px] font-bold text-rose-300">
+                🗑️ Borrar
+              </button>
+            ` : ''}
             <button type="button" onclick="openMatchFromLibrary('${escapeAttr(m.sourceKey)}')" class="rounded-xl border border-sky-500/40 bg-sky-500/15 hover:bg-sky-500/25 px-3 py-1.5 text-[11px] font-extrabold text-sky-300">
               Ver estadística del partido →
             </button>
