@@ -52,7 +52,7 @@
 
         if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
           const swCode = `
-            const CACHE_NAME = 'voley-stats-live-cache-130502';
+            const CACHE_NAME = 'voley-stats-live-cache-130503';
             self.addEventListener('install', (event) => {
               self.skipWaiting();
             });
@@ -115,7 +115,7 @@
         <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-2xl">🏐</div>
         <div>
           <span class="inline-block rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300">PWA · Cancha &amp; Nube</span>
-          <span id="login-version-badge" class="ml-1.5 inline-block rounded-full border border-slate-700 bg-slate-800/90 px-2 py-0.5 text-[10px] font-extrabold tracking-wider text-slate-300">13.05.02</span>
+          <span id="login-version-badge" class="ml-1.5 inline-block rounded-full border border-slate-700 bg-slate-800/90 px-2 py-0.5 text-[10px] font-extrabold tracking-wider text-slate-300">13.05.03</span>
           <h1 class="text-xl font-black tracking-tight text-white">Vóley Stats Live</h1>
         </div>
       </div>
@@ -699,7 +699,7 @@ VELEZ
             <span id="config-cloud-status" class="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-300">Configurada</span>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div id="supabase-credentials-fields" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Project URL</label>
               <input id="supabase-url-input" type="text" class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-200 focus:border-emerald-500 focus:outline-none" />
@@ -832,7 +832,7 @@ VELEZ
     const STORAGE_KEY_CLOUD = 'voley_stats_supabase_cfg_v3';
     const STORAGE_KEY_PENDING_SYNC = 'voley_stats_pending_sync_v3';
     const STORAGE_KEY_PROFE_USERS = 'voley_stats_profe_users_v3';
-    const APP_VERSION = '13.05.02';
+    const APP_VERSION = '13.05.03';
 
     const DEFAULT_SUPABASE_URL = 'https://aevmoxgnptjreycgniks.supabase.co';
     const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_4fNdq9CWVz6yfhLGC3ewZA_s9qxjNrS';
@@ -1906,7 +1906,6 @@ VELEZ
       let currentTeam = null;
       let i = 0;
 
-      // Detectar nombre de equipo al inicio si la primera línea no es número ni edad
       if (!isJerseyLine(lines[0]) && !isAgeLine(lines[0]) && !isCaptainLine(lines[0])) {
         currentTeam = { name: lines[0].toUpperCase(), players: [] };
         teams.push(currentTeam);
@@ -1967,7 +1966,6 @@ VELEZ
           continue;
         }
 
-        // Si aparece un nuevo encabezado de equipo en medio del texto
         if (isNameLine(line) && i + 1 < lines.length && isJerseyLine(lines[i + 1])) {
           if (currentTeam.players.length > 0) {
             currentTeam = { name: line.toUpperCase(), players: [] };
@@ -2047,6 +2045,7 @@ VELEZ
         btn.className = 'rounded-xl bg-sky-500 hover:bg-sky-400 px-4 py-2 text-xs font-extrabold text-slate-950';
       }
     }
+
     function analyzePastedContent() {
       const text = document.getElementById('paste-roster-textarea')?.value || '';
       const gender = (document.getElementById('bulk-roster-gender')?.value || '').trim();
@@ -2080,7 +2079,7 @@ VELEZ
             <div class="rounded-xl border border-slate-800 bg-slate-950/90 p-3">
               <div class="text-xs font-extrabold text-white mb-1.5">${escapeHtml(team.name)} (${team.players.length} jugadores)</div>
               <div class="max-h-36 overflow-y-auto space-y-1 text-[11px] text-slate-300">
-                ${team.players.map((p) => `<div><span class="text-emerald-400 font-bold">#${p.number}</span> ${escapeHtml(p.name)} <span class="text-slate-500">(${p.role})</span></div>`).join('')}
+                ${team.players.map((p) => `<div><span class="text-emerald-400 font-bold">#${p.number}</span> ${escapeHtml(p.name)} <span class="text-slate-500">(${p.role || 'Sin puesto'})</span></div>`).join('')}
               </div>
             </div>
           `).join('')}
@@ -2124,7 +2123,6 @@ VELEZ
 
       if (!Array.isArray(state.rosters)) state.rosters = [];
 
-      // Si hay planteles guardados pero activeRosterId no coincide o apuntaba a uno borrado, tomar uno válido
       if (state.rosters.length > 0 && !state.rosters.some((r) => r.id === state.activeRosterId)) {
         const firstValid = state.rosters[0];
         state.activeRosterId = firstValid.id;
@@ -2171,7 +2169,6 @@ VELEZ
       saveState();
       renderAll();
 
-      // Limpiar cuadro, previsualización y selectores de carga masiva para evitar duplicar cargas
       const importedCount = detectedTeamsBuffer.length;
       const pasteArea = document.getElementById('paste-roster-textarea');
       const previewBox = document.getElementById('detected-teams-preview');
@@ -2318,8 +2315,6 @@ VELEZ
         }
       });
 
-      // Fórmula objetiva y automática de MVP:
-      // +3 pts por punto directo, +1 pt por acción positiva (sigue/adentro/toca/recepción/defensa/armado), -2 pts por error
       const list = [...map.values()].map((r) => {
         const nonPointPos = Math.max(0, r.posActions - r.pts);
         const mvpScore = Number(((r.pts * 3) + (nonPointPos * 1) - (r.err * 2)).toFixed(1));
@@ -2814,8 +2809,14 @@ VELEZ
       const cfg = getSupabaseConfig();
       const urlInp = document.getElementById('supabase-url-input');
       const keyInp = document.getElementById('supabase-key-input');
+      const credsBox = document.getElementById('supabase-credentials-fields');
+      const hasEmbeddedKey = Boolean((DEFAULT_SUPABASE_URL || '').trim() && (DEFAULT_SUPABASE_ANON_KEY || '').trim());
+
       if (urlInp && !urlInp.value) urlInp.value = cfg.url;
       if (keyInp && !keyInp.value && cfg.key) keyInp.value = cfg.key;
+      if (credsBox) {
+        credsBox.classList.toggle('hidden', hasEmbeddedKey);
+      }
     }
 
     function updateSupabaseStatusUI(customText, isError) {
@@ -2854,8 +2855,9 @@ VELEZ
       const silent = Boolean(options && options.silent);
       if (isSyncingCloud) return;
 
-      const url = (document.getElementById('supabase-url-input')?.value || DEFAULT_SUPABASE_URL).trim().replace(/\/+$/, '');
-      const key = (document.getElementById('supabase-key-input')?.value || DEFAULT_SUPABASE_ANON_KEY).trim();
+      const cfg = getSupabaseConfig();
+      const url = (document.getElementById('supabase-url-input')?.value || cfg.url || DEFAULT_SUPABASE_URL).trim().replace(/\/+$/, '');
+      const key = (document.getElementById('supabase-key-input')?.value || cfg.key || DEFAULT_SUPABASE_ANON_KEY).trim();
       if (!url || !key) {
         if (!silent) showToast('Ingresá la Project URL y la Anon / Publishable Key de Supabase.');
         return;
