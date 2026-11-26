@@ -543,6 +543,39 @@ VELEZ
           <div id="tournaments-list" class="flex flex-wrap gap-2 pt-1"></div>
         </div>
 
+        <!-- ABM de Usuarios / Profes (Solo Admin) -->
+        <div id="admin-users-section" class="hidden rounded-3xl border border-sky-500/30 bg-slate-900/90 p-4 sm:p-5 shadow-xl space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 class="text-base font-black text-white">👥 ABM de Usuarios / Profes</h2>
+              <p class="text-xs text-slate-400">Creá, editá o eliminá usuarios (profes/entrenadores) para el inicio de sesión.</p>
+            </div>
+            <span class="rounded-full border border-sky-500/30 bg-sky-500/10 px-3 py-1 text-[11px] font-bold text-sky-300">Solo defeadmin</span>
+          </div>
+
+          <form id="profe-abm-form" onsubmit="saveProfeUser(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 rounded-2xl border border-slate-800 bg-slate-950/90 p-3">
+            <input id="profe-editing-original-username" type="hidden" value="" />
+            <div class="sm:col-span-4">
+              <label for="profe-username-input" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Usuario del Profe</label>
+              <input id="profe-username-input" type="text" placeholder="Ej: profe_martin" class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-bold text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none" />
+            </div>
+            <div class="sm:col-span-4">
+              <label for="profe-password-input" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Contraseña</label>
+              <input id="profe-password-input" type="text" placeholder="Clave de acceso..." class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none" />
+            </div>
+            <div class="sm:col-span-4">
+              <label for="profe-label-input" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Nombre / Rol Visible</label>
+              <input id="profe-label-input" type="text" placeholder="Ej: Martín Pérez · Sub 13" class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none" />
+            </div>
+            <div class="sm:col-span-12 flex flex-wrap items-center justify-end gap-2 pt-1">
+              <button type="button" id="profe-cancel-edit-btn" onclick="cancelEditProfe()" class="hidden rounded-xl border border-slate-700 bg-slate-900 px-3.5 py-2 text-xs font-bold text-slate-300">Cancelar edición</button>
+              <button type="submit" id="profe-submit-btn" class="rounded-xl bg-sky-500 hover:bg-sky-400 px-4 py-2 text-xs font-extrabold text-slate-950">+ Guardar Profe</button>
+            </div>
+          </form>
+
+          <div id="profe-users-list" class="space-y-2"></div>
+        </div>
+
         <!-- Nube Compartida Supabase -->
         <div class="rounded-3xl border border-slate-800 bg-slate-900/90 p-4 sm:p-5 shadow-xl space-y-3">
           <div class="flex items-center justify-between">
@@ -685,6 +718,7 @@ VELEZ
     const STORAGE_KEY_ADMIN_PASS = 'voley_stats_admin_pass_v3';
     const STORAGE_KEY_CLOUD = 'voley_stats_supabase_cfg_v3';
     const STORAGE_KEY_PENDING_SYNC = 'voley_stats_pending_sync_v3';
+    const STORAGE_KEY_PROFE_USERS = 'voley_stats_profe_users_v3';
     const APP_VERSION = 'v3.4.0';
 
     const DEFAULT_SUPABASE_URL = 'https://aevmoxgnptjreycgniks.supabase.co';
@@ -813,6 +847,133 @@ VELEZ
       showToast('Clave restablecida. Ya podés ingresar.');
     }
 
+    function getProfeUsers() {
+      try {
+        const raw = readStore(STORAGE_KEY_PROFE_USERS);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveProfeUsers(list) {
+      writeStore(STORAGE_KEY_PROFE_USERS, JSON.stringify(list));
+    }
+
+    function isCurrentUserAdmin() {
+      const prof = getActiveProfile();
+      return Boolean(prof && String(prof.username || '').trim().toLowerCase() === 'defeadmin');
+    }
+
+    function renderProfeUsersABM() {
+      const section = document.getElementById('admin-users-section');
+      const listEl = document.getElementById('profe-users-list');
+      if (!section || !listEl) return;
+
+      if (!isCurrentUserAdmin()) {
+        section.classList.add('hidden');
+        return;
+      }
+
+      section.classList.remove('hidden');
+      const users = getProfeUsers();
+      if (users.length === 0) {
+        listEl.innerHTML = `<div class="rounded-2xl border border-dashed border-slate-700 p-4 text-center text-xs text-slate-400">Todavía no hay profes creados. Cargá uno arriba para habilitar su acceso.</div>`;
+        return;
+      }
+
+      listEl.innerHTML = users.map((u) => `
+        <div class="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-slate-800 bg-slate-950/80 px-3.5 py-2.5">
+          <div class="min-w-0">
+            <div class="text-xs font-extrabold text-white">${escapeHtml(u.username)} <span class="text-sky-300 font-semibold">· ${escapeHtml(u.label || 'Profe')}</span></div>
+            <div class="text-[11px] text-slate-400">Clave: <span class="font-mono text-slate-200">${escapeHtml(u.password || '(sin clave)')}</span></div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button type="button" onclick="startEditProfe('${escapeAttr(u.username)}')" class="rounded-xl border border-sky-500/40 bg-sky-500/15 px-3 py-1.5 text-[11px] font-bold text-sky-300">Editar</button>
+            <button type="button" onclick="deleteProfeUser('${escapeAttr(u.username)}')" class="rounded-xl border border-rose-500/40 bg-rose-500/15 px-3 py-1.5 text-[11px] font-bold text-rose-300">Eliminar</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function saveProfeUser(e) {
+      e.preventDefault();
+      if (!isCurrentUserAdmin()) {
+        showToast('Solo defeadmin puede administrar usuarios.');
+        return;
+      }
+
+      const origUser = (document.getElementById('profe-editing-original-username')?.value || '').trim().toLowerCase();
+      const username = (document.getElementById('profe-username-input')?.value || '').trim();
+      const password = (document.getElementById('profe-password-input')?.value || '').trim();
+      const label = (document.getElementById('profe-label-input')?.value || '').trim() || 'Profe / Entrenador';
+
+      if (!username) {
+        showToast('Ingresá un nombre de usuario para el profe.');
+        return;
+      }
+      if (username.toLowerCase() === 'defeadmin') {
+        showToast('El usuario defeadmin está reservado para administración.');
+        return;
+      }
+
+      const users = getProfeUsers();
+      const existingIdx = users.findIndex((u) => String(u.username || '').toLowerCase() === username.toLowerCase());
+      const origIdx = origUser ? users.findIndex((u) => String(u.username || '').toLowerCase() === origUser) : -1;
+
+      if (existingIdx >= 0 && existingIdx !== origIdx) {
+        showToast('Ya existe un usuario con ese nombre.');
+        return;
+      }
+
+      const record = { username, password, label };
+      if (origIdx >= 0) {
+        users[origIdx] = record;
+      } else if (existingIdx >= 0) {
+        users[existingIdx] = record;
+      } else {
+        users.push(record);
+      }
+
+      saveProfeUsers(users);
+      cancelEditProfe();
+      renderProfeUsersABM();
+      showToast('Usuario de profe guardado.');
+    }
+
+    function startEditProfe(username) {
+      const users = getProfeUsers();
+      const found = users.find((u) => String(u.username || '').toLowerCase() === String(username || '').toLowerCase());
+      if (!found) return;
+
+      document.getElementById('profe-editing-original-username').value = found.username;
+      document.getElementById('profe-username-input').value = found.username;
+      document.getElementById('profe-password-input').value = found.password || '';
+      document.getElementById('profe-label-input').value = found.label || '';
+      document.getElementById('profe-submit-btn').textContent = '💾 Actualizar Profe';
+      document.getElementById('profe-cancel-edit-btn')?.classList.remove('hidden');
+      document.getElementById('profe-username-input')?.focus();
+    }
+
+    function cancelEditProfe() {
+      document.getElementById('profe-editing-original-username').value = '';
+      document.getElementById('profe-username-input').value = '';
+      document.getElementById('profe-password-input').value = '';
+      document.getElementById('profe-label-input').value = '';
+      document.getElementById('profe-submit-btn').textContent = '+ Guardar Profe';
+      document.getElementById('profe-cancel-edit-btn')?.classList.add('hidden');
+    }
+
+    function deleteProfeUser(username) {
+      if (!isCurrentUserAdmin()) return;
+      const filtered = getProfeUsers().filter((u) => String(u.username || '').toLowerCase() !== String(username || '').toLowerCase());
+      saveProfeUsers(filtered);
+      cancelEditProfe();
+      renderProfeUsersABM();
+      showToast('Usuario eliminado.');
+    }
+
     function handleLoginSubmit(e) {
       e.preventDefault();
       const username = (document.getElementById('login-username')?.value || '').trim();
@@ -836,15 +997,36 @@ VELEZ
           }
           return;
         }
+        if (errBox) errBox.classList.add('hidden');
+        completeLogin('defeadmin');
+        return;
+      }
+
+      const profeUsers = getProfeUsers();
+      const matchedProfe = profeUsers.find((u) => String(u.username || '').toLowerCase() === username.toLowerCase());
+      if (!matchedProfe) {
+        if (errBox) {
+          errBox.textContent = 'Usuario no encontrado. Verificá con el administrador (defeadmin).';
+          errBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      if ((matchedProfe.password || '') && password !== matchedProfe.password) {
+        if (errBox) {
+          errBox.textContent = 'Contraseña incorrecta para este usuario.';
+          errBox.classList.remove('hidden');
+        }
+        return;
       }
 
       if (errBox) errBox.classList.add('hidden');
-      completeLogin(username);
+      completeLogin(matchedProfe.username, matchedProfe.label || matchedProfe.username);
     }
 
-    function completeLogin(username) {
+    function completeLogin(username, customLabel) {
       const preset = PRESET_PROFILES.find((p) => p.username.toLowerCase() === username.toLowerCase());
-      const profile = preset || { username, label: username, role: 'Entrenador' };
+      const profile = preset || { username, label: customLabel || username, role: 'Profe' };
       writeStore(STORAGE_KEY_PROFILE, JSON.stringify(profile));
       enterApp();
     }
@@ -894,7 +1076,7 @@ VELEZ
       if (tabName === 'live') renderLiveTab();
       if (tabName === 'stats') { syncStatsMatchSelector(); renderStats(); }
       if (tabName === 'roster') renderRoster();
-      if (tabName === 'config') { renderTournamentsList(); syncSupabaseInputs(); }
+      if (tabName === 'config') { renderTournamentsList(); renderProfeUsersABM(); syncSupabaseInputs(); }
     }
 
     // =========================================================================
@@ -1444,108 +1626,206 @@ VELEZ
       e.preventDefault();
       const numInput = document.getElementById('manual-player-num');
       const nameInput = document.getElementById('manual-player-name');
-      const roleSelect = document.getElementById('manual-player-role');
-      const teamInput = document.getElementById('manual-team-name');
-      const genderInput = document.getElementById('manual-roster-gender');
-      const categoryInput = document.getElementById('manual-roster-category');
+      const roleInput = document.getElementById('manual-player-role');
 
+      const num = parseInt(numInput?.value || '0', 10);
       const name = (nameInput?.value || '').trim();
+      const role = (roleInput?.value || 'PTA').trim();
+
+      if (!num || num < 1 || num > 99) {
+        showToast('Ingresá un número de camiseta válido (1 a 99).');
+        numInput?.focus();
+        return;
+      }
       if (!name) {
-        showToast('Escribí el nombre del jugador.');
+        showToast('Ingresá el nombre y apellido del jugador.');
+        nameInput?.focus();
         return;
       }
-      const gender = (genderInput?.value || '').trim();
-      const category = (categoryInput?.value || '').trim();
-      if (!gender || !category) {
-        showToast('Seleccioná si es Masculino o Femenino y la categoría.');
-        return;
-      }
-      state.rosterGender = gender;
-      state.rosterCategory = category;
 
-      if (teamInput && teamInput.value.trim()) {
-        state.teamName = teamInput.value.trim();
-      } else if (!state.teamName) {
-        state.teamName = 'Equipo Local';
-      }
-
-      const num = parseInt(numInput?.value || '', 10) || ((state.roster || []).length + 1);
-      const role = roleSelect?.value || 'PTA';
-
-      state.roster.push({
-        id: 'pl_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
+      if (!Array.isArray(state.roster)) state.roster = [];
+      const onCourtCount = state.roster.filter((p) => p.onCourt).length;
+      const newPlayer = {
+        id: 'pl_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
         number: num,
         name,
         role,
-        onCourt: state.roster.filter((p) => p.onCourt).length < 7
-      });
+        onCourt: onCourtCount < 6
+      };
 
+      state.roster.push(newPlayer);
       syncActiveRosterToCollection();
       saveState();
-      if (numInput) numInput.value = '';
-      if (nameInput) nameInput.value = '';
-      renderAll();
-      nameInput?.focus();
-    }
+      renderRoster();
 
-    function changePlayerRole(playerId, newRole) {
-      const p = (state.roster || []).find((x) => x.id === playerId);
-      if (!p) return;
-      p.role = newRole;
-      syncActiveRosterToCollection();
-      saveState();
-      renderAll();
-    }
-
-    function changePlayerNumber(playerId, newNumber) {
-      const p = (state.roster || []).find((x) => x.id === playerId);
-      if (!p) return;
-      const parsed = parseInt(String(newNumber || '').trim(), 10);
-      if (!Number.isNaN(parsed) && parsed > 0) {
-        p.number = parsed;
+      if (numInput) numInput.value = String(num + 1);
+      if (nameInput) {
+        nameInput.value = '';
+        nameInput.focus();
       }
+      showToast(`Sumado #${num} ${name} (${role}).`);
+    }
+
+    function changePlayerNumber(playerId, val) {
+      const parsed = parseInt(val, 10);
+      if (!parsed || parsed < 1 || parsed > 99) {
+        renderRoster();
+        return;
+      }
+      const p = (state.roster || []).find((pl) => pl.id === playerId);
+      if (!p) return;
+      p.number = parsed;
       syncActiveRosterToCollection();
       saveState();
       renderLivePlayersGrid();
-      updateHeaderUI();
     }
 
-    function changePlayerName(playerId, newName) {
-      const p = (state.roster || []).find((x) => x.id === playerId);
+    function changePlayerName(playerId, val) {
+      const clean = String(val || '').trim();
+      const p = (state.roster || []).find((pl) => pl.id === playerId);
       if (!p) return;
-      const clean = String(newName || '').trim();
       if (!clean) {
         renderRoster();
-        showToast('El nombre del jugador no puede quedar vacío.');
         return;
       }
       p.name = clean;
       syncActiveRosterToCollection();
       saveState();
-      renderLivePlayersGrid();
       updateHeaderUI();
-      showToast('Nombre de jugador actualizado.');
+      renderLivePlayersGrid();
+    }
+
+    function changePlayerRole(playerId, roleVal) {
+      const p = (state.roster || []).find((pl) => pl.id === playerId);
+      if (!p) return;
+      p.role = roleVal || 'PTA';
+      syncActiveRosterToCollection();
+      saveState();
+      renderLivePlayersGrid();
     }
 
     function togglePlayerOnCourt(playerId) {
-      const p = (state.roster || []).find((x) => x.id === playerId);
+      const p = (state.roster || []).find((pl) => pl.id === playerId);
       if (!p) return;
       p.onCourt = !p.onCourt;
       syncActiveRosterToCollection();
       saveState();
-      renderAll();
+      renderRoster();
+      renderLivePlayersGrid();
     }
 
     function removePlayerFromRoster(playerId) {
-      state.roster = (state.roster || []).filter((x) => x.id !== playerId);
+      state.roster = (state.roster || []).filter((pl) => pl.id !== playerId);
+      if (selectedPlayerId === playerId) selectedPlayerId = null;
       syncActiveRosterToCollection();
       saveState();
-      renderAll();
+      renderRoster();
+      renderLivePlayersGrid();
     }
 
-    // =========================================================================
-    // IMPORTADOR MASIVO POR PEGADO (FORMATO EQUIPO + CAMISETA + EDAD + NOMBRE)
-    // =========================================================================
+    function parseTwoTeamsFromText(rawText) {
+      const lines = String(rawText || '')
+        .split(/\r?\n/)
+        .map((l) => l.replace(/^\s*[-•*]+\s*/, '').trim())
+        .filter((l) => l.length > 0);
+
+      if (lines.length === 0) return [];
+
+      const stopHeaders = new Set([
+        'cuerpo tecnico', 'cuerpo técnico', 'entrenador', 'primer asistente', 'segundo asistente',
+        'fmv', 'enlaces', 'contacto', 'información', 'informacion', 'jugadores', 'posiciones',
+        'inicio', 'torneos', 'partidos', 'clubes', 'noticias', 'documentos', 'powered by torneomax'
+      ]);
+
+      const isAgeLine = (line) => /^\d{1,2}\s*(años|anos|año|ano)$/i.test(line);
+      const isCaptainLine = (line) => /^c$/i.test(line);
+      const isJerseyLine = (line) => /^\d{1,2}$/.test(line);
+      const isNameLine = (line) => {
+        if (isAgeLine(line) || isCaptainLine(line) || isJerseyLine(line)) return false;
+        if (stopHeaders.has(line.toLowerCase())) return false;
+        return /[a-záéíóúñü]/i.test(line) && line.length >= 2;
+      };
+
+      const teams = [];
+      let currentTeam = null;
+      let i = 0;
+
+      // Detectar nombre de equipo al inicio si la primera línea no es número ni edad
+      if (!isJerseyLine(lines[0]) && !isAgeLine(lines[0]) && !isCaptainLine(lines[0])) {
+        currentTeam = { name: lines[0].toUpperCase(), players: [] };
+        teams.push(currentTeam);
+        i = 1;
+      } else {
+        currentTeam = { name: 'EQUIPO IMPORTADO', players: [] };
+        teams.push(currentTeam);
+      }
+
+      while (i < lines.length) {
+        const line = lines[i];
+        const lower = line.toLowerCase();
+
+        if (stopHeaders.has(lower)) {
+          break;
+        }
+
+        if (isJerseyLine(line)) {
+          const jerseyNum = parseInt(line, 10);
+          i += 1;
+          let playerName = '';
+          let ageValue = null;
+
+          while (i < lines.length) {
+            const next = lines[i];
+            if (isJerseyLine(next) || stopHeaders.has(next.toLowerCase())) {
+              break;
+            }
+            if (isCaptainLine(next)) {
+              i += 1;
+              continue;
+            }
+            if (isAgeLine(next)) {
+              const m = next.match(/(\d{1,2})/);
+              if (m) ageValue = parseInt(m[1], 10);
+              i += 1;
+              continue;
+            }
+            if (!playerName && isNameLine(next)) {
+              playerName = next;
+              i += 1;
+              continue;
+            }
+            i += 1;
+          }
+
+          if (playerName) {
+            currentTeam.players.push({
+              id: 'imp_' + currentTeam.name.toLowerCase().replace(/[^a-z0-9]/g, '') + '_' + jerseyNum + '_' + (currentTeam.players.length + 1),
+              number: jerseyNum,
+              name: playerName,
+              age: ageValue,
+              role: 'PTA',
+              onCourt: currentTeam.players.length < 7
+            });
+          }
+          continue;
+        }
+
+        // Si aparece un nuevo encabezado de equipo en medio del texto
+        if (isNameLine(line) && i + 1 < lines.length && isJerseyLine(lines[i + 1])) {
+          if (currentTeam.players.length > 0) {
+            currentTeam = { name: line.toUpperCase(), players: [] };
+            teams.push(currentTeam);
+          } else {
+            currentTeam.name = line.toUpperCase();
+          }
+        }
+
+        i += 1;
+      }
+
+      return teams.filter((t) => t.players.length > 0);
+    }
+
     function pasteVelezSample() {
       const ta = document.getElementById('paste-roster-textarea');
       if (!ta) return;
@@ -1724,6 +2004,255 @@ VELEZ
       saveState();
       renderAll();
       showToast(`Se importaron ${detectedTeamsBuffer.length} equipo(s) (${gender} · ${category}).`);
+    }
+
+    // =========================================================================
+    // TORNEOS Y ESTADÍSTICAS
+    // =========================================================================
+    function addTournament() {
+      const inp = document.getElementById('new-tournament-input');
+      const name = (inp?.value || '').trim();
+      if (!name) {
+        showToast('Escribí el nombre del torneo.');
+        return;
+      }
+      if (!Array.isArray(state.savedTournaments)) state.savedTournaments = [];
+      if (!state.savedTournaments.includes(name)) {
+        state.savedTournaments.push(name);
+      }
+      if (inp) inp.value = '';
+      saveState();
+      renderTournamentsList();
+      populatePrepSelectors();
+      showToast(`Torneo "${name}" guardado.`);
+    }
+
+    function removeTournament(name) {
+      state.savedTournaments = (state.savedTournaments || []).filter((t) => t !== name);
+      saveState();
+      renderTournamentsList();
+      populatePrepSelectors();
+    }
+
+    function renderTournamentsList() {
+      const box = document.getElementById('tournaments-list');
+      if (!box) return;
+      const list = state.savedTournaments || [];
+      if (list.length === 0) {
+        box.innerHTML = `<span class="text-xs text-slate-400">Sin torneos cargados todavía.</span>`;
+        return;
+      }
+      box.innerHTML = list.map((t) => `
+        <span class="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs font-bold text-slate-200">
+          ${escapeHtml(t)}
+          <button type="button" onclick="removeTournament('${escapeAttr(t)}')" class="text-rose-400 hover:text-rose-300">✕</button>
+        </span>
+      `).join('');
+    }
+
+    function syncStatsMatchSelector() {
+      const sel = document.getElementById('stats-match-selector');
+      if (!sel) return;
+      const prevVal = sel.value;
+      const options = [];
+      if (state.matchActive) {
+        options.push(`<option value="live">En Vivo: ${escapeHtml(state.teamName || 'Local')} vs ${escapeHtml(state.opponent || 'Rival')}</option>`);
+      }
+      (state.history || []).forEach((m, idx) => {
+        options.push(`<option value="hist_${idx}">${escapeHtml(m.date || '')} · ${escapeHtml(m.teamName || 'Local')} vs ${escapeHtml(m.opponent || 'Rival')} (${m.scoreHome}-${m.scoreAway})</option>`);
+      });
+      if (options.length === 0) {
+        sel.innerHTML = `<option value="live">Partido actual</option>`;
+      } else {
+        sel.innerHTML = options.join('');
+        if (prevVal && [...sel.options].some((o) => o.value === prevVal)) {
+          sel.value = prevVal;
+        }
+      }
+    }
+
+    function getSelectedMatchSourceForStats() {
+      const selVal = document.getElementById('stats-match-selector')?.value || 'live';
+      if (selVal.startsWith('hist_')) {
+        const idx = parseInt(selVal.replace('hist_', ''), 10);
+        const h = (state.history || [])[idx];
+        if (h) {
+          return {
+            title: `${h.teamName || 'Local'} vs ${h.opponent || 'Rival'} (${h.tournament || 'Torneo'})`,
+            roster: h.roster || [],
+            events: h.events || []
+          };
+        }
+      }
+      return {
+        title: state.matchActive
+          ? `${state.teamName || 'Local'} vs ${state.opponent || 'Rival'} (${state.tournament || 'Torneo'})`
+          : 'Sin partido activo',
+        roster: state.roster || [],
+        events: state.events || []
+      };
+    }
+
+    function renderStats() {
+      const src = getSelectedMatchSourceForStats();
+      const sub = document.getElementById('stats-context-subtitle');
+      const kpiBox = document.getElementById('stats-kpi-cards');
+      const tbody = document.getElementById('stats-table-body');
+
+      if (sub) sub.textContent = src.title;
+
+      const statsMap = new Map();
+      (src.roster || []).forEach((p) => {
+        statsMap.set(p.id, {
+          id: p.id,
+          number: p.number,
+          name: p.name,
+          role: p.role || 'PTA',
+          pts: 0,
+          atq: 0,
+          blq: 0,
+          saq: 0,
+          rec: 0,
+          def: 0,
+          arm: 0,
+          err: 0
+        });
+      });
+
+      let totalPts = 0;
+      let totalErr = 0;
+      let totalPos = 0;
+
+      (src.events || []).forEach((ev) => {
+        if (!statsMap.has(ev.playerId)) {
+          statsMap.set(ev.playerId, {
+            id: ev.playerId,
+            number: ev.playerNumber || 0,
+            name: ev.playerName || 'Jugador',
+            role: 'PTA',
+            pts: 0, atq: 0, blq: 0, saq: 0, rec: 0, def: 0, arm: 0, err: 0
+          });
+        }
+        const row = statsMap.get(ev.playerId);
+        const sk = String(ev.skill || '').toLowerCase();
+        const q = String(ev.quality || '').toLowerCase();
+
+        if (q === 'excelente') {
+          row.pts += 1;
+          totalPts += 1;
+          totalPos += 1;
+          if (sk === 'ataque') row.atq += 1;
+          else if (sk === 'bloqueo') row.blq += 1;
+          else if (sk === 'saque') row.saq += 1;
+        } else if (q === 'error') {
+          row.err += 1;
+          totalErr += 1;
+        } else {
+          totalPos += 1;
+          if (sk === 'recepcion') row.rec += 1;
+          else if (sk === 'defensa') row.def += 1;
+          else if (sk === 'armado') row.arm += 1;
+        }
+      });
+
+      const rows = [...statsMap.values()].sort((a, b) => (b.pts - a.pts) || (a.number - b.number));
+      const totalActions = (src.events || []).length;
+      const effPct = totalActions > 0 ? Math.round((totalPos / totalActions) * 100) : 0;
+
+      if (kpiBox) {
+        kpiBox.innerHTML = `
+          <div class="rounded-2xl border border-slate-800 bg-slate-950/80 p-3">
+            <div class="text-[10px] font-bold uppercase text-slate-400">Puntos Anotados</div>
+            <div class="text-xl font-black text-emerald-400">${totalPts}</div>
+          </div>
+          <div class="rounded-2xl border border-slate-800 bg-slate-950/80 p-3">
+            <div class="text-[10px] font-bold uppercase text-slate-400">Errores No Forzados</div>
+            <div class="text-xl font-black text-rose-400">${totalErr}</div>
+          </div>
+          <div class="rounded-2xl border border-slate-800 bg-slate-950/80 p-3">
+            <div class="text-[10px] font-bold uppercase text-slate-400">Acciones Positivas</div>
+            <div class="text-xl font-black text-sky-400">${effPct}%</div>
+          </div>
+          <div class="rounded-2xl border border-slate-800 bg-slate-950/80 p-3">
+            <div class="text-[10px] font-bold uppercase text-slate-400">Total Toques</div>
+            <div class="text-xl font-black text-white">${totalActions}</div>
+          </div>
+        `;
+      }
+
+      if (tbody) {
+        if (rows.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="11" class="py-6 text-center text-slate-400">Sin datos estadísticos registrados todavía.</td></tr>`;
+        } else {
+          tbody.innerHTML = rows.map((r) => `
+            <tr onclick="showPlayerBreakdown('${escapeAttr(r.id)}')" class="cursor-pointer hover:bg-slate-800/50 transition">
+              <td class="py-2.5 px-3 font-black text-white">#${r.number}</td>
+              <td class="py-2.5 px-3 font-bold text-slate-200">${escapeHtml(r.name)}</td>
+              <td class="py-2.5 px-3 text-slate-400">${escapeHtml(r.role)}</td>
+              <td class="py-2.5 px-3 text-center font-black text-emerald-400">${r.pts}</td>
+              <td class="py-2.5 px-3 text-center text-slate-300">${r.atq}</td>
+              <td class="py-2.5 px-3 text-center text-slate-300">${r.blq}</td>
+              <td class="py-2.5 px-3 text-center text-slate-300">${r.saq}</td>
+              <td class="py-2.5 px-3 text-center text-slate-300">${r.rec}</td>
+              <td class="py-2.5 px-3 text-center text-slate-300">${r.def}</td>
+              <td class="py-2.5 px-3 text-center text-slate-300">${r.arm}</td>
+              <td class="py-2.5 px-3 text-center font-bold text-rose-400">${r.err}</td>
+            </tr>
+          `).join('');
+        }
+      }
+    }
+
+    function showPlayerBreakdown(playerId) {
+      const panel = document.getElementById('player-detail-panel');
+      if (!panel) return;
+      const src = getSelectedMatchSourceForStats();
+      const p = (src.roster || []).find((pl) => pl.id === playerId);
+      const evs = (src.events || []).filter((e) => e.playerId === playerId);
+      if (!p) return;
+      panel.innerHTML = `<strong class="text-white">#${p.number} ${escapeHtml(p.name)}</strong> (${escapeHtml(p.role)}) · <span class="text-emerald-300">${evs.length} acciones registradas</span> en este partido.`;
+    }
+
+    function copyWhatsAppSummary() {
+      const src = getSelectedMatchSourceForStats();
+      const lines = [`🏐 ${src.title}`];
+      (src.roster || []).forEach((p) => {
+        const pts = (src.events || []).filter((e) => e.playerId === p.id && e.quality === 'excelente').length;
+        const errs = (src.events || []).filter((e) => e.playerId === p.id && e.quality === 'error').length;
+        lines.push(`#${p.number} ${p.name}: ${pts} pts · ${errs} err`);
+      });
+      const text = lines.join('\n');
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        showToast('Resumen copiado al portapapeles.');
+      } catch (e) {
+        showToast('No se pudo copiar automáticamente.');
+      }
+      document.body.removeChild(ta);
+    }
+
+    function exportCSV() {
+      const src = getSelectedMatchSourceForStats();
+      const rows = [['Camiseta', 'Jugador', 'Puesto', 'Puntos', 'Errores', 'TotalAcciones']];
+      (src.roster || []).forEach((p) => {
+        const evs = (src.events || []).filter((e) => e.playerId === p.id);
+        const pts = evs.filter((e) => e.quality === 'excelente').length;
+        const errs = evs.filter((e) => e.quality === 'error').length;
+        rows.push([p.number, p.name, p.role, pts, errs, evs.length]);
+      });
+      const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'estadisticas_voley.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('CSV exportado.');
     }
 
     function getSupabaseConfig() {
