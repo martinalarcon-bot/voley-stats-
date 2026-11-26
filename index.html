@@ -38,6 +38,7 @@
         <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-2xl">🏐</div>
         <div>
           <span class="inline-block rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300">PWA · Cancha &amp; Nube</span>
+          <span id="login-version-badge" class="ml-1.5 inline-block rounded-full border border-slate-700 bg-slate-800/90 px-2 py-0.5 text-[10px] font-extrabold tracking-wider text-slate-300">v3.4.0</span>
           <h1 class="text-xl font-black tracking-tight text-white">Vóley Stats Live</h1>
         </div>
       </div>
@@ -99,7 +100,7 @@
             <button type="button" onclick="logoutUser()" class="rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 px-2.5 py-1 text-[11px] font-bold text-rose-300 transition">
               Cerrar sesión
             </button>
-            <div class="rounded-xl border border-slate-800 bg-slate-900 px-2.5 py-1 text-[11px] font-extrabold text-slate-300">
+            <div id="header-sets-box" class="hidden rounded-xl border border-slate-800 bg-slate-900 px-2.5 py-1 text-[11px] font-extrabold text-slate-300">
               SETS: <span id="header-sets-home" class="text-emerald-400">0</span> - <span id="header-sets-away" class="text-rose-400">0</span>
             </div>
           </div>
@@ -683,6 +684,7 @@ VELEZ
     const STORAGE_KEY_PROFILE = 'voley_stats_active_profile_v3';
     const STORAGE_KEY_ADMIN_PASS = 'voley_stats_admin_pass_v3';
     const STORAGE_KEY_CLOUD = 'voley_stats_supabase_cfg_v3';
+    const APP_VERSION = 'v3.4.0';
 
     const DEFAULT_SUPABASE_URL = 'https://aevmoxgnptjreycgniks.supabase.co';
     const DEFAULT_SUPABASE_ANON_KEY = '';
@@ -1109,6 +1111,7 @@ VELEZ
       const roundLbl = document.getElementById('header-round-label');
       const sbBar = document.getElementById('live-scoreboard-bar');
       const tickerBar = document.getElementById('live-ticker-bar');
+      const setsBox = document.getElementById('header-sets-box');
 
       if (!state.matchActive) {
         if (pill) {
@@ -1119,6 +1122,7 @@ VELEZ
         if (roundLbl) roundLbl.textContent = '';
         sbBar?.classList.add('hidden');
         tickerBar?.classList.add('hidden');
+        setsBox?.classList.add('hidden');
       } else {
         if (pill) {
           pill.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse-soft"></span> EN VIVO`;
@@ -1128,6 +1132,7 @@ VELEZ
         if (roundLbl) roundLbl.textContent = state.round ? `· ${state.round}` : '';
         sbBar?.classList.remove('hidden');
         tickerBar?.classList.remove('hidden');
+        setsBox?.classList.remove('hidden');
       }
 
       const homeName = document.getElementById('sb-home-name');
@@ -2089,6 +2094,9 @@ VELEZ
     }
 
     window.onload = function () {
+      const verBadge = document.getElementById('login-version-badge');
+      if (verBadge) verBadge.textContent = APP_VERSION;
+
       const activeProf = getActiveProfile();
       if (activeProf) {
         enterApp();
