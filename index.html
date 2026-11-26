@@ -167,9 +167,16 @@
 
   <!-- BARRA SUPERIOR -->
   <header class="sticky top-0 z-30 bg-court-900/95 backdrop-blur-md border-b border-slate-800 px-3 py-2 shadow-lg">
+    <div id="no-active-match-banner" class="hidden mb-2 px-2.5 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-200 flex items-center justify-between gap-2 text-[11px]">
+      <span>⏸️ <strong>No hay partido en vivo</strong> · Configurá uno nuevo para comenzar a cargar puntos.</span>
+      <button type="button" onclick="switchTab('roster'); toggleNewMatchWizard(true);" class="tap-btn px-2 py-0.5 rounded-lg bg-amber-400 text-slate-950 font-black text-[10px] shrink-0">
+        + Nuevo Partido
+      </button>
+    </div>
+
     <div class="flex items-center justify-between gap-1.5 mb-1.5">
       <button onclick="openMatchModal()" class="tap-btn flex items-center gap-1.5 min-w-0 flex-1 text-left bg-court-950/70 hover:bg-court-800 border border-slate-800/90 rounded-lg px-2 py-1 transition-colors" title="Tocá para editar Torneo, Fecha o Rival">
-        <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[9px] font-black uppercase tracking-wider shrink-0">EN VIVO</span>
+        <span id="live-status-pill" class="px-1.5 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[9px] font-black uppercase tracking-wider shrink-0">EN VIVO</span>
         <div class="min-w-0 flex-1 flex items-center gap-1.5 text-[11px]">
           <span id="header-tournament" class="font-bold text-slate-200 truncate">Copa Argentina Sub 14</span>
           <span class="text-slate-600">•</span>
@@ -605,8 +612,9 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div>
               <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Torneo / Competencia</label>
-              <input id="nm-tournament" type="text" placeholder="Ej: Copa Argentina Sub 14"
-                class="w-full bg-court-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-white focus:border-emerald-400 focus:outline-none" />
+              <select id="nm-tournament"
+                class="w-full bg-court-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-white focus:border-emerald-400 focus:outline-none">
+              </select>
             </div>
             <div>
               <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Fecha / Instancia</label>
@@ -632,63 +640,6 @@
               class="tap-btn px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-md">
               🏐 Iniciar Partido en Vivo →
             </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- DATOS DEL PARTIDO EDITABLES -->
-      <div class="bg-court-900 border border-slate-800 rounded-2xl p-3.5 shadow-md space-y-3">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <div class="w-7 h-7 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center">
-              <i data-lucide="trophy" class="w-4 h-4"></i>
-            </div>
-            <div>
-              <h2 class="text-sm font-black text-white">Datos del Partido Activo</h2>
-              <p class="text-[11px] text-slate-400">Edición rápida del encuentro actual en curso</p>
-            </div>
-          </div>
-          <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full">En Curso</span>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          <div>
-            <div class="flex items-center justify-between mb-1">
-              <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Torneo / Competencia</label>
-              <span class="text-[9px] text-amber-400 font-bold">Elegí o escribí</span>
-            </div>
-            <div class="flex gap-1 mb-1.5">
-              <select id="saved-tournaments-selector" onchange="selectSavedTournament(this.value)"
-                class="flex-1 min-w-0 bg-court-950 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-bold text-amber-300 focus:border-amber-400 focus:outline-none">
-              </select>
-              <button type="button" onclick="saveCurrentTournamentToList()" class="tap-btn px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-[10px] font-black shrink-0" title="Guardar torneo actual en la lista">
-                + Guardar
-              </button>
-              <button type="button" onclick="deleteSelectedTournament()" class="tap-btn px-2 py-1.5 rounded-xl bg-rose-950/50 hover:bg-rose-900/60 border border-rose-500/30 text-rose-400 text-[10px] font-bold shrink-0" title="Quitar torneo de la lista">
-                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-              </button>
-            </div>
-            <input id="input-tournament" type="text" oninput="updateMatchField('tournament', this.value)"
-              placeholder="Ej: Metro A1, Copa Argentina Sub 14..."
-              class="w-full bg-court-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-white focus:border-emerald-400 focus:outline-none" />
-          </div>
-          <div>
-            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Fecha / Instancia</label>
-            <input id="input-stage" type="text" oninput="updateMatchField('stage', this.value)"
-              placeholder="Ej: Fecha 1 · Zona / Cuartos de Final"
-              class="w-full bg-court-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-white focus:border-emerald-400 focus:outline-none" />
-          </div>
-          <div>
-            <label class="block text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-1">Equipo Local (Activo)</label>
-            <input id="input-home-team" type="text" oninput="updateMatchField('homeTeam', this.value)"
-              placeholder="Ej: DBANF"
-              class="w-full bg-court-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-emerald-300 focus:border-emerald-400 focus:outline-none" />
-          </div>
-          <div>
-            <label class="block text-[10px] font-bold uppercase tracking-wider text-rose-400 mb-1">Equipo Rival</label>
-            <input id="input-away-team" type="text" oninput="updateMatchField('awayTeam', this.value)"
-              placeholder="Ej: AGRARIO CERRITO"
-              class="w-full bg-court-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-rose-300 focus:border-rose-400 focus:outline-none" />
           </div>
         </div>
       </div>
@@ -1208,6 +1159,7 @@
 
     function getDefaultState() {
       return {
+        matchActive: true,
         tournament: 'Copa Argentina Sub 14',
         savedTournaments: [...DEFAULT_TOURNAMENTS],
         stage: 'Fecha 1 · Zona',
@@ -1319,7 +1271,8 @@
       const merged = {
         ...base,
         ...rawState,
-        savedTournaments: Array.isArray(rawState.savedTournaments) && rawState.savedTournaments.length > 0
+        matchActive: typeof rawState.matchActive === 'boolean' ? rawState.matchActive : true,
+        savedTournaments: Array.isArray(rawState.savedTournaments)
           ? rawState.savedTournaments
           : [...DEFAULT_TOURNAMENTS],
         scores: {
@@ -2050,13 +2003,16 @@
     }
 
     function updateScoreboardUI() {
+      const isMatchActive = state.matchActive !== false;
       const team = getActiveTeam();
-      const homeLabel = state.homeTeam || team?.name || 'DBANF';
-      const awayLabel = state.awayTeam || 'AGRARIO CERRITO';
+      const homeLabel = isMatchActive ? (state.homeTeam || team?.name || 'Local') : 'Sin partido';
+      const awayLabel = isMatchActive ? (state.awayTeam || 'Rival') : 'Sin rival';
       const setNum = String(state.currentSet || '1');
       const curScore = state.scores?.[setNum] || { home: 0, away: 0 };
       const { homeSets, awaySets } = computeSetsWon();
 
+      const noMatchBanner = document.getElementById('no-active-match-banner');
+      const statusPill = document.getElementById('live-status-pill');
       const hTor = document.getElementById('header-tournament');
       const hStg = document.getElementById('header-stage');
       const hTeam = document.getElementById('home-team-label');
@@ -2067,8 +2023,16 @@
       const setsBadge = document.getElementById('sets-won-badge');
       const undoBtn = document.getElementById('btn-undo');
 
-      if (hTor) hTor.textContent = state.tournament || 'Torneo';
-      if (hStg) hStg.textContent = state.stage || 'Fecha';
+      if (noMatchBanner) noMatchBanner.classList.toggle('hidden', isMatchActive);
+      if (statusPill) {
+        statusPill.textContent = isMatchActive ? 'EN VIVO' : 'SIN PARTIDO';
+        statusPill.className = isMatchActive
+          ? 'px-1.5 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[9px] font-black uppercase tracking-wider shrink-0'
+          : 'px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-400 text-[9px] font-black uppercase tracking-wider shrink-0';
+      }
+
+      if (hTor) hTor.textContent = isMatchActive ? (state.tournament || 'Torneo') : 'No hay partido en vivo';
+      if (hStg) hStg.textContent = isMatchActive ? (state.stage || 'Fecha') : 'Creá uno en Plantel';
       if (hTeam) hTeam.textContent = homeLabel;
       if (aTeam) aTeam.textContent = awayLabel;
       if (sHome) sHome.textContent = String(curScore.home);
@@ -2084,7 +2048,9 @@
       const tickerItems = document.getElementById('ticker-items');
       if (tickerItems) {
         const recent = [...(state.events || [])].slice(-5).reverse();
-        if (recent.length === 0) {
+        if (!isMatchActive && recent.length === 0) {
+          tickerItems.innerHTML = '<span class="text-amber-300/90 italic text-[11px]">No hay partido activo en vivo. Tocá "+ Nuevo Partido" para iniciar.</span>';
+        } else if (recent.length === 0) {
           tickerItems.innerHTML = '<span class="text-slate-500 italic text-[11px]">Tocá un jugador abajo para empezar a registrar...</span>';
         } else {
           tickerItems.innerHTML = recent.map(ev => {
@@ -2348,6 +2314,9 @@
       resetClearRosterConfirmUI();
       const team = getActiveTeam();
       team.roster = [];
+      team.name = '';
+      state.homeTeam = '';
+      state.awayTeam = '';
       state.selectedPlayerId = null;
       editingPlayerId = null;
       saveState();
@@ -2557,19 +2526,21 @@
       const team = getActiveTeam();
       const roster = getActiveRoster();
       const onCourtCount = roster.filter(p => p.onCourt).length;
+      const hasRoster = roster.length > 0;
 
       const manualTeamEl = document.getElementById('manual-team-name');
       const manualRivalEl = document.getElementById('manual-rival-name');
       if (manualTeamEl && document.activeElement !== manualTeamEl) {
-        manualTeamEl.value = team?.name || state.homeTeam || '';
+        manualTeamEl.value = hasRoster ? (team?.name || state.homeTeam || '') : '';
       }
       if (manualRivalEl && document.activeElement !== manualRivalEl) {
-        manualRivalEl.value = state.awayTeam || '';
+        manualRivalEl.value = hasRoster ? (state.awayTeam || '') : '';
       }
 
       const panelTitle = document.getElementById('roster-panel-title');
       const courtCounter = document.getElementById('roster-court-counter');
-      if (panelTitle) panelTitle.textContent = `Plantel ${team?.name || state.homeTeam || 'Equipo'} (${roster.length})`;
+      const displayTeamName = hasRoster ? (team?.name || state.homeTeam || 'Equipo') : 'Sin plantel cargado';
+      if (panelTitle) panelTitle.textContent = `Plantel ${displayTeamName} (${roster.length})`;
       if (courtCounter) courtCounter.textContent = `${onCourtCount} en cancha`;
 
       const titleBlock = panelTitle ? panelTitle.parentElement?.parentElement : null;
@@ -2784,6 +2755,7 @@
     }
 
     function resetMatchToZero() {
+      state.matchActive = false;
       state.currentSet = '1';
       state.scores = {
         '1': { home: 0, away: 0 },
@@ -2850,54 +2822,77 @@
     }
 
     function populateNewMatchWizard() {
-      const torInp = document.getElementById('nm-tournament');
+      const torSel = document.getElementById('nm-tournament');
       const stgInp = document.getElementById('nm-stage');
       const awayInp = document.getElementById('nm-away-team');
       const rosterSel = document.getElementById('nm-roster-select');
 
-      if (torInp) torInp.value = state.tournament || '';
       if (stgInp) stgInp.value = '';
       if (awayInp) awayInp.value = '';
 
-      if (rosterSel) {
-        const teamsEntries = Object.values(state.teams || {});
-        if (teamsEntries.length === 0) {
-          const active = getActiveTeam();
-          teamsEntries.push(active);
+      if (torSel) {
+        const tournamentsList = Array.isArray(state.savedTournaments)
+          ? state.savedTournaments.filter(t => String(t || '').trim())
+          : [];
+        if (tournamentsList.length === 0) {
+          torSel.innerHTML = `<option value="">Sin torneos cargados</option>`;
+        } else {
+          const currentTor = state.tournament && tournamentsList.includes(state.tournament)
+            ? state.tournament
+            : tournamentsList[0];
+          torSel.innerHTML = tournamentsList
+            .map(t => `<option value="${t}" ${t === currentTor ? 'selected' : ''}>${t}</option>`)
+            .join('');
         }
-        rosterSel.innerHTML = teamsEntries.map(t => {
-          const count = Array.isArray(t.roster) ? t.roster.length : 0;
-          return `<option value="${t.id}" ${t.id === state.activeTeamId ? 'selected' : ''}>${t.name} (${count} jugadores)</option>`;
-        }).join('');
+      }
+
+      if (rosterSel) {
+        const teamsEntries = Object.values(state.teams || {}).filter(
+          t => t && (String(t.name || '').trim() || (Array.isArray(t.roster) && t.roster.length > 0))
+        );
+        if (teamsEntries.length === 0) {
+          rosterSel.innerHTML = `<option value="">Sin planteles cargados</option>`;
+        } else {
+          rosterSel.innerHTML = teamsEntries.map(t => {
+            const count = Array.isArray(t.roster) ? t.roster.length : 0;
+            const labelName = String(t.name || '').trim() || 'Plantel sin nombre';
+            return `<option value="${t.id}" ${t.id === state.activeTeamId ? 'selected' : ''}>${labelName} (${count} jugadores)</option>`;
+          }).join('');
+        }
       }
     }
 
     function confirmAndStartNewMatch() {
-      const torInp = document.getElementById('nm-tournament');
+      const torSel = document.getElementById('nm-tournament');
       const stgInp = document.getElementById('nm-stage');
       const awayInp = document.getElementById('nm-away-team');
       const rosterSel = document.getElementById('nm-roster-select');
 
-      const selectedTeamId = rosterSel && rosterSel.value ? rosterSel.value : state.activeTeamId;
-      if (selectedTeamId && state.teams && state.teams[selectedTeamId]) {
-        state.activeTeamId = selectedTeamId;
+      const selectedTeamId = rosterSel && rosterSel.value ? rosterSel.value : '';
+      if (!selectedTeamId || !state.teams || !state.teams[selectedTeamId]) {
+        showToast('No hay plantel cargado seleccionado');
+        return;
       }
+      state.activeTeamId = selectedTeamId;
       const chosenTeam = getActiveTeam();
 
-      const newTor = (torInp ? torInp.value : '').trim();
+      const newTor = torSel && torSel.value ? torSel.value.trim() : '';
       const newStg = (stgInp ? stgInp.value : '').trim();
       const newAway = (awayInp ? awayInp.value : '').trim();
 
       if (newTor) {
         state.tournament = newTor;
-        if (!Array.isArray(state.savedTournaments)) state.savedTournaments = [...DEFAULT_TOURNAMENTS];
+        if (!Array.isArray(state.savedTournaments)) state.savedTournaments = [];
         if (!state.savedTournaments.includes(newTor)) state.savedTournaments.push(newTor);
+      } else {
+        state.tournament = '';
       }
       state.stage = newStg || 'Fecha 1';
-      state.homeTeam = chosenTeam?.name || state.homeTeam || 'DBANF';
+      state.homeTeam = chosenTeam?.name || 'Local';
       state.awayTeam = newAway || 'RIVAL';
 
       resetMatchToZero();
+      state.matchActive = true;
       viewingStatsMatchId = 'CURRENT';
       saveState();
 
