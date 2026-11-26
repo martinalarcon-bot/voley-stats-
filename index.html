@@ -518,7 +518,7 @@ VELEZ
               <button type="button" onclick="clearImporterBox()" class="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-400 hover:text-white">
                 Limpiar cuadro
               </button>
-              <button type="button" onclick="importParsedTeams()" class="rounded-xl bg-sky-500 hover:bg-sky-400 px-4 py-2 text-xs font-extrabold text-slate-950">
+              <button type="button" id="import-step-btn" onclick="handleImportAction()" class="rounded-xl bg-sky-500 hover:bg-sky-400 px-4 py-2 text-xs font-extrabold text-slate-950">
                 ⚡ Detectar e Importar Plantel
               </button>
             </div>
@@ -684,6 +684,7 @@ VELEZ
     const STORAGE_KEY_PROFILE = 'voley_stats_active_profile_v3';
     const STORAGE_KEY_ADMIN_PASS = 'voley_stats_admin_pass_v3';
     const STORAGE_KEY_CLOUD = 'voley_stats_supabase_cfg_v3';
+    const STORAGE_KEY_PENDING_SYNC = 'voley_stats_pending_sync_v3';
     const APP_VERSION = 'v3.4.0';
 
     const DEFAULT_SUPABASE_URL = 'https://aevmoxgnptjreycgniks.supabase.co';
@@ -753,8 +754,19 @@ VELEZ
     let selectedPlayerId = null;
     let liveRosterFilter = 'court';
     let detectedTeamsBuffer = [];
+    let pendingBulkConfirmation = false;
+    let isSyncingCloud = false;
     let deferredInstallPrompt = null;
     let toastTimeout = null;
+
+    function hasPendingCloudSync() {
+      return readStore(STORAGE_KEY_PENDING_SYNC) === '1';
+    }
+
+    function setPendingCloudSync(flag) {
+      if (flag) writeStore(STORAGE_KEY_PENDING_SYNC, '1');
+      else removeStore(STORAGE_KEY_PENDING_SYNC);
+    }
 
     function loadState() {
       try {
@@ -766,6 +778,8 @@ VELEZ
 
     function saveState() {
       writeStore(STORAGE_KEY_STATE, JSON.stringify(state));
+      setPendingCloudSync(true);
+      updateSupabaseStatusUI();
     }
 
     function showToast(msg) {
@@ -1308,9 +1322,9 @@ VELEZ
 
       listEl.innerHTML = players.map((p) => `
         <div class="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-slate-800 bg-slate-950/80 px-3 py-2.5">
-          <div class="flex items-center gap-2.5 min-w-0">
-            <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 text-xs font-black text-white">#${p.number}</span>
-            <span class="text-xs font-bold text-slate-100 truncate">${escapeHtml(p.name)}</span>
+          <div class="flex items-center gap-2.5 min-w-0 flex-1">
+            <input type="number" min="1" max="99" value="${escapeAttr(p.number)}" aria-label="Número de camiseta" onchange="changePlayerNumber('${escapeAttr(p.id)}', this.value)" class="w-14 shrink-0 rounded-xl border border-slate-800 bg-slate-900 px-2 py-1.5 text-center text-xs font-black text-white focus:border-emerald-500 focus:outline-none" />
+            <input type="text" value="${escapeAttr(p.name)}" aria-label="Nombre del jugador" onchange="changePlayerName('${escapeAttr(p.id)}', this.value)" class="min-w-0 flex-1 rounded-xl border border-transparent hover:border-slate-800 focus:border-emerald-500 bg-slate-900/70 px-2.5 py-1.5 text-xs font-bold text-slate-100 focus:bg-slate-900 focus:outline-none" />
           </div>
           <div class="flex items-center gap-1.5">
             <select onchange="changePlayerRole('${escapeAttr(p.id)}', this.value)" class="rounded-xl border border-slate-700 bg-slate-900 px-2 py-1 text-[11px] font-bold text-slate-200">
@@ -1483,6 +1497,36 @@ VELEZ
       renderAll();
     }
 
+    function changePlayerNumber(playerId, newNumber) {
+      const p = (state.roster || []).find((x) => x.id === playerId);
+      if (!p) return;
+      const parsed = parseInt(String(newNumber || '').trim(), 10);
+      if (!Number.isNaN(parsed) && parsed > 0) {
+        p.number = parsed;
+      }
+      syncActiveRosterToCollection();
+      saveState();
+      renderLivePlayersGrid();
+      updateHeaderUI();
+    }
+
+    function changePlayerName(playerId, newName) {
+      const p = (state.roster || []).find((x) => x.id === playerId);
+      if (!p) return;
+      const clean = String(newName || '').trim();
+      if (!clean) {
+        renderRoster();
+        showToast('El nombre del jugador no puede quedar vacío.');
+        return;
+      }
+      p.name = clean;
+      syncActiveRosterToCollection();
+      saveState();
+      renderLivePlayersGrid();
+      updateHeaderUI();
+      showToast('Nombre de jugador actualizado.');
+    }
+
     function togglePlayerOnCourt(playerId) {
       const p = (state.roster || []).find((x) => x.id === playerId);
       if (!p) return;
@@ -1551,93 +1595,21 @@ VELEZ
         preview.classList.add('hidden');
       }
       detectedTeamsBuffer = [];
+      pendingBulkConfirmation = false;
+      syncImportActionButton();
     }
 
-    function inferRoleFromLine(line) {
-      const upper = String(line || '').toUpperCase();
-      if (/\b(LIB|LIBERO|LÍBERO)\b/.test(upper)) return 'LIB';
-      if (/\b(ARM|ARMADOR|ARMADORA)\b/.test(upper)) return 'ARM';
-      if (/\b(CEN|CENTRAL)\b/.test(upper)) return 'CEN';
-      if (/\b(OPU|OPUESTO|OPUESTA)\b/.test(upper)) return 'OPU';
-      return 'PTA';
-    }
-
-    function parseTwoTeamsFromText(rawText) {
-      const lines = String(rawText || '')
-        .split(/\r?\n/)
-        .map((l) => l.replace(/^\s*[-•*]\s*/, '').trim())
-        .filter((l) => l.length > 0);
-
-      if (lines.length === 0) return [];
-
-      const stopSectionRegex = /^(cuerpo\s*t[eé]cnico|fmv\b|enlaces\b|contacto\b|powered\s+by|©\s*\d{4})/i;
-      const ignoreExactRegex = /^(inicio|torneos|partidos|clubes|noticias|documentos|buscar|iniciar\s*sesi[oó]n|informaci[oó]n|jugadores|posiciones|c|cap|capit[aá]n|lib|l[ií]bero)$/i;
-      const ageRegex = /^\d{1,2}\s*a[nñ]os$/i;
-      const jerseyRegex = /^#?(\d{1,2})$/;
-
-      const teams = [];
-      let currentTeam = null;
-      let pendingJersey = null;
-
-      const ensureTeam = (name) => {
-        const cleanName = String(name || 'Equipo Importado').trim();
-        let existing = teams.find((t) => t.name.toLowerCase() === cleanName.toLowerCase());
-        if (!existing) {
-          existing = { name: cleanName, players: [] };
-          teams.push(existing);
-        }
-        currentTeam = existing;
-        pendingJersey = null;
-        return existing;
-      };
-
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        if (stopSectionRegex.test(line)) break;
-        if (ignoreExactRegex.test(line)) continue;
-        if (ageRegex.test(line)) continue;
-        if (/^#\d{4,}/.test(line) || /\bvs\b/i.test(line) || /sub\s*\d+/i.test(line) || /fecha\s*\d+/i.test(line)) continue;
-
-        const jerseyMatch = line.match(jerseyRegex);
-        if (jerseyMatch) {
-          pendingJersey = parseInt(jerseyMatch[1], 10);
-          continue;
-        }
-
-        if (pendingJersey === null) {
-          const nextLine = lines[i + 1] || '';
-          const nextIsJersey = jerseyRegex.test(nextLine.replace(/^\s*[-•*]\s*/, '').trim());
-          const looksLikeClubHeader = nextIsJersey && !/\d/.test(line) && line.length <= 40;
-          if (looksLikeClubHeader || !currentTeam) {
-            ensureTeam(line);
-            continue;
-          }
-        }
-
-        if (!currentTeam) ensureTeam('Equipo Importado');
-
-        const role = inferRoleFromLine(line);
-        const cleanPlayerName = line
-          .replace(/\b(PTA|OPU|CEN|ARM|LIB|LIBERO|LÍBERO|ARMADOR|CENTRAL|OPUESTO|PUNTA)\b/gi, '')
-          .replace(/\s{2,}/g, ' ')
-          .trim();
-
-        if (!cleanPlayerName) continue;
-
-        const number = pendingJersey !== null ? pendingJersey : currentTeam.players.length + 1;
-        currentTeam.players.push({
-          id: 'imp_' + Date.now() + '_' + currentTeam.players.length + '_' + Math.random().toString(36).slice(2, 5),
-          number,
-          name: cleanPlayerName,
-          role,
-          onCourt: currentTeam.players.length < 7
-        });
-        pendingJersey = null;
+    function syncImportActionButton() {
+      const btn = document.getElementById('import-step-btn');
+      if (!btn) return;
+      if (pendingBulkConfirmation && detectedTeamsBuffer.length > 0) {
+        btn.textContent = '✅ Confirmar Carga con Previsualización';
+        btn.className = 'rounded-xl bg-emerald-500 hover:bg-emerald-400 px-4 py-2 text-xs font-extrabold text-slate-950 shadow-lg shadow-emerald-500/20';
+      } else {
+        btn.textContent = '⚡ Detectar e Importar Plantel';
+        btn.className = 'rounded-xl bg-sky-500 hover:bg-sky-400 px-4 py-2 text-xs font-extrabold text-slate-950';
       }
-
-      return teams.filter((t) => t.players.length > 0);
     }
-
     function analyzePastedContent() {
       const text = document.getElementById('paste-roster-textarea')?.value || '';
       const gender = (document.getElementById('bulk-roster-gender')?.value || '').trim();
@@ -1647,15 +1619,21 @@ VELEZ
 
       detectedTeamsBuffer = parseTwoTeamsFromText(text);
       if (detectedTeamsBuffer.length === 0) {
+        pendingBulkConfirmation = false;
+        syncImportActionButton();
         preview.classList.add('hidden');
         preview.innerHTML = '';
         return;
       }
 
       const metaSummary = [gender, category].filter(Boolean).join(' · ') || 'Sin rama/categoría seleccionada';
+      const confirmBanner = pendingBulkConfirmation
+        ? `<div class="rounded-xl border border-amber-500/40 bg-amber-500/15 px-3 py-2 text-xs font-bold text-amber-200">¿Confirmás la carga de estos datos previsualizados (${escapeHtml(metaSummary)}) al plantel?</div>`
+        : '';
 
       preview.classList.remove('hidden');
       preview.innerHTML = `
+        ${confirmBanner}
         <div class="flex flex-wrap items-center justify-between gap-1">
           <span class="text-xs font-extrabold text-sky-300">✓ ${detectedTeamsBuffer.length} equipo(s) detectado(s)</span>
           <span class="text-[11px] font-semibold text-amber-300">${escapeHtml(metaSummary)}</span>
@@ -1671,6 +1649,26 @@ VELEZ
           `).join('')}
         </div>
       `;
+      syncImportActionButton();
+    }
+
+    function handleImportAction() {
+      analyzePastedContent();
+      if (detectedTeamsBuffer.length === 0) {
+        pendingBulkConfirmation = false;
+        syncImportActionButton();
+        showToast('Pegá primero el listado con el nombre del equipo, camisetas y jugadores.');
+        return;
+      }
+
+      if (!pendingBulkConfirmation) {
+        pendingBulkConfirmation = true;
+        analyzePastedContent();
+        showToast('Revisá la previsualización y tocá "Confirmar Carga" para importar.');
+        return;
+      }
+
+      importParsedTeams();
     }
 
     function importParsedTeams() {
@@ -1721,222 +1719,11 @@ VELEZ
         state.opponent = detectedTeamsBuffer[1].name;
       }
 
+      pendingBulkConfirmation = false;
+      syncImportActionButton();
       saveState();
       renderAll();
       showToast(`Se importaron ${detectedTeamsBuffer.length} equipo(s) (${gender} · ${category}).`);
-    }
-
-    // =========================================================================
-    // ESTADÍSTICAS Y EXPORTACIÓN
-    // =========================================================================
-    function syncStatsMatchSelector() {
-      const sel = document.getElementById('stats-match-selector');
-      if (!sel) return;
-      const currentVal = sel.value || 'current';
-      const options = [`<option value="current">Partido Actual (${escapeHtml(state.teamName || 'Sin equipo')} vs ${escapeHtml(state.opponent || 'Rival')})</option>`];
-      (state.history || []).forEach((m) => {
-        options.push(`<option value="${escapeAttr(m.id)}">${escapeHtml(m.date || '')} · ${escapeHtml(m.teamName)} vs ${escapeHtml(m.opponent)} (${m.scoreHome}-${m.scoreAway})</option>`);
-      });
-      sel.innerHTML = options.join('');
-      if ([...sel.options].some((o) => o.value === currentVal)) sel.value = currentVal;
-    }
-
-    function getSelectedStatsDataset() {
-      const selVal = document.getElementById('stats-match-selector')?.value || 'current';
-      if (selVal === 'current') {
-        return {
-          title: `${state.teamName || 'Equipo'} vs ${state.opponent || 'Rival'}`,
-          roster: state.roster || [],
-          events: state.events || [],
-          scoreHome: state.scoreHome || 0,
-          scoreAway: state.scoreAway || 0
-        };
-      }
-      const match = (state.history || []).find((m) => m.id === selVal);
-      if (!match) return { title: 'Partido', roster: [], events: [], scoreHome: 0, scoreAway: 0 };
-      return {
-        title: `${match.teamName} vs ${match.opponent}`,
-        roster: match.roster || [],
-        events: match.events || [],
-        scoreHome: match.scoreHome || 0,
-        scoreAway: match.scoreAway || 0
-      };
-    }
-
-    function computePlayerRows(dataset) {
-      const map = new Map();
-      (dataset.roster || []).forEach((p) => {
-        map.set(p.id, {
-          id: p.id, number: p.number, name: p.name, role: p.role || 'PTA',
-          pts: 0, ataque: 0, bloqueo: 0, saque: 0, recepcion: 0, defensa: 0, armado: 0, err: 0, total: 0
-        });
-      });
-
-      (dataset.events || []).forEach((ev) => {
-        if (!ev.playerId || !map.has(ev.playerId)) return;
-        const row = map.get(ev.playerId);
-        row.total += 1;
-        if (ev.quality === 'excelente') row.pts += 1;
-        if (ev.quality === 'error') row.err += 1;
-        if (Object.prototype.hasOwnProperty.call(row, ev.skill) && ev.quality !== 'error') {
-          row[ev.skill] += 1;
-        }
-      });
-
-      return Array.from(map.values()).sort((a, b) => (a.number || 0) - (b.number || 0));
-    }
-
-    function renderStats() {
-      const dataset = getSelectedStatsDataset();
-      const rows = computePlayerRows(dataset);
-      const sub = document.getElementById('stats-context-subtitle');
-      const kpi = document.getElementById('stats-kpi-cards');
-      const tbody = document.getElementById('stats-table-body');
-
-      if (sub) sub.textContent = `${dataset.title} · Marcador ${dataset.scoreHome} - ${dataset.scoreAway}`;
-
-      const totalPts = rows.reduce((acc, r) => acc + r.pts, 0);
-      const totalErr = rows.reduce((acc, r) => acc + r.err, 0);
-      const totalActions = rows.reduce((acc, r) => acc + r.total, 0);
-      const efficiency = totalActions > 0 ? Math.round(((totalActions - totalErr) / totalActions) * 100) : 0;
-
-      if (kpi) {
-        kpi.innerHTML = `
-          <div class="rounded-2xl border border-slate-800 bg-slate-900/90 p-3.5">
-            <div class="text-[10px] font-bold uppercase text-slate-400">Puntos Propios (Acciones)</div>
-            <div class="text-2xl font-black text-emerald-300 mt-1">${totalPts}</div>
-          </div>
-          <div class="rounded-2xl border border-slate-800 bg-slate-900/90 p-3.5">
-            <div class="text-[10px] font-bold uppercase text-slate-400">Errores No Forzados</div>
-            <div class="text-2xl font-black text-rose-300 mt-1">${totalErr}</div>
-          </div>
-          <div class="rounded-2xl border border-slate-800 bg-slate-900/90 p-3.5">
-            <div class="text-[10px] font-bold uppercase text-slate-400">Toques Registrados</div>
-            <div class="text-2xl font-black text-sky-300 mt-1">${totalActions}</div>
-          </div>
-          <div class="rounded-2xl border border-slate-800 bg-slate-900/90 p-3.5">
-            <div class="text-[10px] font-bold uppercase text-slate-400">Efectividad Global</div>
-            <div class="text-2xl font-black text-amber-300 mt-1">${efficiency}%</div>
-          </div>
-        `;
-      }
-
-      if (!tbody) return;
-      if (rows.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="11" class="py-6 text-center text-slate-400">Sin jugadores registrados en este partido.</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = rows.map((r) => `
-        <tr onclick="showPlayerStatsDetail('${escapeAttr(r.id)}')" class="hover:bg-slate-800/50 cursor-pointer">
-          <td class="py-2.5 px-3 font-black text-slate-300">#${r.number}</td>
-          <td class="py-2.5 px-3 font-bold text-white">${escapeHtml(r.name)}</td>
-          <td class="py-2.5 px-3 text-slate-400">${escapeHtml(r.role)}</td>
-          <td class="py-2.5 px-3 text-center font-extrabold text-emerald-300">${r.pts}</td>
-          <td class="py-2.5 px-3 text-center">${r.ataque}</td>
-          <td class="py-2.5 px-3 text-center">${r.bloqueo}</td>
-          <td class="py-2.5 px-3 text-center">${r.saque}</td>
-          <td class="py-2.5 px-3 text-center">${r.recepcion}</td>
-          <td class="py-2.5 px-3 text-center">${r.defensa}</td>
-          <td class="py-2.5 px-3 text-center">${r.armado}</td>
-          <td class="py-2.5 px-3 text-center font-bold text-rose-300">${r.err}</td>
-        </tr>
-      `).join('');
-    }
-
-    function showPlayerStatsDetail(playerId) {
-      const panel = document.getElementById('player-detail-panel');
-      if (!panel) return;
-      const dataset = getSelectedStatsDataset();
-      const row = computePlayerRows(dataset).find((r) => r.id === playerId);
-      if (!row) return;
-      panel.innerHTML = `
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <span class="text-sm font-extrabold text-white">#${row.number} ${escapeHtml(row.name)}</span>
-            <span class="ml-2 rounded-md bg-slate-800 px-2 py-0.5 text-[11px] font-bold text-slate-300">${escapeHtml(row.role)}</span>
-          </div>
-          <div class="text-xs text-slate-400">Total acciones: <strong class="text-white">${row.total}</strong> · Puntos: <strong class="text-emerald-300">${row.pts}</strong> · Errores: <strong class="text-rose-300">${row.err}</strong></div>
-        </div>
-      `;
-    }
-
-    function copyTextFallback(text) {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.select();
-      try { document.execCommand('copy'); } catch (err) { /* ignore */ }
-      document.body.removeChild(ta);
-    }
-
-    function copyWhatsAppSummary() {
-      const dataset = getSelectedStatsDataset();
-      const rows = computePlayerRows(dataset);
-      const lines = [
-        `🏐 *${dataset.title}* (${dataset.scoreHome} - ${dataset.scoreAway})`,
-        ...rows.map((r) => `#${r.number} ${r.name}: ${r.pts} pts | ATQ ${r.ataque} | BLQ ${r.bloqueo} | SAQ ${r.saque} | ERR ${r.err}`)
-      ];
-      copyTextFallback(lines.join('\n'));
-      showToast('Resumen copiado al portapapeles.');
-    }
-
-    function exportCSV() {
-      const dataset = getSelectedStatsDataset();
-      const rows = computePlayerRows(dataset);
-      const header = ['Numero', 'Jugador', 'Puesto', 'Puntos', 'Ataque', 'Bloqueo', 'Saque', 'Recepcion', 'Defensa', 'Armado', 'Errores'];
-      const csvLines = [
-        header.join(','),
-        ...rows.map((r) => [r.number, `"${r.name.replace(/"/g, '""')}"`, r.role, r.pts, r.ataque, r.bloqueo, r.saque, r.recepcion, r.defensa, r.armado, r.err].join(','))
-      ];
-      const blob = new Blob([csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `voley_stats_${Date.now()}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast('Planilla CSV descargada.');
-    }
-
-    // =========================================================================
-    // CONFIGURACIÓN: TORNEOS, SUPABASE Y REINICIO
-    // =========================================================================
-    function addTournament() {
-      const input = document.getElementById('new-tournament-input');
-      const name = (input?.value || '').trim();
-      if (!name) return;
-      if (!state.savedTournaments.includes(name)) state.savedTournaments.push(name);
-      if (input) input.value = '';
-      saveState();
-      renderTournamentsList();
-      populatePrepSelectors();
-      showToast(`Torneo "${name}" guardado.`);
-    }
-
-    function removeTournament(name) {
-      state.savedTournaments = state.savedTournaments.filter((t) => t !== name);
-      if (state.tournament === name) state.tournament = '';
-      saveState();
-      renderTournamentsList();
-      populatePrepSelectors();
-    }
-
-    function renderTournamentsList() {
-      const container = document.getElementById('tournaments-list');
-      if (!container) return;
-      if (!state.savedTournaments || state.savedTournaments.length === 0) {
-        container.innerHTML = `<span class="text-xs text-slate-400">Sin torneos cargados todavía.</span>`;
-        return;
-      }
-      container.innerHTML = state.savedTournaments.map((t) => `
-        <span class="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs font-semibold text-slate-200">
-          ${escapeHtml(t)}
-          <button type="button" onclick="removeTournament('${escapeAttr(t)}')" class="text-slate-400 hover:text-rose-400">✕</button>
-        </span>
-      `).join('');
     }
 
     function getSupabaseConfig() {
@@ -1944,44 +1731,78 @@ VELEZ
         const raw = readStore(STORAGE_KEY_CLOUD);
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (parsed && parsed.url && parsed.key) return parsed;
+          return {
+            url: (parsed.url || DEFAULT_SUPABASE_URL).trim().replace(/\/+$/, ''),
+            key: (parsed.key || DEFAULT_SUPABASE_ANON_KEY).trim()
+          };
         }
-      } catch (err) { /* fallback */ }
-      return { url: DEFAULT_SUPABASE_URL, key: DEFAULT_SUPABASE_ANON_KEY };
+      } catch (e) { /* ignore */ }
+      return {
+        url: DEFAULT_SUPABASE_URL.trim().replace(/\/+$/, ''),
+        key: DEFAULT_SUPABASE_ANON_KEY.trim()
+      };
     }
 
     function syncSupabaseInputs() {
       const cfg = getSupabaseConfig();
-      const urlEl = document.getElementById('supabase-url-input');
-      const keyEl = document.getElementById('supabase-key-input');
-      if (urlEl) urlEl.value = cfg.url || '';
-      if (keyEl) keyEl.value = cfg.key || '';
+      const urlInp = document.getElementById('supabase-url-input');
+      const keyInp = document.getElementById('supabase-key-input');
+      if (urlInp && !urlInp.value) urlInp.value = cfg.url;
+      if (keyInp && !keyInp.value && cfg.key) keyInp.value = cfg.key;
     }
 
-    function updateSupabaseStatusUI(customMsg, isError = false) {
+    function updateSupabaseStatusUI(customText, isError) {
       const badge = document.getElementById('cloud-status-badge');
       const cfgBadge = document.getElementById('config-cloud-status');
       const cfg = getSupabaseConfig();
-      const configured = Boolean(cfg.url && cfg.key);
+      const hasConfig = Boolean(cfg.url && cfg.key);
+      const isOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
+      const isPending = hasPendingCloudSync();
+
+      let autoLabel = hasConfig ? '☁️ Nube Lista' : '☁️ Local';
+      if (isOffline && isPending) {
+        autoLabel = '📴 Sin señal · Pendiente';
+      } else if (isOffline) {
+        autoLabel = '📴 Sin conexión';
+      } else if (isPending && hasConfig) {
+        autoLabel = '⏳ Pendiente de subir';
+      }
+
       if (badge) {
-        badge.textContent = customMsg || (configured ? '☁️ Nube Lista' : '☁️ Local');
-        badge.className = isError
-          ? 'rounded-xl border border-rose-500/40 bg-rose-500/15 px-2.5 py-1 text-[11px] font-semibold text-rose-300'
-          : 'rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-300';
+        badge.textContent = customText || autoLabel;
       }
       if (cfgBadge) {
-        cfgBadge.textContent = customMsg || (configured ? 'Configurada' : 'No configurada');
+        cfgBadge.textContent = customText || (isPending ? 'Pendiente de subir' : (hasConfig ? 'Configurada' : 'Pendiente Key'));
+        cfgBadge.className = isError
+          ? 'rounded-full border border-rose-500/40 bg-rose-500/15 px-3 py-1 text-xs font-bold text-rose-300'
+          : (isPending
+              ? 'rounded-full border border-amber-500/40 bg-amber-500/15 px-3 py-1 text-xs font-bold text-amber-300'
+              : (hasConfig
+                  ? 'rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-300'
+                  : 'rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-300'));
       }
     }
 
-    async function saveAndSyncSupabase() {
-      const url = (document.getElementById('supabase-url-input')?.value || '').trim().replace(/\/+$/, '');
-      const key = (document.getElementById('supabase-key-input')?.value || '').trim();
+    async function saveAndSyncSupabase(options = {}) {
+      const silent = Boolean(options && options.silent);
+      if (isSyncingCloud) return;
+
+      const url = (document.getElementById('supabase-url-input')?.value || DEFAULT_SUPABASE_URL).trim().replace(/\/+$/, '');
+      const key = (document.getElementById('supabase-key-input')?.value || DEFAULT_SUPABASE_ANON_KEY).trim();
       if (!url || !key) {
-        showToast('Completá Project URL y Anon Key de Supabase.');
+        if (!silent) showToast('Ingresá la Project URL y la Anon / Publishable Key de Supabase.');
         return;
       }
       writeStore(STORAGE_KEY_CLOUD, JSON.stringify({ url, key }));
+
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        setPendingCloudSync(true);
+        updateSupabaseStatusUI('📴 Sin señal · Pendiente', false);
+        if (!silent) showToast('Sin conexión: cambios guardados en el equipo y listos para subir al recuperar señal.');
+        return;
+      }
+
+      isSyncingCloud = true;
       const prof = getActiveProfile();
       try {
         const res = await fetch(`${url}/rest/v1/club_state?on_conflict=id`, {
@@ -2001,15 +1822,31 @@ VELEZ
         });
         if (!res.ok) {
           const errText = await res.text();
+          setPendingCloudSync(true);
           updateSupabaseStatusUI(`Error HTTP ${res.status}`, true);
-          showToast(`Error al conectar con Supabase (HTTP ${res.status} — ${errText.slice(0, 80)}).`);
+          if (!silent) showToast(`Error al conectar con Supabase (HTTP ${res.status} — ${errText.slice(0, 80)}).`);
           return;
         }
+        setPendingCloudSync(false);
         updateSupabaseStatusUI('☁️ Nube OK', false);
-        showToast('Datos sincronizados en Supabase.');
+        if (!silent) showToast('Datos sincronizados en Supabase.');
       } catch (err) {
-        updateSupabaseStatusUI('Error de red', true);
-        showToast('No se pudo conectar con Supabase.');
+        setPendingCloudSync(true);
+        updateSupabaseStatusUI('📴 Sin señal · Pendiente', false);
+        if (!silent) showToast('Sin conexión o red inestable: quedó guardado local y pendiente de subir.');
+      } finally {
+        isSyncingCloud = false;
+      }
+    }
+
+    function flushPendingCloudSyncIfOnline() {
+      updateSupabaseStatusUI();
+      if (typeof navigator !== 'undefined' && navigator.onLine && hasPendingCloudSync()) {
+        saveAndSyncSupabase({ silent: true }).then(() => {
+          if (!hasPendingCloudSync()) {
+            showToast('Conexión recuperada: datos pendientes subidos a la nube.');
+          }
+        });
       }
     }
 
@@ -2085,6 +1922,14 @@ VELEZ
       document.getElementById('install-app-btn')?.classList.remove('hidden');
     });
 
+    window.addEventListener('online', () => {
+      flushPendingCloudSyncIfOnline();
+    });
+
+    window.addEventListener('offline', () => {
+      updateSupabaseStatusUI('📴 Sin conexión', false);
+    });
+
     async function triggerInstallPrompt() {
       if (!deferredInstallPrompt) return;
       deferredInstallPrompt.prompt();
@@ -2102,7 +1947,9 @@ VELEZ
         enterApp();
       } else {
         checkLoginUserRecoveryState();
+        updateSupabaseStatusUI();
       }
+      flushPendingCloudSyncIfOnline();
     };
   </script>
 </body>
