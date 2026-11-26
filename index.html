@@ -381,8 +381,9 @@
           <!-- Cabecera del Plantel Activo -->
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <div class="flex items-center gap-2">
+              <div class="flex flex-wrap items-center gap-2">
                 <h2 id="roster-title-heading" class="text-lg font-black text-white">Plantel (0)</h2>
+                <span id="roster-meta-badge" class="hidden rounded-full border border-sky-500/30 bg-sky-500/15 px-2.5 py-0.5 text-[11px] font-bold text-sky-300"></span>
                 <span id="roster-oncourt-badge" class="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-[11px] font-bold text-emerald-300">0 en cancha</span>
               </div>
               <p class="text-xs text-slate-400">Cambiá puestos al instante, marcá titulares o cargá jugadores manual o masivamente.</p>
@@ -405,10 +406,34 @@
               <span class="text-[11px] text-slate-400">Enter para sumar rápido</span>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
               <div>
                 <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Nombre del Equipo</label>
                 <input id="manual-team-name" type="text" placeholder="Ej: VELEZ o DBANF" onchange="updateCurrentRosterTeamName(this.value)" class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-bold text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none" />
+              </div>
+              <div>
+                <label for="manual-roster-gender" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Rama (Masculino / Femenino)</label>
+                <select id="manual-roster-gender" onchange="updateCurrentRosterMeta()" class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-bold text-white focus:border-emerald-500 focus:outline-none">
+                  <option value="">Seleccionar rama...</option>
+                  <option value="Masculino">Masculino</option>
+                  <option value="Femenino">Femenino</option>
+                </select>
+              </div>
+              <div>
+                <label for="manual-roster-category" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Categoría</label>
+                <select id="manual-roster-category" onchange="updateCurrentRosterMeta()" class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-bold text-white focus:border-emerald-500 focus:outline-none">
+                  <option value="">Seleccionar categoría...</option>
+                  <option value="Sub 11">Sub 11</option>
+                  <option value="Sub 12">Sub 12</option>
+                  <option value="Sub 13">Sub 13</option>
+                  <option value="Sub 14">Sub 14</option>
+                  <option value="Sub 15">Sub 15</option>
+                  <option value="Sub 16">Sub 16</option>
+                  <option value="Sub 18">Sub 18</option>
+                  <option value="Sub 21">Sub 21</option>
+                  <option value="Mayores">Mayores</option>
+                  <option value="Maxi">Maxi</option>
+                </select>
               </div>
               <div>
                 <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Rival sugerido (opcional)</label>
@@ -440,11 +465,38 @@
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h3 class="text-xs font-extrabold text-sky-300">📋 Carga Masiva por Pegado (TorneoMax / MetroVoley / Planilla)</h3>
-                <p class="text-[11px] text-slate-400">Pegá el listado con el nombre del equipo arriba, número de camiseta, edad y nombre completo.</p>
+                <p class="text-[11px] text-slate-400">Elegí rama y categoría y pegá el listado con el nombre del equipo arriba, número de camiseta, edad y nombre completo.</p>
               </div>
               <button type="button" onclick="pasteVelezSample()" class="rounded-xl border border-slate-700 bg-slate-900 hover:bg-slate-800 px-3 py-1.5 text-[11px] font-bold text-slate-300">
                 Pegar ejemplo VELEZ
               </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div>
+                <label for="bulk-roster-gender" class="block text-[10px] font-bold uppercase text-sky-300 mb-1">¿Es Masculino o Femenino?</label>
+                <select id="bulk-roster-gender" onchange="analyzePastedContent()" class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-bold text-white focus:border-sky-500 focus:outline-none">
+                  <option value="">Seleccionar rama...</option>
+                  <option value="Masculino">Masculino</option>
+                  <option value="Femenino">Femenino</option>
+                </select>
+              </div>
+              <div>
+                <label for="bulk-roster-category" class="block text-[10px] font-bold uppercase text-sky-300 mb-1">¿Para qué categoría es?</label>
+                <select id="bulk-roster-category" onchange="analyzePastedContent()" class="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-bold text-white focus:border-sky-500 focus:outline-none">
+                  <option value="">Seleccionar categoría...</option>
+                  <option value="Sub 11">Sub 11</option>
+                  <option value="Sub 12">Sub 12</option>
+                  <option value="Sub 13">Sub 13</option>
+                  <option value="Sub 14">Sub 14</option>
+                  <option value="Sub 15">Sub 15</option>
+                  <option value="Sub 16">Sub 16</option>
+                  <option value="Sub 18">Sub 18</option>
+                  <option value="Sub 21">Sub 21</option>
+                  <option value="Mayores">Mayores</option>
+                  <option value="Maxi">Maxi</option>
+                </select>
+              </div>
             </div>
 
             <textarea id="paste-roster-textarea" rows="6" oninput="analyzePastedContent()" placeholder="Ejemplo:
@@ -666,6 +718,8 @@ VELEZ
         tournament: '',
         round: '',
         teamName: '',
+        rosterGender: '',
+        rosterCategory: '',
         opponent: '',
         currentSet: 1,
         scoreHome: 0,
@@ -849,7 +903,11 @@ VELEZ
           rosterSel.innerHTML = `<option value="">Sin planteles cargados</option>`;
         } else {
           rosterSel.innerHTML = state.rosters
-            .map((r) => `<option value="${escapeAttr(r.id)}">${escapeHtml(r.name)} (${(r.players || []).length} jugadores)</option>`)
+            .map((r) => {
+              const meta = [r.gender, r.category].filter(Boolean).join(' · ');
+              const metaText = meta ? ` — ${meta}` : '';
+              return `<option value="${escapeAttr(r.id)}">${escapeHtml(r.name)}${escapeHtml(metaText)} (${(r.players || []).length} jugadores)</option>`;
+            })
             .join('');
           if (state.activeRosterId) rosterSel.value = state.activeRosterId;
         }
@@ -877,6 +935,8 @@ VELEZ
 
       state.activeRosterId = chosenRoster.id;
       state.teamName = chosenRoster.name;
+      state.rosterGender = chosenRoster.gender || '';
+      state.rosterCategory = chosenRoster.category || '';
       state.roster = chosenRoster.players.map((p) => ({ ...p }));
       state.tournament = tourVal || 'Torneo';
       state.round = roundVal || 'Fecha 1';
@@ -1178,9 +1238,12 @@ VELEZ
     function renderRoster() {
       const dropdown = document.getElementById('saved-rosters-dropdown');
       const heading = document.getElementById('roster-title-heading');
+      const metaBadge = document.getElementById('roster-meta-badge');
       const badge = document.getElementById('roster-oncourt-badge');
       const primaryBtn = document.getElementById('roster-primary-action-btn');
       const teamInput = document.getElementById('manual-team-name');
+      const genderInput = document.getElementById('manual-roster-gender');
+      const categoryInput = document.getElementById('manual-roster-category');
       const rivalInput = document.getElementById('manual-rival-name');
       const listEl = document.getElementById('roster-players-list');
 
@@ -1191,7 +1254,10 @@ VELEZ
           dropdown.innerHTML = `<option value="">Sin planteles guardados</option>`;
         } else {
           dropdown.innerHTML = state.rosters
-            .map((r) => `<option value="${escapeAttr(r.id)}">${escapeHtml(r.name)} (${(r.players || []).length})</option>`)
+            .map((r) => {
+              const meta = [r.gender, r.category].filter(Boolean).join(' · ');
+              return `<option value="${escapeAttr(r.id)}">${escapeHtml(r.name)}${meta ? ` (${escapeHtml(meta)})` : ''} [${(r.players || []).length}]</option>`;
+            })
             .join('');
           if (state.activeRosterId) dropdown.value = state.activeRosterId;
         }
@@ -1200,8 +1266,18 @@ VELEZ
       const players = state.roster || [];
       const onCourtCount = players.filter((p) => p.onCourt).length;
       const displayTeam = state.teamName ? `Plantel ${state.teamName}` : 'Plantel';
+      const metaLabel = [state.rosterGender, state.rosterCategory].filter(Boolean).join(' · ');
 
       if (heading) heading.textContent = `${displayTeam} (${players.length})`;
+      if (metaBadge) {
+        if (metaLabel) {
+          metaBadge.textContent = metaLabel;
+          metaBadge.classList.remove('hidden');
+        } else {
+          metaBadge.textContent = '';
+          metaBadge.classList.add('hidden');
+        }
+      }
       if (badge) badge.textContent = `${onCourtCount} en cancha`;
 
       if (primaryBtn) {
@@ -1215,6 +1291,8 @@ VELEZ
       }
 
       if (teamInput) teamInput.value = players.length === 0 && !state.teamName ? '' : (state.teamName || '');
+      if (genderInput) genderInput.value = state.rosterGender || '';
+      if (categoryInput) categoryInput.value = state.rosterCategory || '';
       if (rivalInput) rivalInput.value = players.length === 0 && !state.opponent ? '' : (state.opponent || '');
 
       if (!listEl) return;
@@ -1266,6 +1344,8 @@ VELEZ
       }
       state.activeRosterId = '';
       state.teamName = '';
+      state.rosterGender = '';
+      state.rosterCategory = '';
       state.opponent = '';
       state.roster = [];
       saveState();
@@ -1275,10 +1355,14 @@ VELEZ
 
     function createNewEmptyRoster() {
       const id = 'roster_' + Date.now();
-      const newObj = { id, name: 'Nuevo Equipo', players: [] };
+      const gender = (document.getElementById('manual-roster-gender')?.value || '').trim();
+      const category = (document.getElementById('manual-roster-category')?.value || '').trim();
+      const newObj = { id, name: 'Nuevo Equipo', gender, category, players: [] };
       state.rosters.push(newObj);
       state.activeRosterId = id;
       state.teamName = newObj.name;
+      state.rosterGender = gender;
+      state.rosterCategory = category;
       state.roster = [];
       saveState();
       renderAll();
@@ -1290,6 +1374,8 @@ VELEZ
       if (!found) return;
       state.activeRosterId = found.id;
       state.teamName = found.name;
+      state.rosterGender = found.gender || '';
+      state.rosterCategory = found.category || '';
       state.roster = (found.players || []).map((p) => ({ ...p }));
       saveState();
       renderAll();
@@ -1304,6 +1390,8 @@ VELEZ
       const entry = {
         id: state.activeRosterId,
         name: cleanName,
+        gender: state.rosterGender || '',
+        category: state.rosterCategory || '',
         players: (state.roster || []).map((p) => ({ ...p }))
       };
       if (idx >= 0) state.rosters[idx] = entry;
@@ -1318,6 +1406,17 @@ VELEZ
       updateHeaderUI();
     }
 
+    function updateCurrentRosterMeta() {
+      const genderVal = (document.getElementById('manual-roster-gender')?.value || '').trim();
+      const categoryVal = (document.getElementById('manual-roster-category')?.value || '').trim();
+      state.rosterGender = genderVal;
+      state.rosterCategory = categoryVal;
+      syncActiveRosterToCollection();
+      saveState();
+      renderRoster();
+      populatePrepSelectors();
+    }
+
     function focusManualPlayerInput() {
       document.getElementById('manual-player-name')?.focus();
     }
@@ -1328,12 +1427,23 @@ VELEZ
       const nameInput = document.getElementById('manual-player-name');
       const roleSelect = document.getElementById('manual-player-role');
       const teamInput = document.getElementById('manual-team-name');
+      const genderInput = document.getElementById('manual-roster-gender');
+      const categoryInput = document.getElementById('manual-roster-category');
 
       const name = (nameInput?.value || '').trim();
       if (!name) {
         showToast('Escribí el nombre del jugador.');
         return;
       }
+      const gender = (genderInput?.value || '').trim();
+      const category = (categoryInput?.value || '').trim();
+      if (!gender || !category) {
+        showToast('Seleccioná si es Masculino o Femenino y la categoría.');
+        return;
+      }
+      state.rosterGender = gender;
+      state.rosterCategory = category;
+
       if (teamInput && teamInput.value.trim()) {
         state.teamName = teamInput.value.trim();
       } else if (!state.teamName) {
@@ -1525,6 +1635,8 @@ VELEZ
 
     function analyzePastedContent() {
       const text = document.getElementById('paste-roster-textarea')?.value || '';
+      const gender = (document.getElementById('bulk-roster-gender')?.value || '').trim();
+      const category = (document.getElementById('bulk-roster-category')?.value || '').trim();
       const preview = document.getElementById('detected-teams-preview');
       if (!preview) return;
 
@@ -1535,11 +1647,13 @@ VELEZ
         return;
       }
 
+      const metaSummary = [gender, category].filter(Boolean).join(' · ') || 'Sin rama/categoría seleccionada';
+
       preview.classList.remove('hidden');
       preview.innerHTML = `
-        <div class="flex items-center justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-1">
           <span class="text-xs font-extrabold text-sky-300">✓ ${detectedTeamsBuffer.length} equipo(s) detectado(s)</span>
-          <span class="text-[11px] text-slate-400">Listo para importar al plantel</span>
+          <span class="text-[11px] font-semibold text-amber-300">${escapeHtml(metaSummary)}</span>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
           ${detectedTeamsBuffer.map((team) => `
@@ -1561,15 +1675,26 @@ VELEZ
         return;
       }
 
+      const gender = (document.getElementById('bulk-roster-gender')?.value || '').trim();
+      const category = (document.getElementById('bulk-roster-category')?.value || '').trim();
+      if (!gender || !category) {
+        showToast('Elegí si es Masculino o Femenino y la categoría antes de importar.');
+        return;
+      }
+
       if (!Array.isArray(state.rosters)) state.rosters = [];
       let firstImportedId = null;
 
       detectedTeamsBuffer.forEach((team, index) => {
-        const existingIdx = state.rosters.findIndex((r) => r.name.toLowerCase() === team.name.toLowerCase());
+        const existingIdx = state.rosters.findIndex(
+          (r) => r.name.toLowerCase() === team.name.toLowerCase() && (r.gender || '') === gender && (r.category || '') === category
+        );
         const rosterId = existingIdx >= 0 ? state.rosters[existingIdx].id : ('roster_' + Date.now() + '_' + index);
         const rosterObj = {
           id: rosterId,
           name: team.name,
+          gender,
+          category,
           players: team.players.map((p) => ({ ...p }))
         };
 
@@ -1583,6 +1708,8 @@ VELEZ
         const active = state.rosters.find((r) => r.id === firstImportedId);
         state.activeRosterId = active.id;
         state.teamName = active.name;
+        state.rosterGender = active.gender || gender;
+        state.rosterCategory = active.category || category;
         state.roster = active.players.map((p) => ({ ...p }));
       }
       if (detectedTeamsBuffer.length > 1) {
@@ -1591,7 +1718,7 @@ VELEZ
 
       saveState();
       renderAll();
-      showToast(`Se importaron ${detectedTeamsBuffer.length} equipo(s) (${detectedTeamsBuffer[0].name}).`);
+      showToast(`Se importaron ${detectedTeamsBuffer.length} equipo(s) (${gender} · ${category}).`);
     }
 
     // =========================================================================
