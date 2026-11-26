@@ -819,6 +819,7 @@
     const STORAGE_KEY_STATE_PREFIX = 'voley_stats_state_';
     const STORAGE_KEY_CLOUD = 'voley_stats_supabase_cfg_v1';
     const DEFAULT_SUPABASE_URL = 'https://aevmoxgnptjreycgniks.supabase.co';
+    const DEFAULT_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFldm1veGducHRqcmV5Y2duaWtzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyMDAwMDAsImV4cCI6MjA1Njc3NjAwMH0.public_anon_placeholder_key';
 
     const memoryFallback = new Map();
     let deferredInstallPrompt = null;
@@ -2238,12 +2239,11 @@
       try {
         const raw = readStore(STORAGE_KEY_CLOUD);
         const parsed = raw ? JSON.parse(raw) : {};
-        return {
-          url: (parsed.url || DEFAULT_SUPABASE_URL).trim(),
-          key: (parsed.key || '').trim()
-        };
+        const url = String(parsed.url || '').trim() || DEFAULT_SUPABASE_URL;
+        const key = String(parsed.key || '').trim() || DEFAULT_SUPABASE_ANON_KEY;
+        return { url, key };
       } catch (err) {
-        return { url: DEFAULT_SUPABASE_URL, key: '' };
+        return { url: DEFAULT_SUPABASE_URL, key: DEFAULT_SUPABASE_ANON_KEY };
       }
     }
 
@@ -2264,7 +2264,7 @@
         topBadge.textContent = configured ? '☁️ Nube lista' : '☁️ Local';
       }
       if (cfgBadge) {
-        cfgBadge.textContent = configured ? 'Configurada' : 'No configurada';
+        cfgBadge.textContent = configured ? 'Configurada (Compartida)' : 'No configurada';
         cfgBadge.className = configured
           ? 'rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-3 py-1 text-xs font-bold text-emerald-300'
           : 'rounded-xl border border-slate-700 bg-slate-950 px-3 py-1 text-xs font-bold text-slate-300';
@@ -2272,17 +2272,15 @@
     }
 
     async function saveAndSyncSupabase() {
-      const u = (document.getElementById('supabase-url-input')?.value || '').trim();
-      const k = (document.getElementById('supabase-key-input')?.value || '').trim();
+      const u = (document.getElementById('supabase-url-input')?.value || '').trim() || DEFAULT_SUPABASE_URL;
+      const k = (document.getElementById('supabase-key-input')?.value || '').trim() || DEFAULT_SUPABASE_ANON_KEY;
       writeStore(STORAGE_KEY_CLOUD, JSON.stringify({ url: u, key: k }));
       updateSupabaseStatusUI();
-      if (!u || !k) {
-        showToast('Configuración guardada en local.');
-        return;
-      }
+
       try {
         const prof = getActiveProfile();
-        const res = await fetch(`${u.replace(/\/+$/, '')}/rest/v1/club_state?on_conflict=id`, {
+        const endpoint = `${u.replace(/\/+$/, '')}/rest/v1/club_state?on_conflict=id`;
+        const res = await fetch(endpoint, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -2296,17 +2294,27 @@
             updated_by: prof ? prof.username : 'defeadmin'
           }])
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        showToast('Estado sincronizado con Supabase.');
+
+        if (!res.ok) {
+          let detail = '';
+          try {
+            const errJson = await res.json();
+            detail = errJson.message || errJson.hint || JSON.stringify(errJson);
+          } catch (_) {
+            detail = await res.text().catch(() => '');
+          }
+          throw new Error(`HTTP ${res.status}${detail ? ` — ${detail}` : ''}`);
+        }
+        showToast('Estado guardado y sincronizado en Supabase.');
       } catch (err) {
-        showToast(`No se pudo subir a Supabase (${err.message}).`);
+        showToast(`Error al conectar con Supabase (${err.message}). Verificá la Anon Key y la tabla club_state.`);
       }
     }
 
     async function pullFromSupabase() {
       const cfg = getSupabaseConfig();
       if (!cfg.url || !cfg.key) {
-        showToast('Ingresá URL y Key de Supabase primero.');
+        showToast('Falta configurar URL y Key de Supabase.');
         return;
       }
       try {
@@ -2317,7 +2325,14 @@
             Authorization: `Bearer ${cfg.key}`
           }
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) {
+          let detail = '';
+          try {
+            const errJson = await res.json();
+            detail = errJson.message || errJson.hint || '';
+          } catch (_) {}
+          throw new Error(`HTTP ${res.status}${detail ? ` — ${detail}` : ''}`);
+        }
         const rows = await res.json();
         if (Array.isArray(rows) && rows[0] && rows[0].payload) {
           state = normalizeState(rows[0].payload);
@@ -2325,7 +2340,7 @@
           renderAll();
           showToast('Datos descargados desde Supabase.');
         } else {
-          showToast('No hay registros remotos todavía.');
+          showToast('Tabla conectada, sin registros guardados todavía.');
         }
       } catch (err) {
         showToast(`Error al bajar de nube (${err.message}).`);
