@@ -577,6 +577,65 @@
     <!-- VISTA 3: PLANTEL, DATOS DEL PARTIDO, SUPABASE E IMPORTADOR -->
     <section id="view-roster" class="hidden space-y-3.5">
 
+      <!-- BOTÓN Y ASISTENTE DE NUEVO PARTIDO -->
+      <div class="bg-gradient-to-br from-emerald-950/60 via-court-900 to-sky-950/40 border border-emerald-500/40 rounded-2xl p-3.5 shadow-md space-y-3">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 flex items-center justify-center shrink-0">
+              <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h2 class="text-sm font-black text-white">Preparar Partido</h2>
+              <p class="text-[11px] text-slate-300">Asigná torneo, plantel cargado y rival con marcador en 0-0</p>
+            </div>
+          </div>
+          <button type="button" id="btn-start-new-match-flow" onclick="toggleNewMatchWizard(true)"
+            class="tap-btn px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-lg shadow-emerald-950/50 shrink-0 flex items-center gap-1.5">
+            <span>➕ Nuevo Partido</span>
+          </button>
+        </div>
+
+        <!-- PANEL DESPLEGABLE DE NUEVO PARTIDO -->
+        <div id="new-match-wizard-box" class="hidden bg-court-950/90 border border-emerald-500/35 rounded-xl p-3 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-black uppercase tracking-wider text-emerald-300">⚡ Configurar Nuevo Partido (Reinicia Stats a 0-0)</span>
+            <button type="button" onclick="toggleNewMatchWizard(false)" class="text-xs font-bold text-slate-400 hover:text-white px-1">✕</button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Torneo / Competencia</label>
+              <input id="nm-tournament" type="text" placeholder="Ej: Copa Argentina Sub 14"
+                class="w-full bg-court-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-white focus:border-emerald-400 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Fecha / Instancia</label>
+              <input id="nm-stage" type="text" placeholder="Ej: Fecha 2 · Zona"
+                class="w-full bg-court-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-white focus:border-emerald-400 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-1">Plantel Cargado (Local)</label>
+              <select id="nm-roster-select"
+                class="w-full bg-court-900 border border-emerald-500/40 rounded-lg px-2.5 py-1.5 text-xs font-bold text-emerald-300 focus:border-emerald-400 focus:outline-none">
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold uppercase tracking-wider text-rose-400 mb-1">Equipo Rival</label>
+              <input id="nm-away-team" type="text" placeholder="Nombre del rival..."
+                class="w-full bg-court-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-bold text-rose-300 focus:border-rose-400 focus:outline-none" />
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between gap-2 pt-1">
+            <span class="text-[10px] text-amber-300 font-semibold">⚠️ Se reinician puntos y acciones en 0-0</span>
+            <button type="button" onclick="confirmAndStartNewMatch()"
+              class="tap-btn px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-md">
+              🏐 Iniciar Partido en Vivo →
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- DATOS DEL PARTIDO EDITABLES -->
       <div class="bg-court-900 border border-slate-800 rounded-2xl p-3.5 shadow-md space-y-3">
         <div class="flex items-center justify-between">
@@ -585,11 +644,11 @@
               <i data-lucide="trophy" class="w-4 h-4"></i>
             </div>
             <div>
-              <h2 class="text-sm font-black text-white">Datos del Partido</h2>
-              <p class="text-[11px] text-slate-400">Se muestran en vivo y en el resumen de WhatsApp</p>
+              <h2 class="text-sm font-black text-white">Datos del Partido Activo</h2>
+              <p class="text-[11px] text-slate-400">Edición rápida del encuentro actual en curso</p>
             </div>
           </div>
-          <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full">Auto-guardado</span>
+          <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full">En Curso</span>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -2762,8 +2821,93 @@
       updateScoreboardUI();
       renderPlayersGrid();
       syncStatsMatchSelector();
-      showToast('💾 Partido guardado en la base');
+      switchTab('roster');
+      toggleNewMatchWizard(true);
+      showToast('💾 Partido guardado · Configurá el próximo partido');
       await pushToSupabase(false);
+    }
+
+    function finalizeAndDiscardMatch() {
+      resetMatchToZero();
+      saveState();
+      closeFinishMatchModal();
+      updateScoreboardUI();
+      renderPlayersGrid();
+      syncStatsMatchSelector();
+      switchTab('roster');
+      toggleNewMatchWizard(true);
+      showToast('🗑️ Partido cerrado · Listo para cargar nuevo partido');
+    }
+
+    function toggleNewMatchWizard(forceOpen) {
+      const box = document.getElementById('new-match-wizard-box');
+      if (!box) return;
+      const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : box.classList.contains('hidden');
+      box.classList.toggle('hidden', !shouldOpen);
+      if (shouldOpen) {
+        populateNewMatchWizard();
+      }
+    }
+
+    function populateNewMatchWizard() {
+      const torInp = document.getElementById('nm-tournament');
+      const stgInp = document.getElementById('nm-stage');
+      const awayInp = document.getElementById('nm-away-team');
+      const rosterSel = document.getElementById('nm-roster-select');
+
+      if (torInp) torInp.value = state.tournament || '';
+      if (stgInp) stgInp.value = '';
+      if (awayInp) awayInp.value = '';
+
+      if (rosterSel) {
+        const teamsEntries = Object.values(state.teams || {});
+        if (teamsEntries.length === 0) {
+          const active = getActiveTeam();
+          teamsEntries.push(active);
+        }
+        rosterSel.innerHTML = teamsEntries.map(t => {
+          const count = Array.isArray(t.roster) ? t.roster.length : 0;
+          return `<option value="${t.id}" ${t.id === state.activeTeamId ? 'selected' : ''}>${t.name} (${count} jugadores)</option>`;
+        }).join('');
+      }
+    }
+
+    function confirmAndStartNewMatch() {
+      const torInp = document.getElementById('nm-tournament');
+      const stgInp = document.getElementById('nm-stage');
+      const awayInp = document.getElementById('nm-away-team');
+      const rosterSel = document.getElementById('nm-roster-select');
+
+      const selectedTeamId = rosterSel && rosterSel.value ? rosterSel.value : state.activeTeamId;
+      if (selectedTeamId && state.teams && state.teams[selectedTeamId]) {
+        state.activeTeamId = selectedTeamId;
+      }
+      const chosenTeam = getActiveTeam();
+
+      const newTor = (torInp ? torInp.value : '').trim();
+      const newStg = (stgInp ? stgInp.value : '').trim();
+      const newAway = (awayInp ? awayInp.value : '').trim();
+
+      if (newTor) {
+        state.tournament = newTor;
+        if (!Array.isArray(state.savedTournaments)) state.savedTournaments = [...DEFAULT_TOURNAMENTS];
+        if (!state.savedTournaments.includes(newTor)) state.savedTournaments.push(newTor);
+      }
+      state.stage = newStg || 'Fecha 1';
+      state.homeTeam = chosenTeam?.name || state.homeTeam || 'DBANF';
+      state.awayTeam = newAway || 'RIVAL';
+
+      resetMatchToZero();
+      viewingStatsMatchId = 'CURRENT';
+      saveState();
+
+      toggleNewMatchWizard(false);
+      syncMatchInputs();
+      updateScoreboardUI();
+      renderRoster();
+      renderPlayersGrid();
+      switchTab('live');
+      showToast(`🏐 Nuevo partido: ${state.homeTeam} vs ${state.awayTeam} (0-0)`);
     }
 
     function finalizeAndDiscardMatch() {
