@@ -1,951 +1,809 @@
-<!DOCTYPE html>
+{<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Vóley Stats Live • v13.05.10</title>
+  <title>Vóley Stats Live • v13.05.29</title>
   <meta name="theme-color" content="#0f172a" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    * {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      background: radial-gradient(circle at top, #172554 0%, #090d16 55%, #05070d 100%);
+      color: #f8fafc;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.84);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      box-shadow: 0 18px 40px -20px rgba(0, 0, 0, 0.75);
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #ffffff;
+      border-color: rgba(16, 185, 129, 0.6);
+      box-shadow: 0 8px 20px -6px rgba(16, 185, 129, 0.55);
+    }
+    .court-chip-active {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.22), rgba(14, 165, 233, 0.18));
+      border-color: #10b981 !important;
+      box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.45);
+    }
+    .action-tile {
+      transition: transform 0.08s ease, border-color 0.15s ease, background-color 0.15s ease;
+    }
+    .action-tile:active {
+      transform: scale(0.97);
+    }
+    /* Scrollbar discreta */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.5);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(100, 116, 139, 0.45);
+      border-radius: 9999px;
+    }
+  </style>
   <script>
-    // Manifest PWA dinámico + Service Worker inline para habilitar instalación en Android Chrome desde 1 solo HTML
-    (function setupDynamicPWA() {
-      const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#0f172a"/><circle cx="256" cy="256" r="176" fill="#10b981" fill-opacity="0.18" stroke="#10b981" stroke-width="24"/><path d="M110 210c85-35 205-35 292 0M110 302c85 35 205 35 292 0M256 80c-45 85-45 267 0 352M256 80c45 85 45 267 0 352" fill="none" stroke="#34d399" stroke-width="18" stroke-linecap="round"/></svg>`;
-      const iconDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(iconSvg);
+    // Manifest dinámico y Service Worker inline para instalación PWA en Android / escritorio
+    (function initPwaHelpers() {
+      try {
+        const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" rx="42" fill="#0f172a"/><circle cx="96" cy="96" r="62" fill="none" stroke="#10b981" stroke-width="10"/><path d="M44 74c34 6 62 34 68 74M96 34c18 28 24 66 12 122M40 112c38-14 78-10 114 14" fill="none" stroke="#38bdf8" stroke-width="8" stroke-linecap="round"/></svg>`;
+        const iconUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(iconSvg);
+        const manifest = {
+          name: 'Vóley Stats Live',
+          short_name: 'Vóley Stats',
+          start_url: './',
+          display: 'standalone',
+          background_color: '#090d16',
+          theme_color: '#0f172a',
+          icons: [
+            { src: iconUrl, sizes: '192x192', type: 'image/svg+xml', purpose: 'any' },
+            { src: iconUrl, sizes: '512x512', type: 'image/svg+xml', purpose: 'any' }
+          ]
+        };
+        const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+        const manifestUrl = URL.createObjectURL(blob);
+        const linkEl = document.createElement('link');
+        linkEl.rel = 'manifest';
+        linkEl.href = manifestUrl;
+        document.head.appendChild(linkEl);
 
-      const manifestObj = {
-        name: 'Vóley Stats Live',
-        short_name: 'Vóley Stats',
-        description: 'Registro estadístico táctico en vivo para equipos de vóley.',
-        start_url: location.href,
-        scope: location.origin + location.pathname.replace(/[^/]*$/, ''),
-        display: 'standalone',
-        orientation: 'portrait',
-        background_color: '#090d16',
-        theme_color: '#0f172a',
-        icons: [
-          { src: iconDataUrl, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
-          { src: iconDataUrl, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
-        ]
-      };
-
-      const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
-      const manifestUrl = URL.createObjectURL(manifestBlob);
-      const link = document.createElement('link');
-      link.rel = 'manifest';
-      link.href = manifestUrl;
-      document.head.appendChild(link);
-
-      const appleIcon = document.createElement('link');
-      appleIcon.rel = 'apple-touch-icon';
-      appleIcon.href = iconDataUrl;
-      document.head.appendChild(appleIcon);
-
-      if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
-        const swCode = `
-          const CACHE_NAME = 'voley-stats-13-05-10';
-          self.addEventListener('install', (e) => {
-            self.skipWaiting();
-          });
-          self.addEventListener('activate', (e) => {
-            e.waitUntil(self.clients.claim());
-          });
-          self.addEventListener('fetch', (e) => {
-            if (e.request.method !== 'GET') return;
-            e.respondWith(
-              fetch(e.request).catch(() => caches.match(e.request))
-            );
-          });
-        `;
-        const swBlob = new Blob([swCode], { type: 'application/javascript' });
-        const swUrl = URL.createObjectURL(swBlob);
-        navigator.serviceWorker.register(swUrl).catch(() => {});
+        if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+          const swCode = `
+            const CACHE_NAME = 'voley-stats-13-05-29';
+            self.addEventListener('install', (event) => {
+              event.waitUntil(self.skipWaiting());
+            });
+            self.addEventListener('activate', (event) => {
+              event.waitUntil(self.clients.claim());
+            });
+            self.addEventListener('fetch', (event) => {
+              if (event.request.method !== 'GET') return;
+              event.respondWith(
+                fetch(event.request).catch(() => caches.match(event.request))
+              );
+            });
+          `;
+          const swBlob = new Blob([swCode], { type: 'application/javascript' });
+          const swUrl = URL.createObjectURL(swBlob);
+          navigator.serviceWorker.register(swUrl).catch(() => {});
+        }
+      } catch (err) {
+        console.warn('PWA init skipped:', err);
       }
     })();
   </script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-    body {
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background-color: #090d16;
-      color: #f8fafc;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .glass-card {
-      background: rgba(15, 23, 42, 0.85);
-      border: 1px solid rgba(51, 65, 85, 0.65);
-      backdrop-filter: blur(12px);
-    }
-    .action-btn {
-      transition: transform 0.08s ease, filter 0.15s ease;
-    }
-    .action-btn:active {
-      transform: scale(0.96);
-    }
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-  </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="antialiased selection:bg-emerald-500/30 selection:text-emerald-200">
+  <!-- Contenedor de Toast / Notificaciones no bloqueantes -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none px-2 sm:px-0"></div>
 
-  <!-- PANTALLA DE LOGIN -->
-  <div id="login-screen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
-    <div class="w-full max-w-md glass-card rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-800">
-      <div class="flex items-center gap-3 mb-6">
-        <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-2xl">
-          🏐
-        </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <span class="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-              PWA • CANCHA & NUBE
-            </span>
-            <span id="login-version-badge" class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-              v13.05.10
-            </span>
-          </div>
-          <h1 class="text-2xl font-black tracking-tight text-white mt-1">Vóley Stats Live</h1>
+  <!-- ===================================================================== -->
+  <!-- PANTALLA DE LOGIN                                                     -->
+  <!-- ===================================================================== -->
+  <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
+    <div class="glass-card w-full max-w-md rounded-3xl p-6 sm:p-7 space-y-5">
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+            PWA • CANCHA & NUBE
+          </span>
+          <span id="login-version-badge" class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+            v13.05.29
+          </span>
         </div>
       </div>
 
-      <p class="text-xs sm:text-sm text-slate-400 mb-6 leading-relaxed">
-        Ingresá tus credenciales de acceso para registrar estadísticas en vivo, gestionar convocatorias y sincronizar planteles.
-      </p>
+      <div>
+        <h1 class="text-2xl font-black tracking-tight text-white">Vóley Stats Live</h1>
+        <p class="text-xs sm:text-sm text-slate-400 mt-1">
+          Ingresá tus credenciales para registrar estadísticas en vivo, analizar rendimiento y sincronizar planteles.
+        </p>
+      </div>
 
-      <form id="login-form" class="space-y-4">
+      <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
         <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Usuario</label>
-          <input id="login-username" type="text" autocomplete="username" required placeholder="Ingresá tu usuario"
-            class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors" />
+          <label for="login-username" class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5">
+            Usuario
+          </label>
+          <input id="login-username" type="text" required autocomplete="username" placeholder="Ej: admin o profe"
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500" />
         </div>
+
         <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Contraseña</label>
-          <input id="login-password" type="password" autocomplete="current-password" required placeholder="••••"
-            class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors" />
+          <label for="login-password" class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5">
+            Contraseña
+          </label>
+          <input id="login-password" type="password" required autocomplete="current-password" placeholder="••••"
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500" />
         </div>
-        <div id="login-error" class="hidden text-xs text-rose-400 bg-rose-500/10 border border-rose-500/30 rounded-xl px-3.5 py-2.5">
-          Usuario o contraseña incorrectos.
-        </div>
+
         <button type="submit"
-          class="w-full py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm tracking-wide shadow-lg shadow-emerald-500/20 transition-all">
-          Entrar a la Cancha
+          class="w-full py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-sm tracking-wide shadow-lg shadow-emerald-500/20 transition">
+          Ingresar a la Cancha
         </button>
       </form>
+
+      <div class="pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
+        <span>Demo: <strong class="text-slate-200">defeadmin</strong> / <strong class="text-slate-200">admin</strong> o <strong class="text-slate-200">ciro</strong> / <strong class="text-slate-200">123</strong></span>
+      </div>
     </div>
   </div>
 
-  <!-- APLICACIÓN PRINCIPAL -->
-  <div id="app-shell" class="hidden flex-1 flex flex-col">
-    <!-- BARRA SUPERIOR -->
-    <header class="sticky top-0 z-30 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80">
-      <div class="max-w-6xl mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2">
-        <div class="flex items-center gap-2.5 min-w-0">
-          <div class="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-lg shrink-0">
-            🏐
-          </div>
+  <!-- ===================================================================== -->
+  <!-- APLICACIÓN PRINCIPAL                                                  -->
+  <!-- ===================================================================== -->
+  <div id="app-shell" class="hidden min-h-screen flex flex-col">
+    <!-- Encabezado y navegación -->
+    <header class="sticky top-0 z-30 bg-slate-950/85 backdrop-blur-xl border-b border-slate-800/90">
+      <div class="max-w-6xl mx-auto px-3 sm:px-6 py-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
           <div class="min-w-0">
             <div class="flex items-center gap-2">
-              <h1 class="text-sm sm:text-base font-black text-white truncate">Vóley Stats Live</h1>
-              <span id="app-version-badge" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 shrink-0">
-                v13.05.10
+              <h1 class="text-base sm:text-lg font-black text-white truncate">Vóley Stats Live</h1>
+              <span id="app-version-badge" class="text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-800 text-emerald-300 border border-slate-700 shrink-0">
+                v13.05.29
               </span>
             </div>
-            <div class="flex items-center gap-2 text-[11px] text-slate-400">
-              <span id="active-user-label" class="truncate">Usuario: -</span>
+            <div class="flex flex-wrap items-center gap-2 text-[11px] text-slate-400 mt-0.5">
+              <span>Usuario: <strong id="header-user-label" class="text-slate-200">-</strong></span>
               <span>•</span>
-              <span id="cloud-status-pill" class="inline-flex items-center gap-1 text-slate-300">
-                <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span> Local
+              <span id="cloud-status-pill" class="inline-flex items-center gap-1.5 text-emerald-400 font-semibold">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                Nube Lista
               </span>
             </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button onclick="syncCloudManual()"
+              class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 text-xs font-bold transition">
+              ☁️ Sincronizar
+            </button>
+            <button onclick="logoutUser()"
+              class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-rose-500/15 text-slate-300 hover:text-rose-300 border border-slate-800 text-xs font-bold transition">
+              Salir
+            </button>
           </div>
         </div>
 
-        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <button id="btn-install-pwa" onclick="triggerInstallPWA()"
-            class="hidden px-2.5 py-1.5 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 text-xs font-bold">
-            📲 Instalar
+        <!-- Navegación principal -->
+        <nav class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2 mt-3" aria-label="Secciones principales">
+          <button id="tab-setup" onclick="switchTab('setup')"
+            class="tab-btn active py-2.5 px-2.5 rounded-xl text-xs sm:text-sm font-bold text-center border border-transparent transition">
+            1. Preparar Partido
           </button>
-          <button onclick="openBulkModal()"
-            class="px-2.5 py-1.5 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-xs font-bold">
-            📋 Carga Masiva
+          <button id="tab-live" onclick="switchTab('live')"
+            class="tab-btn py-2.5 px-2.5 rounded-xl text-xs sm:text-sm font-bold text-center bg-slate-900/90 text-slate-300 hover:bg-slate-800 border border-slate-800 transition">
+            2. En Vivo
           </button>
-          <button onclick="logout()"
-            class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-semibold">
-            Salir
+          <button id="tab-stats" onclick="switchTab('stats')"
+            class="tab-btn py-2.5 px-2.5 rounded-xl text-xs sm:text-sm font-bold text-center bg-slate-900/90 text-slate-300 hover:bg-slate-800 border border-slate-800 transition">
+            3. Rendimiento
+          </button>
+          <button id="tab-library" onclick="switchTab('library')"
+            class="tab-btn py-2.5 px-2.5 rounded-xl text-xs sm:text-sm font-bold text-center bg-slate-900/90 text-slate-300 hover:bg-slate-800 border border-slate-800 transition">
+            4. Biblioteca
+          </button>
+        </nav>
+
+        <!-- Barra secundaria de Administración / Configuración -->
+        <div id="admin-config-strip" class="mt-2 flex flex-wrap items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-slate-900/75 border border-slate-800/80">
+          <div class="flex items-center gap-2 text-[11px] text-slate-400">
+            <span class="font-semibold text-slate-300">Panel de Control</span>
+            <span id="admin-notif-badge" class="hidden px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-bold text-[10px]">
+              0 avisos
+            </span>
+          </div>
+          <button id="tab-config" onclick="switchTab('config')"
+            class="tab-btn py-1.5 px-3 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-emerald-500/30 transition flex items-center gap-1.5">
+            <span>⚙️ Configuración</span>
           </button>
         </div>
       </div>
-
-      <!-- NAVEGACIÓN PRINCIPAL -->
-      <nav class="max-w-6xl mx-auto px-3 sm:px-6 pb-2 flex gap-1.5 overflow-x-auto no-scrollbar">
-        <button onclick="switchTab('setup')" id="tab-btn-setup"
-          class="tab-btn flex-1 min-w-[115px] py-2 px-3 rounded-xl text-xs font-extrabold transition-all bg-emerald-500 text-slate-950">
-          1. Preparar Partido
-        </button>
-        <button onclick="switchTab('live')" id="tab-btn-live"
-          class="tab-btn flex-1 min-w-[115px] py-2 px-3 rounded-xl text-xs font-extrabold transition-all bg-slate-900 text-slate-400 hover:text-white border border-slate-800">
-          2. En Vivo
-        </button>
-        <button onclick="switchTab('stats')" id="tab-btn-stats"
-          class="tab-btn flex-1 min-w-[115px] py-2 px-3 rounded-xl text-xs font-extrabold transition-all bg-slate-900 text-slate-400 hover:text-white border border-slate-800">
-          3. Rendimiento
-        </button>
-        <button onclick="switchTab('library')" id="tab-btn-library"
-          class="tab-btn flex-1 min-w-[115px] py-2 px-3 rounded-xl text-xs font-extrabold transition-all bg-slate-900 text-slate-400 hover:text-white border border-slate-800">
-          4. Biblioteca
-        </button>
-      </nav>
     </header>
 
-    <!-- CONTENIDO -->
-    <main class="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-5">
-
+    <!-- Contenido principal -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-6 py-4 space-y-4">
       <!-- ========================================================= -->
-      <!-- VISTA 1: PREPARAR PARTIDO                                 -->
+      <!-- SOLAPA 1: PREPARAR PARTIDO                                -->
       <!-- ========================================================= -->
-      <section id="view-setup" class="space-y-5">
-
-        <!-- NUBE COMPARTIDA (SUPABASE) -->
-        <div class="glass-card rounded-2xl p-4 sm:p-5">
-          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+      <section id="view-setup" class="space-y-4">
+        <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h2 class="text-sm sm:text-base font-extrabold text-white flex items-center gap-2">
-                ☁️ Nube Compartida (Supabase)
-              </h2>
-              <p class="text-xs text-slate-400">Sincronizá planteles, convocatorias y partidos entre entrenadores.</p>
+              <h2 class="text-base sm:text-lg font-black text-white">Configuración del Partido y Plantel</h2>
+              <p class="text-xs text-slate-400">Seleccioná equipo, rival, torneo y definí Titulares, Banco o No Convocados.</p>
             </div>
-            <span id="supabase-badge" class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-              Sin configurar
-            </span>
-          </div>
-
-          <div id="supabase-credentials-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-            <div>
-              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Project URL</label>
-              <input id="supabase-url-input" type="url" placeholder="https://tu-proyecto.supabase.co"
-                class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500" />
-            </div>
-            <div>
-              <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Anon / Publishable Key</label>
-              <input id="supabase-key-input" type="password" placeholder="eyJ... o sb_publishable_..."
-                class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500" />
-            </div>
-          </div>
-
-          <div class="flex flex-wrap items-center gap-2">
-            <button onclick="saveSupabaseConfigAndSync()"
-              class="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs">
-              Guardar y Sincronizar
-            </button>
-            <button onclick="pullFromCloud(true)"
-              class="px-3.5 py-2 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 font-bold text-xs">
-              ⬇️ Bajar de Nube
-            </button>
-            <button id="btn-toggle-supabase-creds" onclick="toggleSupabaseCredentialsVisibility()"
-              class="hidden px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-semibold text-xs">
-              ⚙️ Editar credenciales
-            </button>
-          </div>
-        </div>
-
-        <!-- SELECCIÓN DE EQUIPOS Y DATOS DEL PARTIDO -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          <!-- MI EQUIPO -->
-          <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-4">
-            <div class="flex items-center justify-between gap-2">
-              <h2 class="text-sm sm:text-base font-extrabold text-white">🛡️ Mi Equipo (Plantel Propio)</h2>
-              <button onclick="createNewTeamPrompt()"
-                class="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-bold">
-                + Nuevo Equipo
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="openBulkImportModal()"
+                class="px-3 py-2 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 text-xs font-bold transition">
+                📥 Carga Masiva
+              </button>
+              <button onclick="startMatchAndGoLive()"
+                class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs sm:text-sm font-black transition">
+                ▶️ Ir a En Vivo
               </button>
             </div>
+          </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-              <div class="sm:col-span-2">
-                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Equipo Seleccionado</label>
-                <div class="flex gap-1.5">
-                  <select id="select-my-team" onchange="selectMyTeam(this.value)"
-                    class="flex-1 px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-white font-semibold focus:outline-none focus:border-emerald-500">
-                  </select>
-                  <button onclick="renameActiveTeamPrompt()" title="Renombrar equipo"
-                    class="px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs">
-                    ✏️
-                  </button>
-                  <button onclick="deleteActiveTeam()" title="Eliminar equipo"
-                    class="px-2.5 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-xs">
-                    🗑️
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Rama / Cat.</label>
-                <input id="input-team-branch" type="text" placeholder="Ej: Sub-18 Masc"
-                  onchange="updateActiveTeamBranch(this.value)"
-                  class="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500" />
-              </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label for="setup-team-select" class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">
+                Mi Equipo
+              </label>
+              <select id="setup-team-select" onchange="onSetupTeamChange()"
+                class="w-full px-3 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500"></select>
             </div>
 
-            <!-- AGREGAR JUGADOR INDIVIDUAL -->
-            <form onsubmit="addPlayerToRoster(event)" class="grid grid-cols-12 gap-2 pt-2 border-t border-slate-800/80">
-              <input id="new-player-number" type="number" min="1" max="99" required placeholder="#"
-                class="col-span-3 sm:col-span-2 px-2.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-white text-center font-bold focus:outline-none focus:border-emerald-500" />
-              <input id="new-player-name" type="text" required placeholder="Nombre y apellido"
-                class="col-span-9 sm:col-span-5 px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500" />
+            <div>
+              <label for="setup-rival-input" class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">
+                Rival
+              </label>
+              <input id="setup-rival-input" type="text" oninput="onMatchMetaChange()" placeholder="Ej: Banfield / Glorias"
+                class="w-full px-3 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500" />
+            </div>
+
+            <div>
+              <label for="setup-tournament-select" class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">
+                Torneo / Copa
+              </label>
+              <select id="setup-tournament-select" onchange="onMatchMetaChange()"
+                class="w-full px-3 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500"></select>
+            </div>
+          </div>
+
+          <!-- Alta rápida de jugador -->
+          <div class="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2.5">
+            <div class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">+ Agregar Jugador al Plantel</div>
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              <input id="new-player-number" type="number" min="1" max="99" placeholder="#"
+                class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500" />
+              <input id="new-player-name" type="text" placeholder="Nombre y apellido"
+                class="col-span-2 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500" />
               <select id="new-player-pos"
-                class="col-span-7 sm:col-span-3 px-2.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500">
-                <option value="Universal">Universal</option>
-                <option value="Armador">Armador</option>
+                class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500">
                 <option value="Punta">Punta</option>
                 <option value="Central">Central</option>
                 <option value="Opuesto">Opuesto</option>
+                <option value="Armador">Armador</option>
                 <option value="Líbero">Líbero</option>
+                <option value="Universal">Universal</option>
               </select>
-              <button type="submit"
-                class="col-span-5 sm:col-span-2 py-2 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs">
-                + Sumar
-              </button>
-            </form>
-          </div>
-
-          <!-- DATOS DEL RIVAL Y ENCUENTRO -->
-          <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-4">
-            <h2 class="text-sm sm:text-base font-extrabold text-white">⚔️ Datos del Encuentro</h2>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Equipo Rival</label>
-                <input id="input-opponent-name" type="text" placeholder="Ej: Club Ciudad"
-                  onchange="updateMatchMeta('opponentName', this.value)"
-                  class="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-white font-semibold focus:outline-none focus:border-emerald-500" />
-              </div>
-              <div>
-                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Torneo / Fecha</label>
-                <input id="input-tournament-name" type="text" placeholder="Ej: Metro Fecha 4"
-                  onchange="updateMatchMeta('tournament', this.value)"
-                  class="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500" />
-              </div>
-              <div>
-                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Fecha</label>
-                <input id="input-match-date" type="date"
-                  onchange="updateMatchMeta('date', this.value)"
-                  class="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500" />
-              </div>
-              <div>
-                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Formato</label>
-                <select id="select-match-format" onchange="updateMatchMeta('bestOf', parseInt(this.value, 10))"
-                  class="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-white font-semibold focus:outline-none focus:border-emerald-500">
-                  <option value="5">Mejor de 5 Sets (25 / 15)</option>
-                  <option value="3">Mejor de 3 Sets (25 / 15)</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="pt-2 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
-              <div class="text-xs text-slate-400">
-                Convocados hoy: <strong id="convoked-summary-count" class="text-emerald-400">0</strong>
-                • Titulares: <strong id="titular-summary-count" class="text-sky-400">0</strong>
-              </div>
-              <button onclick="switchTab('live')"
-                class="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs shadow-lg shadow-emerald-500/20">
-                Ir a Planilla En Vivo →
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- LISTA DEL PLANTEL CON CONVOCATORIAS Y EDICIÓN -->
-        <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-3">
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h3 class="text-sm sm:text-base font-extrabold text-white">📋 Plantel y Estado de Convocatoria</h3>
-              <p class="text-xs text-slate-400">
-                Tocá el estado para alternar (<span class="text-emerald-300 font-semibold">Titular</span> /
-                <span class="text-amber-300 font-semibold">Banco</span> /
-                <span class="text-rose-300 font-semibold">No convocado</span>), tocá <strong>✏️</strong> para editar o el nombre para ver su perfil.
-              </p>
-            </div>
-            <div class="flex items-center gap-1.5 text-[11px]">
-              <button onclick="setAllPlayersStatus('banco')"
-                class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-semibold">
-                Todos a Banco
+              <button onclick="addPlayerToActiveTeam()"
+                class="col-span-2 sm:col-span-1 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold transition">
+                Agregar
               </button>
             </div>
           </div>
 
-          <div id="roster-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-            <!-- Renderizado dinámico -->
-          </div>
+          <!-- Lista de jugadores con estados Titular / Banco / No Convocado -->
+          <div id="setup-roster-list" class="space-y-2"></div>
         </div>
       </section>
 
       <!-- ========================================================= -->
-      <!-- VISTA 2: EN VIVO (MARCADOR Y REGISTRO TÁCTICO)            -->
+      <!-- SOLAPA 2: EN VIVO                                         -->
       <!-- ========================================================= -->
       <section id="view-live" class="hidden space-y-4">
-
-        <!-- MARCADOR SUPERIOR -->
-        <div class="glass-card rounded-2xl p-4 sm:p-5 border border-slate-800">
-          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-            <div class="flex items-center gap-2">
-              <span id="live-set-badge" class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-black">
-                SET 1
-              </span>
-              <span id="live-sets-score" class="text-xs font-bold text-slate-300">
-                Sets: 0 - 0
-              </span>
+        <!-- Marcador y control de sets -->
+        <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-400">
+                Set <span id="live-set-num">1</span> • <span id="live-match-title">Mi Equipo vs Rival</span>
+              </div>
+              <p class="text-xs text-slate-400">Tocá un jugador en cancha y elegí la acción táctica con su calidad.</p>
             </div>
-
-            <div class="flex items-center gap-1.5 flex-wrap">
+            <div class="flex flex-wrap items-center gap-2">
               <button onclick="undoLastAction()"
-                class="action-btn px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold">
+                class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 text-xs font-bold transition">
                 ↩️ Deshacer
               </button>
               <button onclick="finishCurrentSet()"
-                class="action-btn px-2.5 py-1.5 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 text-xs font-bold">
-                🏁 Cerrar Set
+                class="px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition">
+                Cerrar Set
               </button>
-              <button onclick="archiveCurrentMatch()"
-                class="action-btn px-2.5 py-1.5 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/40 text-xs font-bold">
+              <button onclick="saveMatchToLibrary()"
+                class="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black transition">
                 💾 Guardar Partido
               </button>
             </div>
           </div>
 
-          <div class="grid grid-cols-11 items-center gap-2 text-center">
-            <!-- MI EQUIPO -->
-            <div class="col-span-5 bg-slate-950/90 border border-emerald-500/30 rounded-2xl p-3">
-              <div id="live-my-team-name" class="text-xs sm:text-sm font-extrabold text-emerald-300 truncate">Mi Equipo</div>
-              <div id="live-my-score" class="text-4xl sm:text-5xl font-black text-white my-1 tabular-nums">0</div>
-              <div class="flex justify-center gap-1.5 mt-1">
-                <button onclick="adjustDirectScore('us', 1)" class="action-btn px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-bold">+1</button>
-                <button onclick="adjustDirectScore('us', -1)" class="action-btn px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 text-xs font-bold">-1</button>
-              </div>
-            </div>
-
-            <div class="col-span-1 text-slate-500 font-black text-sm">VS</div>
-
-            <!-- RIVAL -->
-            <div class="col-span-5 bg-slate-950/90 border border-rose-500/30 rounded-2xl p-3">
-              <div id="live-opp-team-name" class="text-xs sm:text-sm font-extrabold text-rose-300 truncate">Rival</div>
-              <div id="live-opp-score" class="text-4xl sm:text-5xl font-black text-white my-1 tabular-nums">0</div>
-              <div class="flex justify-center gap-1.5 mt-1">
-                <button onclick="adjustDirectScore('them', 1)" class="action-btn px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-300 text-xs font-bold">+1</button>
-                <button onclick="adjustDirectScore('them', -1)" class="action-btn px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 text-xs font-bold">-1</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- HISTORIAL DE SETS -->
-          <div id="live-sets-pills" class="flex items-center justify-center gap-2 mt-3 flex-wrap text-[11px]"></div>
-        </div>
-
-        <!-- PASO 1: ELEGIR JUGADOR CONVOCADO -->
-        <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-3">
-          <div class="flex items-center justify-between gap-2">
+          <div class="grid grid-cols-3 items-center gap-3 text-center py-3 px-4 rounded-2xl bg-slate-950/80 border border-slate-800">
             <div>
-              <span class="text-[10px] font-black uppercase tracking-wider text-emerald-400">PASO 1 • JUGADOR EN ACCIÓN</span>
-              <h3 class="text-sm font-extrabold text-white">Seleccioná quién intervino (solo convocados)</h3>
+              <div id="live-home-name" class="text-xs sm:text-sm font-extrabold text-white truncate">Mi Equipo</div>
+              <div class="text-[11px] text-slate-400">Sets: <span id="live-home-sets" class="text-emerald-400 font-bold">0</span></div>
+              <div id="live-home-score" class="text-3xl sm:text-5xl font-black text-emerald-400 mt-1">0</div>
+              <div class="flex justify-center gap-1.5 mt-2">
+                <button onclick="adjustScore('home', -1)" class="px-2.5 py-1 rounded-lg bg-slate-800 text-xs font-bold text-slate-300">-1</button>
+                <button onclick="adjustScore('home', 1)" class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-xs font-bold text-emerald-300">+1</button>
+              </div>
             </div>
-            <span id="live-selected-player-pill" class="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-              Ninguno seleccionado
-            </span>
-          </div>
 
-          <div id="live-players-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-            <!-- Jugadores convocados -->
-          </div>
-        </div>
+            <div class="space-y-1">
+              <div class="text-xs font-black uppercase tracking-widest text-slate-500">VS</div>
+              <div id="live-sets-history" class="text-[11px] text-slate-400 space-y-0.5"></div>
+            </div>
 
-        <!-- PASO 2: ACCIONES TÁCTICAS DETALLADAS POR FUNDAMENTO -->
-        <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-4">
-          <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <span class="text-[10px] font-black uppercase tracking-wider text-sky-400">PASO 2 • ACCIÓN TÁCTICA DETALLADA</span>
-              <h3 class="text-sm sm:text-base font-extrabold text-white">
-                Registrando para: <span id="live-action-target-label" class="text-emerald-400">Seleccioná un jugador arriba</span>
-              </h3>
-            </div>
-            <span class="text-[11px] text-slate-400">1 toque registra acción y actualiza marcador</span>
-          </div>
-
-          <!-- GRUPO: SAQUE Y ATAQUE -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <!-- SAQUE -->
-            <div class="bg-slate-950/70 border border-slate-800/90 rounded-2xl p-3 space-y-2">
-              <div class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-300">🎯 Saque</div>
-              <div class="grid grid-cols-3 gap-2">
-                <button onclick="recordTacticalAction('serve_ace')"
-                  class="action-btn p-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-left">
-                  <div class="text-xs font-black text-emerald-300">Ace (#)</div>
-                  <div class="text-[10px] text-slate-400">+1 punto</div>
-                </button>
-                <button onclick="recordTacticalAction('serve_pos')"
-                  class="action-btn p-2.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/35 text-left">
-                  <div class="text-xs font-black text-sky-300">Saque +</div>
-                  <div class="text-[10px] text-slate-400">Dificulta rival</div>
-                </button>
-                <button onclick="recordTacticalAction('serve_err')"
-                  class="action-btn p-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-left">
-                  <div class="text-xs font-black text-rose-300">Err. Saque</div>
-                  <div class="text-[10px] text-slate-400">+1 rival</div>
-                </button>
-              </div>
-            </div>
-
-            <!-- ATAQUE -->
-            <div class="bg-slate-950/70 border border-slate-800/90 rounded-2xl p-3 space-y-2">
-              <div class="text-[11px] font-extrabold uppercase tracking-wider text-amber-300">⚡ Ataque / Remate</div>
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <button onclick="recordTacticalAction('attack_kill')"
-                  class="action-btn p-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-left">
-                  <div class="text-xs font-black text-emerald-300">Punto (#)</div>
-                  <div class="text-[10px] text-slate-400">+1 punto</div>
-                </button>
-                <button onclick="recordTacticalAction('attack_pos')"
-                  class="action-btn p-2.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/35 text-left">
-                  <div class="text-xs font-black text-sky-300">Ataque +</div>
-                  <div class="text-[10px] text-slate-400">Sigue juego</div>
-                </button>
-                <button onclick="recordTacticalAction('attack_blk')"
-                  class="action-btn p-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/35 text-left">
-                  <div class="text-xs font-black text-amber-300">Bloqueado</div>
-                  <div class="text-[10px] text-slate-400">+1 rival</div>
-                </button>
-                <button onclick="recordTacticalAction('attack_err')"
-                  class="action-btn p-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-left">
-                  <div class="text-xs font-black text-rose-300">Err. Ataque</div>
-                  <div class="text-[10px] text-slate-400">+1 rival</div>
-                </button>
+              <div id="live-away-name" class="text-xs sm:text-sm font-extrabold text-white truncate">Rival</div>
+              <div class="text-[11px] text-slate-400">Sets: <span id="live-away-sets" class="text-rose-400 font-bold">0</span></div>
+              <div id="live-away-score" class="text-3xl sm:text-5xl font-black text-rose-400 mt-1">0</div>
+              <div class="flex justify-center gap-1.5 mt-2">
+                <button onclick="adjustScore('away', -1)" class="px-2.5 py-1 rounded-lg bg-slate-800 text-xs font-bold text-slate-300">-1</button>
+                <button onclick="adjustScore('away', 1)" class="px-2.5 py-1 rounded-lg bg-rose-500/20 text-xs font-bold text-rose-300">+1</button>
               </div>
             </div>
           </div>
 
-          <!-- GRUPO: ARMADO Y RECEPCIÓN -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <!-- ARMADO -->
-            <div class="bg-slate-950/70 border border-slate-800/90 rounded-2xl p-3 space-y-2">
-              <div class="text-[11px] font-extrabold uppercase tracking-wider text-indigo-300">🙌 Armado / Levantada</div>
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <button onclick="recordTacticalAction('set_perf')"
-                  class="action-btn p-2.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/40 text-left">
-                  <div class="text-xs font-black text-indigo-300">Perfecto (#)</div>
-                  <div class="text-[10px] text-slate-400">1 bloqueo / solo</div>
-                </button>
-                <button onclick="recordTacticalAction('set_good')"
-                  class="action-btn p-2.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/35 text-left">
-                  <div class="text-xs font-black text-sky-300">Bueno (+)</div>
-                  <div class="text-[10px] text-slate-400">Atacable cómodo</div>
-                </button>
-                <button onclick="recordTacticalAction('set_poor')"
-                  class="action-btn p-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/35 text-left">
-                  <div class="text-xs font-black text-amber-300">Malo (-)</div>
-                  <div class="text-[10px] text-slate-400">Incómodo / vendido</div>
-                </button>
-                <button onclick="recordTacticalAction('set_err')"
-                  class="action-btn p-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-left">
-                  <div class="text-xs font-black text-rose-300">Err. Armado</div>
-                  <div class="text-[10px] text-slate-400">Doble / +1 rival</div>
-                </button>
+          <!-- Paso 1: Jugadores en cancha -->
+          <div class="space-y-2">
+            <div class="text-xs font-extrabold uppercase tracking-wider text-sky-400">Paso 1 • Seleccioná Jugador en Cancha</div>
+            <div id="live-court-players" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2"></div>
+          </div>
+
+          <!-- Paso 2: Acciones tácticas con niveles de calidad por fundamento -->
+          <div class="space-y-3 pt-2 border-t border-slate-800/80">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">
+                Paso 2 • Registrando para: <span id="live-selected-player-label" class="text-white">Ninguno</span>
               </div>
+              <span class="text-[11px] text-slate-400">Incluye calidades (# / + / - / Error) para todas las posiciones</span>
             </div>
 
-            <!-- RECEPCIÓN -->
-            <div class="bg-slate-950/70 border border-slate-800/90 rounded-2xl p-3 space-y-2">
-              <div class="text-[11px] font-extrabold uppercase tracking-wider text-cyan-300">🛡️ Recepción de Saque</div>
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <button onclick="recordTacticalAction('rec_perf')"
-                  class="action-btn p-2.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-left">
-                  <div class="text-xs font-black text-cyan-300">Perfecta (#)</div>
-                  <div class="text-[10px] text-slate-400">A la cabeza</div>
-                </button>
-                <button onclick="recordTacticalAction('rec_good')"
-                  class="action-btn p-2.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/35 text-left">
-                  <div class="text-xs font-black text-sky-300">Buena (+)</div>
-                  <div class="text-[10px] text-slate-400">Armado jugable</div>
-                </button>
-                <button onclick="recordTacticalAction('rec_poor')"
-                  class="action-btn p-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/35 text-left">
-                  <div class="text-xs font-black text-amber-300">Mala (-)</div>
-                  <div class="text-[10px] text-slate-400">Pasa libre / vendida</div>
-                </button>
-                <button onclick="recordTacticalAction('rec_err')"
-                  class="action-btn p-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-left">
-                  <div class="text-xs font-black text-rose-300">Err. Recep.</div>
-                  <div class="text-[10px] text-slate-400">Ace rival (+1)</div>
-                </button>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <!-- Ataque -->
+              <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2">
+                <div class="text-xs font-extrabold text-emerald-400">⚡ Ataque</div>
+                <div class="grid grid-cols-2 gap-1.5">
+                  <button onclick="recordAction('attack_point')" class="action-tile p-2 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/35 text-left">
+                    <div class="text-xs font-bold text-emerald-300">Punto (#)</div>
+                    <div class="text-[10px] text-slate-400">+1 punto</div>
+                  </button>
+                  <button onclick="recordAction('attack_pos')" class="action-tile p-2 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/35 text-left">
+                    <div class="text-xs font-bold text-sky-300">Ataque +</div>
+                    <div class="text-[10px] text-slate-400">Continúa juego</div>
+                  </button>
+                  <button onclick="recordAction('attack_block')" class="action-tile p-2 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-left">
+                    <div class="text-xs font-bold text-rose-300">Bloqueado</div>
+                    <div class="text-[10px] text-slate-400">+1 rival</div>
+                  </button>
+                  <button onclick="recordAction('attack_err')" class="action-tile p-2 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-left">
+                    <div class="text-xs font-bold text-rose-300">Err. Ataque</div>
+                    <div class="text-[10px] text-slate-400">+1 rival</div>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Armado / Levantada -->
+              <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2">
+                <div class="text-xs font-extrabold text-sky-400">🙌 Armado</div>
+                <div class="grid grid-cols-2 gap-1.5">
+                  <button onclick="recordAction('set_perf')" class="action-tile p-2 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/35 text-left">
+                    <div class="text-xs font-bold text-emerald-300">Armado Perf. (#)</div>
+                    <div class="text-[10px] text-slate-400">Opción libre</div>
+                  </button>
+                  <button onclick="recordAction('set_good')" class="action-tile p-2 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/35 text-left">
+                    <div class="text-xs font-bold text-sky-300">Armado Bueno (+)</div>
+                    <div class="text-[10px] text-slate-400">Habilitación clara</div>
+                  </button>
+                  <button onclick="recordAction('set_bad')" class="action-tile p-2 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/35 text-left">
+                    <div class="text-xs font-bold text-amber-300">Armado Malo (-)</div>
+                    <div class="text-[10px] text-slate-400">Atrasado / forzado</div>
+                  </button>
+                  <button onclick="recordAction('set_err')" class="action-tile p-2 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-left">
+                    <div class="text-xs font-bold text-rose-300">Err. Armado</div>
+                    <div class="text-[10px] text-slate-400">Doble / +1 rival</div>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Recepción -->
+              <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2">
+                <div class="text-xs font-extrabold text-indigo-400">🛡️ Recepción</div>
+                <div class="grid grid-cols-2 gap-1.5">
+                  <button onclick="recordAction('rec_perf')" class="action-tile p-2 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/35 text-left">
+                    <div class="text-xs font-bold text-emerald-300">Recep. Perf. (#)</div>
+                    <div class="text-[10px] text-slate-400">Al armador</div>
+                  </button>
+                  <button onclick="recordAction('rec_good')" class="action-tile p-2 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/35 text-left">
+                    <div class="text-xs font-bold text-sky-300">Recep. Buena (+)</div>
+                    <div class="text-[10px] text-slate-400">Jugable</div>
+                  </button>
+                  <button onclick="recordAction('rec_bad')" class="action-tile p-2 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/35 text-left">
+                    <div class="text-xs font-bold text-amber-300">Recep. Mala (-)</div>
+                    <div class="text-[10px] text-slate-400">Desarmada</div>
+                  </button>
+                  <button onclick="recordAction('rec_err')" class="action-tile p-2 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-left">
+                    <div class="text-xs font-bold text-rose-300">Err. Recep.</div>
+                    <div class="text-[10px] text-slate-400">Ace rival (+1)</div>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Saque -->
+              <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2">
+                <div class="text-xs font-extrabold text-teal-400">🎯 Saque</div>
+                <div class="grid grid-cols-3 gap-1.5">
+                  <button onclick="recordAction('serve_ace')" class="action-tile p-2 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/35 text-left">
+                    <div class="text-xs font-bold text-emerald-300">Ace (#)</div>
+                    <div class="text-[10px] text-slate-400">+1 punto</div>
+                  </button>
+                  <button onclick="recordAction('serve_pos')" class="action-tile p-2 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/35 text-left">
+                    <div class="text-xs font-bold text-sky-300">Saque +</div>
+                    <div class="text-[10px] text-slate-400">Presión</div>
+                  </button>
+                  <button onclick="recordAction('serve_err')" class="action-tile p-2 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-left">
+                    <div class="text-xs font-bold text-rose-300">Err. Saque</div>
+                    <div class="text-[10px] text-slate-400">+1 rival</div>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Bloqueo -->
+              <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2">
+                <div class="text-xs font-extrabold text-amber-400">🧱 Bloqueo</div>
+                <div class="grid grid-cols-3 gap-1.5">
+                  <button onclick="recordAction('block_point')" class="action-tile p-2 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/35 text-left">
+                    <div class="text-xs font-bold text-emerald-300">Punto (#)</div>
+                    <div class="text-[10px] text-slate-400">+1 punto</div>
+                  </button>
+                  <button onclick="recordAction('block_touch')" class="action-tile p-2 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/35 text-left">
+                    <div class="text-xs font-bold text-sky-300">Toque +</div>
+                    <div class="text-[10px] text-slate-400">Amortigua</div>
+                  </button>
+                  <button onclick="recordAction('block_err')" class="action-tile p-2 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-left">
+                    <div class="text-xs font-bold text-rose-300">Falta / Err.</div>
+                    <div class="text-[10px] text-slate-400">+1 rival</div>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Defensa y Equipo -->
+              <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2">
+                <div class="text-xs font-extrabold text-purple-400">🤿 Defensa y Rival</div>
+                <div class="grid grid-cols-2 gap-1.5">
+                  <button onclick="recordAction('dig_pos')" class="action-tile p-2 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/35 text-left">
+                    <div class="text-xs font-bold text-sky-300">Defensa +</div>
+                    <div class="text-[10px] text-slate-400">Pelota viva</div>
+                  </button>
+                  <button onclick="recordAction('dig_neg')" class="action-tile p-2 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/35 text-left">
+                    <div class="text-xs font-bold text-amber-300">Defensa -</div>
+                    <div class="text-[10px] text-slate-400">Difícil / cae</div>
+                  </button>
+                  <button onclick="recordAction('opp_error')" class="action-tile p-2 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/35 text-left">
+                    <div class="text-xs font-bold text-emerald-300">Error Rival</div>
+                    <div class="text-[10px] text-slate-400">+1 punto</div>
+                  </button>
+                  <button onclick="recordAction('fault_other')" class="action-tile p-2 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-left">
+                    <div class="text-xs font-bold text-rose-300">Invasión / Red</div>
+                    <div class="text-[10px] text-slate-400">+1 rival</div>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- GRUPO: BLOQUEO, DEFENSA Y EQUIPO -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <!-- BLOQUEO -->
-            <div class="bg-slate-950/70 border border-slate-800/90 rounded-2xl p-3 space-y-2">
-              <div class="text-[11px] font-extrabold uppercase tracking-wider text-teal-300">🧱 Bloqueo</div>
-              <div class="grid grid-cols-3 gap-2">
-                <button onclick="recordTacticalAction('blk_kill')"
-                  class="action-btn p-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-left">
-                  <div class="text-xs font-black text-emerald-300">Punto (#)</div>
-                  <div class="text-[10px] text-slate-400">Tapa directa +1</div>
-                </button>
-                <button onclick="recordTacticalAction('blk_touch')"
-                  class="action-btn p-2.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/35 text-left">
-                  <div class="text-xs font-black text-sky-300">Toque +</div>
-                  <div class="text-[10px] text-slate-400">Amortigua</div>
-                </button>
-                <button onclick="recordTacticalAction('blk_err')"
-                  class="action-btn p-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-left">
-                  <div class="text-xs font-black text-rose-300">Red / Block</div>
-                  <div class="text-[10px] text-slate-400">+1 rival</div>
-                </button>
-              </div>
-            </div>
-
-            <!-- DEFENSA Y EQUIPO -->
-            <div class="bg-slate-950/70 border border-slate-800/90 rounded-2xl p-3 space-y-2">
-              <div class="text-[11px] font-extrabold uppercase tracking-wider text-purple-300">🤿 Defensa y Equipo</div>
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <button onclick="recordTacticalAction('def_pos')"
-                  class="action-btn p-2.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/35 text-left">
-                  <div class="text-xs font-black text-sky-300">Defensa +</div>
-                  <div class="text-[10px] text-slate-400">Levanta ataque</div>
-                </button>
-                <button onclick="recordTacticalAction('def_neg')"
-                  class="action-btn p-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/35 text-left">
-                  <div class="text-xs font-black text-amber-300">Defensa -</div>
-                  <div class="text-[10px] text-slate-400">No controla</div>
-                </button>
-                <button onclick="recordTacticalAction('opp_err')"
-                  class="action-btn p-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-left">
-                  <div class="text-xs font-black text-emerald-300">Error Rival</div>
-                  <div class="text-[10px] text-slate-400">+1 mi equipo</div>
-                </button>
-                <button onclick="recordTacticalAction('team_fault')"
-                  class="action-btn p-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-left">
-                  <div class="text-xs font-black text-rose-300">Falta / Otro</div>
-                  <div class="text-[10px] text-slate-400">Invasión / +1 rival</div>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- FEED DE ÚLTIMAS JUGADAS -->
-        <div class="glass-card rounded-2xl p-4 sm:p-5">
-          <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2.5">Últimas acciones registradas</h3>
-          <div id="live-events-feed" class="space-y-1.5 max-h-52 overflow-y-auto text-xs">
-            <div class="text-slate-500">Aún no hay acciones registradas en este partido.</div>
+          <!-- Log reciente -->
+          <div class="pt-2 border-t border-slate-800/80">
+            <div class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5">Últimas jugadas</div>
+            <div id="live-recent-log" class="space-y-1 max-h-36 overflow-y-auto text-xs text-slate-300"></div>
           </div>
         </div>
       </section>
 
       <!-- ========================================================= -->
-      <!-- VISTA 3: RENDIMIENTO Y ESTADÍSTICAS                       -->
+      <!-- SOLAPA 3: RENDIMIENTO                                     -->
       <!-- ========================================================= -->
-      <section id="view-stats" class="hidden space-y-5">
+      <section id="view-stats" class="hidden space-y-4">
         <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-4">
-          <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <h2 class="text-base sm:text-lg font-black text-white">📊 Rendimiento del Equipo</h2>
-                <span id="stats-team-badge" class="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-xs font-extrabold">
-                  Equipo
-                </span>
-              </div>
-              <p id="stats-match-subtitle" class="text-xs text-slate-400 mt-0.5">
-                Desglose táctico por jugador y cálculo objetivo de MVP.
-              </p>
+              <h2 id="stats-team-heading" class="text-base sm:text-lg font-black text-white">Rendimiento del Equipo</h2>
+              <p id="stats-team-subtitle" class="text-xs text-slate-400">Planilla por jugador, MVP automático y exportación.</p>
             </div>
-
             <div class="flex flex-wrap items-center gap-2">
-              <select id="stats-match-selector" onchange="onSelectStatsMatch(this.value)"
-                class="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white font-semibold focus:outline-none focus:border-emerald-500">
-                <option value="current">Partido Actual En Vivo</option>
-              </select>
-              <button onclick="exportCurrentStatsCSV()"
-                class="px-3 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-bold">
-                📥 Exportar CSV
+              <select id="stats-source-select" onchange="renderStatsView()"
+                class="px-3 py-2 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-white focus:outline-none focus:border-emerald-500"></select>
+              <button onclick="exportStatsCsv()"
+                class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition">
+                📊 Exportar CSV
               </button>
             </div>
           </div>
 
-          <!-- TARJETA MVP DEL PARTIDO -->
-          <div id="stats-mvp-banner" class="rounded-2xl p-4 bg-gradient-to-r from-amber-500/15 via-slate-900 to-emerald-500/10 border border-amber-500/30 flex flex-wrap items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-              <div class="w-11 h-11 rounded-2xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-2xl">
-                🏆
-              </div>
-              <div>
-                <div class="text-[10px] font-black uppercase tracking-wider text-amber-300">MVP OBJETIVO DEL PARTIDO</div>
-                <div id="stats-mvp-name" class="text-sm sm:text-base font-black text-white">Sin datos suficientes</div>
-                <div id="stats-mvp-detail" class="text-xs text-slate-400">Registrá acciones en vivo para calcular el índice de rendimiento.</div>
-              </div>
-            </div>
-            <div id="stats-mvp-score" class="px-3 py-1.5 rounded-xl bg-slate-950 border border-amber-500/30 text-xs font-mono font-bold text-amber-300">
-              Índice: 0.0
-            </div>
-          </div>
+          <div id="stats-mvp-banner" class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs sm:text-sm text-amber-200"></div>
 
-          <!-- TABLA ESTADÍSTICA -->
           <div class="overflow-x-auto rounded-xl border border-slate-800">
             <table class="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr class="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase text-[10px] tracking-wider">
-                  <th class="py-2.5 px-3">Jugador</th>
-                  <th class="py-2.5 px-2 text-center">Estado</th>
-                  <th class="py-2.5 px-2 text-center text-emerald-400">Pts</th>
-                  <th class="py-2.5 px-2 text-center text-rose-400">Err</th>
-                  <th class="py-2.5 px-2 text-center">Bal</th>
-                  <th class="py-2.5 px-2 text-center">Saque (Ace/+/E)</th>
-                  <th class="py-2.5 px-2 text-center">Ataque (#/+/B/E)</th>
-                  <th class="py-2.5 px-2 text-center">Bloq (#/+/E)</th>
-                  <th class="py-2.5 px-2 text-center">Armado (#/+/-/E)</th>
-                  <th class="py-2.5 px-2 text-center">Recep (#/+/-/E)</th>
-                  <th class="py-2.5 px-2 text-center">Def (+/-)</th>
-                  <th class="py-2.5 px-2 text-center text-amber-300">Índice MVP</th>
+              <thead class="bg-slate-950/90 text-slate-400 uppercase text-[10px]">
+                <tr>
+                  <th class="p-2.5">Jugador</th>
+                  <th class="p-2.5 text-center">Pts</th>
+                  <th class="p-2.5 text-center">Atq #</th>
+                  <th class="p-2.5 text-center">Bloq #</th>
+                  <th class="p-2.5 text-center">Ace #</th>
+                  <th class="p-2.5 text-center">Arm #/+</th>
+                  <th class="p-2.5 text-center">Rec #/+</th>
+                  <th class="p-2.5 text-center">Def +</th>
+                  <th class="p-2.5 text-center">Err</th>
                 </tr>
               </thead>
-              <tbody id="stats-table-body" class="divide-y divide-slate-800/70 bg-slate-900/40">
-              </tbody>
+              <tbody id="stats-table-body" class="divide-y divide-slate-800/70 bg-slate-900/50"></tbody>
             </table>
           </div>
         </div>
       </section>
 
       <!-- ========================================================= -->
-      <!-- VISTA 4: BIBLIOTECA / ARCHIVO POR EQUIPO                  -->
+      <!-- SOLAPA 4: BIBLIOTECA Y ARCHIVO DE PARTIDOS                -->
       <!-- ========================================================= -->
-      <section id="view-library" class="hidden space-y-5">
+      <section id="view-library" class="hidden space-y-4">
         <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-4">
-          <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h2 class="text-base sm:text-lg font-black text-white">📚 Biblioteca de Partidos por Equipo</h2>
-              <p class="text-xs text-slate-400">Explorá el historial de partidos archivados, revisá estadísticas o eliminá registros de prueba.</p>
+              <h2 class="text-base sm:text-lg font-black text-white">Biblioteca de Partidos Guardados</h2>
+              <p class="text-xs text-slate-400">Explorá partidos por equipo, cargalos en Rendimiento o borrá los tuyos.</p>
             </div>
             <select id="library-team-filter" onchange="renderLibraryView()"
-              class="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white font-semibold focus:outline-none focus:border-emerald-500">
-              <option value="all">Todos los equipos</option>
-            </select>
+              class="px-3 py-2 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-white focus:outline-none focus:border-emerald-500"></select>
           </div>
-
-          <div id="library-matches-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          </div>
+          <div id="library-matches-list" class="space-y-2.5"></div>
         </div>
       </section>
 
+      <!-- ========================================================= -->
+      <!-- SOLAPA 5: CONFIGURACIÓN (ABM PERFILES & AVISOS)           -->
+      <!-- ========================================================= -->
+      <section id="view-config" class="hidden space-y-4">
+        <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 class="text-base sm:text-lg font-black text-white">⚙️ Configuración y Perfiles</h2>
+              <p class="text-xs text-slate-400">Administración de usuarios, notificaciones de cambio de clave y seguridad de cuenta.</p>
+            </div>
+            <span id="config-role-badge" class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+              Perfil
+            </span>
+          </div>
+
+          <!-- Cambio de contraseña propio -->
+          <div class="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-3">
+            <div class="text-xs font-extrabold uppercase tracking-wider text-sky-400">🔐 Mi Contraseña</div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <input id="my-new-password" type="password" placeholder="Nueva contraseña (mín. 4 caracteres)"
+                class="sm:col-span-2 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs sm:text-sm text-white focus:outline-none focus:border-sky-500" />
+              <button onclick="changeOwnPassword()"
+                class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs sm:text-sm font-bold transition">
+                Actualizar Clave
+              </button>
+            </div>
+          </div>
+
+          <!-- Sección exclusiva de defeadmin -->
+          <div id="admin-only-config-panel" class="hidden space-y-4">
+            <div class="p-3.5 rounded-xl bg-amber-500/5 border border-amber-500/25 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <div class="text-xs font-extrabold uppercase tracking-wider text-amber-300">🔔 Notificaciones de Cambio de Clave</div>
+                <button onclick="clearPasswordNotifications()"
+                  class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-bold">
+                  Marcar leídas
+                </button>
+              </div>
+              <div id="admin-password-notifications" class="space-y-2 text-xs text-slate-300"></div>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-3">
+              <div class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">👥 ABM de Perfiles de Usuario</div>
+              <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                <input id="new-user-username" type="text" placeholder="Usuario (ej: dt_sub18)"
+                  class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500" />
+                <input id="new-user-display" type="text" placeholder="Nombre visible"
+                  class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500" />
+                <input id="new-user-password" type="password" placeholder="Contraseña inicial"
+                  class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500" />
+                <button onclick="createUserProfile()"
+                  class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold transition">
+                  + Crear Perfil
+                </button>
+              </div>
+              <div id="admin-users-list" class="space-y-2 pt-1"></div>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
   </div>
 
-  <!-- ========================================================= -->
-  <!-- MODAL: PERFIL INDIVIDUAL DEL JUGADOR                      -->
-  <!-- ========================================================= -->
-  <div id="player-profile-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
-    <div class="w-full max-w-3xl max-h-[90vh] overflow-y-auto glass-card rounded-3xl p-5 sm:p-6 border border-slate-700 shadow-2xl space-y-5">
-      <div class="flex items-start justify-between gap-3">
-        <div class="flex items-center gap-3">
-          <div id="profile-player-number" class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-lg font-black text-emerald-300">
-            #1
-          </div>
-          <div>
-            <h3 id="profile-player-name" class="text-lg sm:text-xl font-black text-white">Nombre Jugador</h3>
-            <p id="profile-player-meta" class="text-xs text-slate-400">Posición • Equipo</p>
-          </div>
-        </div>
-        <button onclick="closePlayerProfile()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold">
-          ✕ Cerrar
-        </button>
-      </div>
-
-      <!-- RESUMEN ACUMULADO -->
-      <div id="profile-summary-cards" class="grid grid-cols-2 sm:grid-cols-5 gap-2.5"></div>
-
-      <!-- HISTORIAL POR PARTIDO -->
-      <div class="space-y-2">
-        <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Historial por Partido</h4>
-        <div class="overflow-x-auto rounded-xl border border-slate-800">
-          <table class="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr class="bg-slate-950 text-slate-400 border-b border-slate-800 text-[10px] uppercase">
-                <th class="py-2 px-3">Fecha / Rival</th>
-                <th class="py-2 px-2 text-center">Conv.</th>
-                <th class="py-2 px-2 text-center text-emerald-400">Pts</th>
-                <th class="py-2 px-2 text-center text-rose-400">Err</th>
-                <th class="py-2 px-2 text-center">Saque</th>
-                <th class="py-2 px-2 text-center">Ataque</th>
-                <th class="py-2 px-2 text-center">Armado</th>
-                <th class="py-2 px-2 text-center">Recep</th>
-                <th class="py-2 px-2 text-center text-amber-300">MVP</th>
-              </tr>
-            </thead>
-            <tbody id="profile-matches-tbody" class="divide-y divide-slate-800/70"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ========================================================= -->
-  <!-- MODAL: CARGA MASIVA DE PLANTEL                            -->
-  <!-- ========================================================= -->
-  <div id="bulk-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
-    <div class="w-full max-w-2xl max-h-[90vh] overflow-y-auto glass-card rounded-3xl p-5 sm:p-6 border border-slate-700 shadow-2xl space-y-4">
+  <!-- Modal de Carga Masiva -->
+  <div id="bulk-import-modal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-card w-full max-w-lg rounded-2xl p-5 space-y-3.5">
       <div class="flex items-center justify-between">
+        <h3 class="text-base font-black text-white">📥 Carga Masiva de Plantel</h3>
+        <button onclick="closeBulkImportModal()" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         <div>
-          <h3 class="text-base sm:text-lg font-black text-white">📋 Carga Masiva de Plantel</h3>
-          <p class="text-xs text-slate-400">Pegá el listado en una línea por jugador o en formato lista/planilla con viñetas.</p>
+          <label class="block text-[11px] font-bold text-slate-400 mb-1">Rama</label>
+          <select id="bulk-branch-select" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white">
+            <option value="Masculino">Masculino</option>
+            <option value="Femenino">Femenino</option>
+            <option value="Mixto">Mixto</option>
+          </select>
         </div>
-        <button onclick="closeBulkModal()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold">
-          ✕
-        </button>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-400 mb-1">Categoría</label>
+          <input id="bulk-category-input" type="text" placeholder="Ej: Sub-18, Primera..."
+            class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white" />
+        </div>
       </div>
-
-      <textarea id="bulk-textarea" rows="9"
-        placeholder="Ejemplo multilínea o una línea:&#10;DBANF B&#10;- 1&#10;- Luciano Joaquin Heredia&#10;- 17 años&#10;- 3&#10;- Lautaro Joel Mate&#10;- Líbero&#10;- 17 años"
-        class="w-full p-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-white font-mono focus:outline-none focus:border-emerald-500"></textarea>
-
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <button onclick="previewBulkImport()"
-          class="px-4 py-2 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 text-xs font-bold">
-          🔍 Previsualizar Detección
-        </button>
-        <button id="btn-confirm-bulk" onclick="confirmBulkImport()" disabled
-          class="px-4 py-2 rounded-xl bg-emerald-500 disabled:opacity-40 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold">
-          ✓ Importar al Plantel
-        </button>
+      <textarea id="bulk-roster-textarea" rows="7" placeholder="Pegá la lista de jugadores (dorsal y nombre, con o sin viñetas)..."
+        class="w-full p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-sky-500"></textarea>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeBulkImportModal()" class="px-3.5 py-2 rounded-xl bg-slate-800 text-xs font-bold text-slate-300">Cancelar</button>
+        <button onclick="processBulkImport()" class="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-black">Importar Jugadores</button>
       </div>
-
-      <div id="bulk-preview-container" class="space-y-2 text-xs"></div>
     </div>
   </div>
-
-  <!-- TOAST NOTIFICACIÓN -->
-  <div id="toast-banner" class="hidden fixed bottom-4 right-4 z-50 px-4 py-3 rounded-2xl bg-slate-900 border border-slate-700 text-xs font-bold text-white shadow-2xl"></div>
 
   <script>
-    const APP_VERSION = '13.05.10';
+    const APP_VERSION = '13.05.29';
     const STORAGE_KEY = 'voley_stats_live_state_v13';
-    const AUTH_SESSION_KEY = 'voley_stats_live_user';
-    const SUPABASE_CFG_KEY = 'voley_stats_supabase_cfg';
 
-    // Opcional: pegá aquí tus credenciales fijas de Supabase para que todos los dispositivos entren conectados
-    const DEFAULT_SUPABASE_URL = 'https://aevmoxgnptjreycgniks.supabase.co';
-    const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_4fNdq9CWVz6yfhLGC3ewZA_s9qxjNrS';
-
-    const USERS_DB = {
-      defeadmin: '2420',
-      ciro: '1234',
-      entrenador: 'voley2026'
-    };
-
-    const ACTION_META = {
-      serve_ace:   { label: 'Ace (#)',          cat: 'serve',  quality: 'perf', deltaUs: 1, deltaThem: 0, isPoint: true,  isError: false, mvpWeight: 2.2 },
-      serve_pos:   { label: 'Saque +',          cat: 'serve',  quality: 'pos',  deltaUs: 0, deltaThem: 0, isPoint: false, isError: false, mvpWeight: 0.6 },
-      serve_err:   { label: 'Error de Saque',   cat: 'serve',  quality: 'err',  deltaUs: 0, deltaThem: 1, isPoint: false, isError: true,  mvpWeight: -1.4 },
-
-      attack_kill: { label: 'Ataque Punto (#)', cat: 'attack', quality: 'perf', deltaUs: 1, deltaThem: 0, isPoint: true,  isError: false, mvpWeight: 2.0 },
-      attack_pos:  { label: 'Ataque +',         cat: 'attack', quality: 'pos',  deltaUs: 0, deltaThem: 0, isPoint: false, isError: false, mvpWeight: 0.5 },
-      attack_blk:  { label: 'Ataque Bloqueado', cat: 'attack', quality: 'blk',  deltaUs: 0, deltaThem: 1, isPoint: false, isError: true,  mvpWeight: -1.2 },
-      attack_err:  { label: 'Error de Ataque',  cat: 'attack', quality: 'err',  deltaUs: 0, deltaThem: 1, isPoint: false, isError: true,  mvpWeight: -1.5 },
-
-      set_perf:    { label: 'Armado Perfecto (#)', cat: 'set', quality: 'perf', deltaUs: 0, deltaThem: 0, isPoint: false, isError: false, mvpWeight: 1.2 },
-      set_good:    { label: 'Armado Bueno (+)',    cat: 'set', quality: 'pos',  deltaUs: 0, deltaThem: 0, isPoint: false, isError: false, mvpWeight: 0.6 },
-      set_poor:    { label: 'Armado Malo (-)',     cat: 'set', quality: 'neg',  deltaUs: 0, deltaThem: 0, isPoint: false, isError: false, mvpWeight: -0.4 },
-      set_err:     { label: 'Error de Armado',     cat: 'set', quality: 'err',  deltaUs: 0, deltaThem: 1, isPoint: false, isError: true,  mvpWeight: -1.4 },
-
-      rec_perf:    { label: 'Recep. Perfecta (#)', cat: 'rec', quality: 'perf', deltaUs: 0, deltaThem: 0, isPoint: false, isError: false, mvpWeight: 1.2 },
-      rec_good:    { label: 'Recep. Buena (+)',    cat: 'rec', quality: 'pos',  deltaUs: 0, deltaThem: 0, isPoint: false, isError: false, mvpWeight: 0.6 },
-      rec_poor:    { label: 'Recep. Mala (-)',     cat: 'rec', quality: 'neg',  deltaUs: 0, deltaThem: 0, isPoint: false, isError: false, mvpWeight: -0.4 },
-      rec_err:     { label: 'Error de Recep.',     cat: 'rec', quality: 'err',  deltaUs: 0, deltaThem: 1, isPoint: false, isError: true,  mvpWeight: -1.5 },
-
-      blk_kill:    { label: 'Bloqueo Punto (#)',   cat: 'block', quality: 'perf', deltaUs: 1, deltaThem: 0, isPoint: true,  isError: false, mvpWeight: 2.2 },
-      blk_touch:   { label: 'Toque Bloqueo +',     cat: 'block', quality: 'pos',  deltaUs: 0, deltaThem: 0, isPoint: false, isError: false, mvpWeight: 0.6 },
-      blk_err:     { label: 'Falta Bloqueo / Red', cat: 'block', quality: 'err',  deltaUs: 0, deltaThem: 1, isPoint: false, isError: true,  mvpWeight: -1.3 },
-
-      def_pos:     { label: 'Defensa +',           cat: 'def',   quality: 'pos',  deltaUs: 0, deltaThem: 0, isPoint: false, isError: false, mvpWeight: 0.9 },
-      def_neg:     { label: 'Defensa -',           cat: 'def',   quality: 'neg',  deltaUs: 0, deltaThem: 0, isPoint: false, isError: false, mvpWeight: -0.3 },
-      opp_err:     { label: 'Error Rival (+1)',    cat: 'team',  quality: 'perf', deltaUs: 1, deltaThem: 0, isPoint: false, isError: false, mvpWeight: 0.0 },
-      team_fault:  { label: 'Falta / Otro (+1 Riv)', cat: 'team', quality: 'err', deltaUs: 0, deltaThem: 1, isPoint: false, isError: true, mvpWeight: -1.2 }
-    };
-
-    let currentUser = null;
-    let activeTab = 'setup';
-    let selectedLivePlayerId = null;
-    let selectedStatsMatchId = 'current';
-    let parsedPreviewTeams = [];
-    let editingPlayerId = null;
-    let deferredInstallPrompt = null;
-    let cloudSyncStatus = 'local';
-    let cloudSaveTimer = null;
-    let isApplyingRemoteState = false;
-    let supabaseCredentialsForceEdit = false;
-
-    function getDefaultState() {
-      const today = new Date().toISOString().slice(0, 10);
+    function emptyPlayerStats() {
       return {
-        teams: [
-          {
-            id: 'team_default_1',
-            name: 'DBANF B',
-            branch: 'Sub-18 Masc',
-            players: [
-              { id: 'p_1', number: 1, name: 'Luciano Joaquin Heredia', position: 'Universal', status: 'titular' },
-              { id: 'p_3', number: 3, name: 'Lautaro Joel Mate', position: 'Líbero', status: 'titular' },
-              { id: 'p_5', number: 5, name: 'Valentino Scavone', position: 'Punta', status: 'titular' },
-              { id: 'p_6', number: 6, name: 'Santino Vergara', position: 'Central', status: 'titular' },
-              { id: 'p_7', number: 7, name: 'Gael Luis García Vaccarezza', position: 'Armador', status: 'titular' },
-              { id: 'p_8', number: 8, name: 'Manuel Alejandro Falchetti', position: 'Opuesto', status: 'titular' },
-              { id: 'p_9', number: 9, name: 'Ascona Marcos Curis', position: 'Central', status: 'banco' },
-              { id: 'p_11', number: 11, name: 'Andreozzi Ciro Alarcon', position: 'Punta', status: 'banco' }
-            ]
-          }
-        ],
-        selectedTeamId: 'team_default_1',
-        currentMatch: {
-          id: 'match_live_' + Date.now(),
-          teamId: 'team_default_1',
-          opponentName: 'Rival',
-          tournament: 'Torneo Oficial',
-          date: today,
-          bestOf: 5,
-          currentSet: 1,
-          scoreUs: 0,
-          scoreThem: 0,
-          setsUs: 0,
-          setsThem: 0,
-          completedSets: [],
-          events: [],
-          convokedIds: ['p_1', 'p_3', 'p_5', 'p_6', 'p_7', 'p_8', 'p_9', 'p_11']
-        },
-        archivedMatches: []
+        attack_point: 0, attack_pos: 0, attack_block: 0, attack_err: 0,
+        set_perf: 0, set_good: 0, set_bad: 0, set_err: 0,
+        rec_perf: 0, rec_good: 0, rec_bad: 0, rec_err: 0,
+        serve_ace: 0, serve_pos: 0, serve_err: 0,
+        block_point: 0, block_touch: 0, block_err: 0,
+        dig_pos: 0, dig_neg: 0,
+        opp_error: 0, fault_other: 0
       };
     }
 
-    let appState = loadState();
+    function createDefaultState() {
+      const defaultTeamId = 'team_defe_a';
+      const defaultPlayers = [
+        { id: 'p_1', number: 1, name: 'Luciano Heredia', position: 'Punta', status: 'starter' },
+        { id: 'p_2', number: 5, name: 'Lautaro Mate', position: 'Líbero', status: 'starter' },
+        { id: 'p_3', number: 7, name: 'Santino Vergara', position: 'Central', status: 'starter' },
+        { id: 'p_4', number: 8, name: 'Gael García', position: 'Opuesto', status: 'starter' },
+        { id: 'p_5', number: 9, name: 'Manuel Falchetti', position: 'Armador', status: 'starter' },
+        { id: 'p_6', number: 12, name: 'Ciro Alarcón', position: 'Punta', status: 'starter' },
+        { id: 'p_7', number: 14, name: 'Máximo Jaramillo', position: 'Universal', status: 'bench' },
+        { id: 'p_8', number: 18, name: 'Matías Chayán', position: 'Líbero', status: 'not_convoked' }
+      ];
+      return {
+        currentUser: null,
+        activeTab: 'setup',
+        users: [
+          { username: 'defeadmin', name: 'Administrador General', password: 'admin', role: 'admin' },
+          { username: 'ciro', name: 'Ciro (DT)', password: '123', role: 'coach' },
+          { username: 'entrenador', name: 'Entrenador Cancha', password: '123', role: 'coach' }
+        ],
+        passwordNotifications: [],
+        teams: [
+          {
+            id: defaultTeamId,
+            name: 'DBANF A',
+            branch: 'Masculino',
+            category: 'Sub-18',
+            players: defaultPlayers
+          }
+        ],
+        tournaments: [
+          { id: 't_metro', name: 'Metropolitano FMV' },
+          { id: 't_copa', name: 'Copa Club / Amistoso' }
+        ],
+        savedMatches: [],
+        currentMatch: createNewMatchObject(defaultTeamId, 't_metro', defaultPlayers)
+      };
+    }
 
-    function loadState() {
+    function createNewMatchObject(teamId, tournamentId, players = []) {
+      const statsByPlayer = {};
+      (players || []).forEach(p => {
+        statsByPlayer[p.id] = emptyPlayerStats();
+      });
+      return {
+        id: 'match_' + Date.now(),
+        teamId: teamId || '',
+        tournamentId: tournamentId || '',
+        rival: 'Rival',
+        setNum: 1,
+        homeScore: 0,
+        awayScore: 0,
+        homeSets: 0,
+        awaySets: 0,
+        setsHistory: [],
+        selectedPlayerId: players[0]?.id || null,
+        statsByPlayer,
+        history: []
+      };
+    }
+
+    function ensureStateDefaults(st) {
+      const base = createDefaultState();
+      if (!st || typeof st !== 'object') return base;
+      st.users = Array.isArray(st.users) && st.users.length ? st.users : base.users;
+      if (!st.users.some(u => u.username === 'defeadmin')) {
+        st.users.unshift(base.users[0]);
+      }
+      st.passwordNotifications = Array.isArray(st.passwordNotifications) ? st.passwordNotifications : [];
+      st.teams = Array.isArray(st.teams) && st.teams.length ? st.teams : base.teams;
+      st.tournaments = Array.isArray(st.tournaments) && st.tournaments.length ? st.tournaments : base.tournaments;
+      st.savedMatches = Array.isArray(st.savedMatches) ? st.savedMatches : [];
+      st.activeTab = st.activeTab || 'setup';
+
+      const activeTeam = st.teams.find(t => t.id === st.currentMatch?.teamId) || st.teams[0];
+      if (!st.currentMatch || typeof st.currentMatch !== 'object') {
+        st.currentMatch = createNewMatchObject(activeTeam.id, st.tournaments[0]?.id || '', activeTeam.players);
+      } else {
+        st.currentMatch.statsByPlayer = st.currentMatch.statsByPlayer || {};
+        (activeTeam.players || []).forEach(p => {
+          if (!st.currentMatch.statsByPlayer[p.id]) {
+            st.currentMatch.statsByPlayer[p.id] = emptyPlayerStats();
+          }
+        });
+        st.currentMatch.setsHistory = Array.isArray(st.currentMatch.setsHistory) ? st.currentMatch.setsHistory : [];
+        st.currentMatch.history = Array.isArray(st.currentMatch.history) ? st.currentMatch.history : [];
+      }
+      return st;
+    }
+
+    let appState = loadInitialState();
+
+    function loadInitialState() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return getDefaultState();
-        const parsed = JSON.parse(raw);
-        if (!parsed.teams || !parsed.teams.length) return getDefaultState();
-        if (!parsed.currentMatch) parsed.currentMatch = getDefaultState().currentMatch;
-        if (!Array.isArray(parsed.archivedMatches)) parsed.archivedMatches = [];
-        return parsed;
-      } catch {
-        return getDefaultState();
+        if (!raw) return createDefaultState();
+        return ensureStateDefaults(JSON.parse(raw));
+      } catch (e) {
+        return createDefaultState();
       }
     }
 
-    function saveState(skipCloud = false) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-      if (!skipCloud && !isApplyingRemoteState) {
-        scheduleCloudPush();
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {
+        console.warn('No se pudo guardar en localStorage:', e);
       }
     }
 
@@ -954,1355 +812,745 @@
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
     }
 
-    function showToast(msg, type = 'info') {
-      const el = document.getElementById('toast-banner');
-      if (!el) return;
-      el.textContent = msg;
-      el.className = 'fixed bottom-4 right-4 z-50 px-4 py-3 rounded-2xl border text-xs font-bold shadow-2xl transition-all ' + (
-        type === 'success' ? 'bg-emerald-950/95 border-emerald-500/50 text-emerald-200' :
-        type === 'warning' ? 'bg-amber-950/95 border-amber-500/50 text-amber-200' :
-        type === 'error'   ? 'bg-rose-950/95 border-rose-500/50 text-rose-200' :
-                             'bg-slate-900/95 border-slate-700 text-slate-100'
-      );
-      el.classList.remove('hidden');
-      clearTimeout(el._timer);
-      el._timer = setTimeout(() => el.classList.add('hidden'), 3200);
-    }
-
-    // =========================================================
-    // AUTENTICACIÓN Y PWA
-    // =========================================================
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredInstallPrompt = e;
-      const btn = document.getElementById('btn-install-pwa');
-      if (btn) btn.classList.remove('hidden');
-    });
-
-    async function triggerInstallPWA() {
-      if (!deferredInstallPrompt) {
-        showToast('Abrí el menú del navegador (⋮) y tocá "Instalar app" o "Agregar a pantalla principal"', 'info');
-        return;
-      }
-      deferredInstallPrompt.prompt();
-      await deferredInstallPrompt.userChoice;
-      deferredInstallPrompt = null;
-      document.getElementById('btn-install-pwa')?.classList.add('hidden');
-    }
-
-    document.getElementById('login-form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const user = document.getElementById('login-username').value.trim().toLowerCase();
-      const pass = document.getElementById('login-password').value.trim();
-      if (USERS_DB[user] && USERS_DB[user] === pass) {
-        currentUser = user;
-        localStorage.setItem(AUTH_SESSION_KEY, user);
-        document.getElementById('login-error').classList.add('hidden');
-        enterApp();
-      } else {
-        document.getElementById('login-error').classList.remove('hidden');
-      }
-    });
-
-    function enterApp() {
-      document.getElementById('login-screen').classList.add('hidden');
-      document.getElementById('app-shell').classList.remove('hidden');
-      document.getElementById('active-user-label').textContent = `Usuario: ${currentUser}`;
-      syncSupabaseInputs();
-      renderAll();
-      pullFromCloud(false);
-    }
-
-    function logout() {
-      localStorage.removeItem(AUTH_SESSION_KEY);
-      currentUser = null;
-      document.getElementById('app-shell').classList.add('hidden');
-      document.getElementById('login-screen').classList.remove('hidden');
-    }
-
-    // =========================================================
-    // NUBE COMPARTIDA (SUPABASE)
-    // =========================================================
-    function getSupabaseConfig() {
-      let saved = {};
-      try {
-        saved = JSON.parse(localStorage.getItem(SUPABASE_CFG_KEY) || '{}');
-      } catch {}
-      const url = (saved.url || DEFAULT_SUPABASE_URL || '').trim().replace(/\/$/, '');
-      const key = (saved.key || DEFAULT_SUPABASE_ANON_KEY || '').trim();
-      return { url, key };
-    }
-
-    function syncSupabaseInputs() {
-      const cfg = getSupabaseConfig();
-      const urlInput = document.getElementById('supabase-url-input');
-      const keyInput = document.getElementById('supabase-key-input');
-      const credsGrid = document.getElementById('supabase-credentials-grid');
-      const toggleBtn = document.getElementById('btn-toggle-supabase-creds');
-      const badge = document.getElementById('supabase-badge');
-
-      if (urlInput) urlInput.value = cfg.url;
-      if (keyInput) keyInput.value = cfg.key;
-
-      const isConfigured = Boolean(cfg.url && cfg.key);
-      const isAdmin = currentUser === 'defeadmin';
-
-      if (badge) {
-        badge.textContent = isConfigured ? 'Configurada' : 'Sin configurar';
-        badge.className = isConfigured
-          ? 'text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
-          : 'text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700';
-      }
-
-      if (credsGrid) {
-        if (!isAdmin || (isConfigured && !supabaseCredentialsForceEdit)) {
-          credsGrid.classList.add('hidden');
-        } else {
-          credsGrid.classList.remove('hidden');
-        }
-      }
-
-      if (toggleBtn) {
-        if (isAdmin && isConfigured) {
-          toggleBtn.classList.remove('hidden');
-          toggleBtn.textContent = supabaseCredentialsForceEdit ? 'Ocultar credenciales' : '⚙️ Editar credenciales';
-        } else {
-          toggleBtn.classList.add('hidden');
-        }
-      }
-    }
-
-    function toggleSupabaseCredentialsVisibility() {
-      if (currentUser !== 'defeadmin') return;
-      supabaseCredentialsForceEdit = !supabaseCredentialsForceEdit;
-      syncSupabaseInputs();
-    }
-
-    function updateCloudPill(status, label) {
-      cloudSyncStatus = status;
-      const pill = document.getElementById('cloud-status-pill');
-      if (!pill) return;
-      const dotColor =
-        status === 'synced'  ? 'bg-emerald-400' :
-        status === 'syncing' ? 'bg-amber-400 animate-pulse' :
-        status === 'offline' ? 'bg-rose-400' : 'bg-slate-500';
-      pill.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${dotColor}"></span> ${escapeHtml(label)}`;
-    }
-
-    async function saveSupabaseConfigAndSync() {
-      const cfg = getSupabaseConfig();
-      const urlVal = (document.getElementById('supabase-url-input')?.value || cfg.url || '').trim().replace(/\/$/, '');
-      const keyVal = (document.getElementById('supabase-key-input')?.value || cfg.key || '').trim();
-
-      if (!urlVal || !keyVal) {
-        showToast('Falta configurar URL o API Key de Supabase', 'warning');
-        return;
-      }
-
-      localStorage.setItem(SUPABASE_CFG_KEY, JSON.stringify({ url: urlVal, key: keyVal }));
-      supabaseCredentialsForceEdit = false;
-      syncSupabaseInputs();
-      await pushToCloud(true);
-    }
-
-    function scheduleCloudPush() {
-      const cfg = getSupabaseConfig();
-      if (!cfg.url || !cfg.key) return;
-      clearTimeout(cloudSaveTimer);
-      cloudSaveTimer = setTimeout(() => pushToCloud(false), 1200);
-    }
-
-    async function pushToCloud(manual = false) {
-      const cfg = getSupabaseConfig();
-      if (!cfg.url || !cfg.key) {
-        if (manual) showToast('Nube no configurada', 'warning');
-        return;
-      }
-      updateCloudPill('syncing', 'Sincronizando...');
-      try {
-        const res = await fetch(`${cfg.url}/rest/v1/club_state`, {
-          method: 'POST',
-          headers: {
-            'apikey': cfg.key,
-            'Authorization': `Bearer ${cfg.key}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'resolution=merge-duplicates,return=minimal'
-          },
-          body: JSON.stringify({
-            id: 'main_club',
-            payload: appState,
-            updated_by: currentUser || 'app',
-            updated_at: new Date().toISOString()
-          })
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        updateCloudPill('synced', 'Nube OK');
-        if (manual) showToast('Estado guardado y sincronizado en la nube', 'success');
-      } catch (err) {
-        updateCloudPill('offline', 'Error nube');
-        if (manual) showToast(`Error al subir a nube (${err.message})`, 'error');
-      }
-    }
-
-    async function pullFromCloud(manual = false) {
-      const cfg = getSupabaseConfig();
-      if (!cfg.url || !cfg.key) {
-        if (manual) showToast('Nube no configurada', 'warning');
-        return;
-      }
-      updateCloudPill('syncing', 'Bajando...');
-      try {
-        const res = await fetch(`${cfg.url}/rest/v1/club_state?id=eq.main_club&select=payload,updated_at`, {
-          headers: {
-            'apikey': cfg.key,
-            'Authorization': `Bearer ${cfg.key}`
-          }
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const rows = await res.json();
-        if (rows && rows.length && rows[0].payload) {
-          isApplyingRemoteState = true;
-          appState = rows[0].payload;
-          saveState(true);
-          isApplyingRemoteState = false;
-          renderAll();
-          updateCloudPill('synced', 'Nube OK');
-          if (manual) showToast('Datos actualizados desde la nube', 'success');
-        } else {
-          updateCloudPill('synced', 'Nube vacía');
-          if (manual) showToast('No había datos previos en la nube', 'info');
-        }
-      } catch (err) {
-        updateCloudPill('offline', 'Sin conexión');
-        if (manual) showToast(`No se pudo bajar de la nube (${err.message})`, 'error');
-      }
-    }
-
-    // =========================================================
-    // NAVEGACIÓN ENTRE PESTAÑAS
-    // =========================================================
-    function switchTab(tab) {
-      activeTab = tab;
-      ['setup', 'live', 'stats', 'library'].forEach(t => {
-        const view = document.getElementById(`view-${t}`);
-        const btn = document.getElementById(`tab-btn-${t}`);
-        if (!view || !btn) return;
-        if (t === tab) {
-          view.classList.remove('hidden');
-          btn.className = 'tab-btn flex-1 min-w-[115px] py-2 px-3 rounded-xl text-xs font-extrabold transition-all bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20';
-        } else {
-          view.classList.add('hidden');
-          btn.className = 'tab-btn flex-1 min-w-[115px] py-2 px-3 rounded-xl text-xs font-extrabold transition-all bg-slate-900 text-slate-400 hover:text-white border border-slate-800';
-        }
-      });
-
-      if (tab === 'setup') renderSetupView();
-      if (tab === 'live') renderLiveView();
-      if (tab === 'stats') renderStatsView();
-      if (tab === 'library') renderLibraryView();
-    }
-
-    function renderAll() {
-      renderSetupView();
-      renderLiveView();
-      renderStatsView();
-      renderLibraryView();
-    }
-
-    // =========================================================
-    // GESTIÓN DE EQUIPOS Y PLANTEL (VISTA 1)
-    // =========================================================
-    function getActiveTeam() {
-      return appState.teams.find(t => t.id === appState.selectedTeamId) || appState.teams[0];
-    }
-
-    function getPlayerStatus(player) {
-      if (player.status === 'titular' || player.status === 'banco' || player.status === 'no_convocado') {
-        return player.status;
-      }
-      return 'banco';
-    }
-
-    function getStatusBadgeMeta(status) {
-      if (status === 'titular') {
-        return {
-          label: 'Titular',
-          cardClass: 'bg-emerald-950/25 border-emerald-500/35',
-          badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-        };
-      }
-      if (status === 'banco') {
-        return {
-          label: 'Banco',
-          cardClass: 'bg-amber-950/20 border-amber-500/30',
-          badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-        };
-      }
-      return {
-        label: 'No convocado',
-        cardClass: 'bg-slate-950/60 border-slate-800/80 opacity-75',
-        badgeClass: 'bg-rose-500/15 text-rose-300 border-rose-500/35'
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+      const colors = {
+        success: 'bg-emerald-950/95 border-emerald-500/40 text-emerald-200',
+        warning: 'bg-amber-950/95 border-amber-500/40 text-amber-200',
+        info: 'bg-slate-900/95 border-slate-700 text-slate-200'
       };
+      const el = document.createElement('div');
+      el.className = `px-3.5 py-2.5 rounded-xl border text-xs font-semibold shadow-lg transition ${colors[type] || colors.info}`;
+      el.textContent = message;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        setTimeout(() => el.remove(), 250);
+      }, 2600);
     }
 
-    function getPlayerConvocationStats(teamId, playerId) {
-      const teamMatches = appState.archivedMatches.filter(m => m.teamId === teamId);
-      let convoked = 0;
-      let notConvoked = 0;
-      teamMatches.forEach(m => {
-        const list = Array.isArray(m.convokedIds) ? m.convokedIds : [];
-        if (list.includes(playerId)) convoked++;
-        else notConvoked++;
+    function isAdminUser() {
+      return (appState.currentUser || '').toLowerCase() === 'defeadmin';
+    }
+
+    function handleLogin(event) {
+      event.preventDefault();
+      const uVal = (document.getElementById('login-username')?.value || '').trim().toLowerCase();
+      const pVal = (document.getElementById('login-password')?.value || '').trim();
+      const found = (appState.users || []).find(
+        u => u.username.toLowerCase() === uVal && String(u.password) === pVal
+      );
+      if (!found) {
+        showToast('Usuario o contraseña incorrectos.', 'warning');
+        return;
+      }
+      appState.currentUser = found.username;
+      saveState();
+      updateAuthVisibility();
+      renderAll();
+      showToast(`Bienvenido, ${found.name || found.username}`, 'success');
+    }
+
+    function logoutUser() {
+      appState.currentUser = null;
+      saveState();
+      updateAuthVisibility();
+    }
+
+    function updateAuthVisibility() {
+      const loggedIn = Boolean(appState.currentUser);
+      document.getElementById('login-screen')?.classList.toggle('hidden', loggedIn);
+      document.getElementById('app-shell')?.classList.toggle('hidden', !loggedIn);
+      if (loggedIn) {
+        const label = document.getElementById('header-user-label');
+        if (label) label.textContent = appState.currentUser;
+      }
+    }
+
+    function syncCloudManual() {
+      saveState();
+      renderAll();
+      showToast('Estado local sincronizado.', 'success');
+    }
+
+    function switchTab(tabName) {
+      const valid = ['setup', 'live', 'stats', 'library', 'config'];
+      appState.activeTab = valid.includes(tabName) ? tabName : 'setup';
+      saveState();
+      renderTabs();
+      if (appState.activeTab === 'setup') renderSetupView();
+      if (appState.activeTab === 'live') renderLiveView();
+      if (appState.activeTab === 'stats') renderStatsView();
+      if (appState.activeTab === 'library') renderLibraryView();
+      if (appState.activeTab === 'config') renderConfigPanel();
+    }
+
+    function renderTabs() {
+      const tabs = ['setup', 'live', 'stats', 'library', 'config'];
+      const active = appState.activeTab || 'setup';
+      tabs.forEach(t => {
+        const btn = document.getElementById('tab-' + t);
+        const view = document.getElementById('view-' + t);
+        if (btn) {
+          btn.classList.toggle('active', t === active);
+        }
+        if (view) {
+          view.classList.toggle('hidden', t !== active);
+        }
       });
-      return { convoked, notConvoked, total: teamMatches.length };
+
+      const badge = document.getElementById('admin-notif-badge');
+      const unread = (appState.passwordNotifications || []).filter(n => !n.read).length;
+      if (badge) {
+        if (isAdminUser() && unread > 0) {
+          badge.textContent = `${unread} aviso${unread > 1 ? 's' : ''} clave`;
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+      }
     }
 
-    function syncCurrentMatchConvokedFromRoster() {
-      const activeTeam = getActiveTeam();
-      if (!activeTeam) return;
-      appState.currentMatch.teamId = activeTeam.id;
-      appState.currentMatch.convokedIds = activeTeam.players
-        .filter(p => getPlayerStatus(p) !== 'no_convocado')
-        .map(p => p.id);
+    function getActiveTeam() {
+      return appState.teams.find(t => t.id === appState.currentMatch.teamId) || appState.teams[0];
     }
 
     function renderSetupView() {
-      const activeTeam = getActiveTeam();
-      const teamSelect = document.getElementById('select-my-team');
+      const teamSelect = document.getElementById('setup-team-select');
+      const tourSelect = document.getElementById('setup-tournament-select');
+      const rivalInput = document.getElementById('setup-rival-input');
+      const team = getActiveTeam();
+
       if (teamSelect) {
         teamSelect.innerHTML = appState.teams.map(t =>
-          `<option value="${t.id}" ${t.id === activeTeam?.id ? 'selected' : ''}>${escapeHtml(t.name)}</option>`
+          `<option value="${escapeHtml(t.id)}" ${t.id === team.id ? 'selected' : ''}>${escapeHtml(t.name)} (${escapeHtml(t.branch || '')} • ${escapeHtml(t.category || '')})</option>`
         ).join('');
       }
+      if (tourSelect) {
+        tourSelect.innerHTML = appState.tournaments.map(tr =>
+          `<option value="${escapeHtml(tr.id)}" ${tr.id === appState.currentMatch.tournamentId ? 'selected' : ''}>${escapeHtml(tr.name)}</option>`
+        ).join('');
+      }
+      if (rivalInput && document.activeElement !== rivalInput) {
+        rivalInput.value = appState.currentMatch.rival || '';
+      }
 
-      const branchInput = document.getElementById('input-team-branch');
-      if (branchInput && activeTeam) branchInput.value = activeTeam.branch || '';
-
-      const m = appState.currentMatch;
-      const oppInp = document.getElementById('input-opponent-name');
-      const tourInp = document.getElementById('input-tournament-name');
-      const dateInp = document.getElementById('input-match-date');
-      const fmtSel = document.getElementById('select-match-format');
-      if (oppInp) oppInp.value = m.opponentName || '';
-      if (tourInp) tourInp.value = m.tournament || '';
-      if (dateInp) dateInp.value = m.date || '';
-      if (fmtSel) fmtSel.value = String(m.bestOf || 5);
-
-      const rosterContainer = document.getElementById('roster-list-container');
-      if (!rosterContainer || !activeTeam) return;
-
-      const titularCount = activeTeam.players.filter(p => getPlayerStatus(p) === 'titular').length;
-      const convokedCount = activeTeam.players.filter(p => getPlayerStatus(p) !== 'no_convocado').length;
-      document.getElementById('convoked-summary-count').textContent = convokedCount;
-      document.getElementById('titular-summary-count').textContent = titularCount;
-
-      if (!activeTeam.players.length) {
-        rosterContainer.innerHTML = `<div class="col-span-full text-xs text-slate-500 p-4 rounded-xl bg-slate-950/60 border border-slate-800">No hay jugadores cargados en este equipo. Sumalos arriba o usá Carga Masiva.</div>`;
+      const rosterBox = document.getElementById('setup-roster-list');
+      if (!rosterBox) return;
+      const players = team.players || [];
+      if (!players.length) {
+        rosterBox.innerHTML = `<div class="text-xs text-slate-400 p-3 rounded-xl bg-slate-950/60 border border-slate-800">Sin jugadores cargados en este plantel.</div>`;
         return;
       }
 
-      const sortedPlayers = [...activeTeam.players].sort((a, b) => a.number - b.number);
-      const positionsList = ['Armador', 'Punta', 'Central', 'Opuesto', 'Líbero', 'Universal'];
-
-      rosterContainer.innerHTML = sortedPlayers.map(p => {
-        const status = getPlayerStatus(p);
-        const stMeta = getStatusBadgeMeta(status);
-        const convMetrics = getPlayerConvocationStats(activeTeam.id, p.id);
-
-        if (editingPlayerId === p.id) {
-          return `
-            <div class="col-span-full p-3 rounded-xl border border-sky-500/50 bg-slate-950/95 space-y-2.5">
-              <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold uppercase tracking-wider text-sky-400">Editando Jugador</span>
-                <button onclick="cancelEditPlayer()" class="text-xs text-slate-400 hover:text-white font-semibold">Cancelar</button>
-              </div>
-              <div class="grid grid-cols-12 gap-2">
-                <input id="edit-player-number-${p.id}" type="number" min="1" max="99" value="${p.number}"
-                  class="col-span-3 sm:col-span-2 px-2.5 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs sm:text-sm text-white text-center font-bold focus:outline-none focus:border-sky-400" />
-                <input id="edit-player-name-${p.id}" type="text" value="${escapeHtml(p.name)}"
-                  onkeydown="if(event.key==='Enter'){ event.preventDefault(); saveEditedPlayer('${p.id}'); }"
-                  class="col-span-9 sm:col-span-5 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs sm:text-sm text-white focus:outline-none focus:border-sky-400" />
-                <select id="edit-player-pos-${p.id}"
-                  class="col-span-7 sm:col-span-3 px-2.5 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs sm:text-sm text-white focus:outline-none focus:border-sky-400">
-                  ${positionsList.map(pos => `<option value="${pos}" ${p.position === pos ? 'selected' : ''}>${pos}</option>`).join('')}
-                </select>
-                <button onclick="saveEditedPlayer('${p.id}')"
-                  class="col-span-5 sm:col-span-2 action-btn py-2 px-3 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-extrabold text-xs">
-                  ✓ Guardar
-                </button>
-              </div>
-            </div>
-          `;
-        }
-
+      rosterBox.innerHTML = players.map(p => {
+        const status = p.status || 'bench';
         return `
-          <div class="p-2.5 rounded-xl border flex items-center justify-between gap-2 ${stMeta.cardClass}">
-            <div onclick="openPlayerProfile('${activeTeam.id}', '${p.id}')"
-              class="cursor-pointer flex items-center gap-2.5 min-w-0 flex-1 group" title="Ver perfil del jugador">
-              <span class="w-8 h-8 rounded-lg bg-slate-900 border border-slate-700 flex items-center justify-center font-black text-xs text-white shrink-0 group-hover:border-sky-400">
-                #${p.number}
-              </span>
-              <div class="min-w-0">
-                <div class="font-bold text-xs sm:text-sm text-white truncate group-hover:text-sky-300 transition-colors">${escapeHtml(p.name)}</div>
-                <div class="text-[11px] text-slate-400 flex items-center gap-1.5 flex-wrap">
-                  <span>${escapeHtml(p.position)}</span>
-                  <span class="text-slate-600">•</span>
-                  <span class="text-emerald-300/90" title="Partidos convocado">Conv: ${convMetrics.convoked}</span>
-                  <span class="text-rose-300/80" title="Partidos no convocado">No: ${convMetrics.notConvoked}</span>
-                </div>
+          <div class="p-3 rounded-xl bg-slate-950/75 border border-slate-800 flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <span class="w-8 h-8 rounded-lg bg-slate-800 text-emerald-300 font-black text-xs flex items-center justify-center shrink-0">#${escapeHtml(p.number)}</span>
+              <div class="truncate">
+                <div class="text-xs sm:text-sm font-bold text-white truncate">${escapeHtml(p.name)}</div>
+                <div class="text-[11px] text-slate-400">${escapeHtml(p.position || 'Jugador')}</div>
               </div>
             </div>
-
-            <div class="flex items-center gap-1.5 shrink-0">
-              <button onclick="cyclePlayerStatus('${p.id}')"
-                title="Cambiar estado: Titular / Banco / No convocado"
-                class="action-btn px-2.5 py-1.5 rounded-lg text-[11px] font-bold border ${stMeta.badgeClass}">
-                ${stMeta.label}
-              </button>
-              <button onclick="startEditPlayer('${p.id}')" title="Editar número, nombre o posición"
-                class="action-btn w-7 h-7 rounded-lg bg-slate-900 hover:bg-sky-500/20 text-slate-400 hover:text-sky-300 border border-slate-800 text-xs font-bold">
-                ✏️
-              </button>
-              <button onclick="removePlayerFromRoster('${p.id}')" title="Quitar jugador"
-                class="action-btn w-7 h-7 rounded-lg bg-slate-900 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-slate-800 text-xs font-bold">
-                ✕
-              </button>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <button onclick="setPlayerStatus('${p.id}', 'starter')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold border ${status === 'starter' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50' : 'bg-slate-900 text-slate-400 border-slate-800'}">Titular</button>
+              <button onclick="setPlayerStatus('${p.id}', 'bench')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold border ${status === 'bench' ? 'bg-sky-500/20 text-sky-300 border-sky-500/50' : 'bg-slate-900 text-slate-400 border-slate-800'}">Banco</button>
+              <button onclick="setPlayerStatus('${p.id}', 'not_convoked')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold border ${status === 'not_convoked' ? 'bg-amber-500/20 text-amber-300 border-amber-500/50' : 'bg-slate-900 text-slate-400 border-slate-800'}">No convocado</button>
+              <button onclick="editPlayerQuick('${p.id}')" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs">✏️</button>
+              <button onclick="removePlayer('${p.id}')" class="px-2 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 text-xs">🗑️</button>
             </div>
           </div>
         `;
       }).join('');
     }
 
-    function selectMyTeam(teamId) {
-      editingPlayerId = null;
-      appState.selectedTeamId = teamId;
-      syncCurrentMatchConvokedFromRoster();
+    function onSetupTeamChange() {
+      const teamId = document.getElementById('setup-team-select')?.value;
+      const team = appState.teams.find(t => t.id === teamId) || appState.teams[0];
+      appState.currentMatch.teamId = team.id;
+      (team.players || []).forEach(p => {
+        if (!appState.currentMatch.statsByPlayer[p.id]) {
+          appState.currentMatch.statsByPlayer[p.id] = emptyPlayerStats();
+        }
+      });
       saveState();
-      renderAll();
+      renderSetupView();
     }
 
-    function createNewTeamPrompt() {
-      const name = prompt('Nombre del nuevo equipo:');
-      if (!name || !name.trim()) return;
-      const newTeam = {
-        id: 'team_' + Date.now(),
-        name: name.trim(),
-        branch: '',
-        players: []
-      };
-      appState.teams.push(newTeam);
-      appState.selectedTeamId = newTeam.id;
-      syncCurrentMatchConvokedFromRoster();
+    function onMatchMetaChange() {
+      appState.currentMatch.rival = (document.getElementById('setup-rival-input')?.value || '').trim() || 'Rival';
+      appState.currentMatch.tournamentId = document.getElementById('setup-tournament-select')?.value || '';
       saveState();
-      renderAll();
-      showToast(`Equipo "${newTeam.name}" creado`, 'success');
     }
 
-    function renameActiveTeamPrompt() {
-      const active = getActiveTeam();
-      if (!active) return;
-      const name = prompt('Nuevo nombre para el equipo:', active.name);
-      if (!name || !name.trim()) return;
-      active.name = name.trim();
-      saveState();
-      renderAll();
-      showToast('Nombre de equipo actualizado', 'success');
-    }
-
-    function deleteActiveTeam() {
-      if (appState.teams.length <= 1) {
-        showToast('Debe quedar al menos un equipo creado', 'warning');
+    function addPlayerToActiveTeam() {
+      const num = parseInt(document.getElementById('new-player-number')?.value || '0', 10) || 0;
+      const name = (document.getElementById('new-player-name')?.value || '').trim();
+      const pos = document.getElementById('new-player-pos')?.value || 'Punta';
+      if (!name) {
+        showToast('Ingresá el nombre del jugador.', 'warning');
         return;
       }
-      const active = getActiveTeam();
-      if (!active || !confirm(`¿Eliminar el equipo "${active.name}" y su plantel?`)) return;
-      appState.teams = appState.teams.filter(t => t.id !== active.id);
-      appState.selectedTeamId = appState.teams[0].id;
-      syncCurrentMatchConvokedFromRoster();
-      saveState();
-      renderAll();
-      showToast('Equipo eliminado', 'info');
-    }
-
-    function updateActiveTeamBranch(val) {
-      const active = getActiveTeam();
-      if (!active) return;
-      active.branch = val.trim();
-      saveState();
-      renderStatsView();
-    }
-
-    function updateMatchMeta(field, val) {
-      appState.currentMatch[field] = val;
-      saveState();
-      renderLiveView();
-      renderStatsView();
-    }
-
-    function cyclePlayerStatus(playerId) {
-      const active = getActiveTeam();
-      if (!active) return;
-      const p = active.players.find(pl => pl.id === playerId);
-      if (!p) return;
-      const order = ['titular', 'banco', 'no_convocado'];
-      const cur = getPlayerStatus(p);
-      p.status = order[(order.indexOf(cur) + 1) % order.length];
-      syncCurrentMatchConvokedFromRoster();
-      saveState();
-      renderSetupView();
-      renderLiveView();
-      renderStatsView();
-    }
-
-    function setAllPlayersStatus(newStatus) {
-      const active = getActiveTeam();
-      if (!active) return;
-      active.players.forEach(p => { p.status = newStatus; });
-      syncCurrentMatchConvokedFromRoster();
-      saveState();
-      renderSetupView();
-      renderLiveView();
-      renderStatsView();
-    }
-
-    function addPlayerToRoster(e) {
-      e.preventDefault();
-      const active = getActiveTeam();
-      if (!active) return;
-      const num = parseInt(document.getElementById('new-player-number').value, 10);
-      const name = document.getElementById('new-player-name').value.trim();
-      const pos = document.getElementById('new-player-pos').value;
-      if (!num || !name) return;
-
-      active.players.push({
-        id: 'p_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
-        number: num,
-        name,
-        position: pos,
-        status: 'banco'
-      });
-
+      const team = getActiveTeam();
+      const id = 'p_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+      team.players.push({ id, number: num || (team.players.length + 1), name, position: pos, status: 'bench' });
+      appState.currentMatch.statsByPlayer[id] = emptyPlayerStats();
       document.getElementById('new-player-number').value = '';
       document.getElementById('new-player-name').value = '';
-      syncCurrentMatchConvokedFromRoster();
       saveState();
       renderSetupView();
-      renderLiveView();
-      showToast(`#${num} ${name} agregado al plantel`, 'success');
+      showToast(`${name} agregado al plantel.`, 'success');
     }
 
-    function startEditPlayer(playerId) {
-      editingPlayerId = playerId;
-      renderSetupView();
-      setTimeout(() => {
-        const nameInp = document.getElementById(`edit-player-name-${playerId}`);
-        if (nameInp) nameInp.focus();
-      }, 30);
-    }
-
-    function cancelEditPlayer() {
-      editingPlayerId = null;
+    function setPlayerStatus(playerId, status) {
+      const team = getActiveTeam();
+      const pl = (team.players || []).find(p => p.id === playerId);
+      if (!pl) return;
+      pl.status = status;
+      saveState();
       renderSetupView();
     }
 
-    function saveEditedPlayer(playerId) {
-      const active = getActiveTeam();
-      if (!active) return;
-      const p = active.players.find(pl => pl.id === playerId);
-      if (!p) return;
+    function editPlayerQuick(playerId) {
+      const team = getActiveTeam();
+      const pl = (team.players || []).find(p => p.id === playerId);
+      if (!pl) return;
+      const nextName = prompt('Nombre del jugador:', pl.name);
+      if (nextName === null) return;
+      const nextNum = prompt('Número de camiseta:', String(pl.number));
+      if (nextNum === null) return;
+      const nextPos = prompt('Posición:', pl.position || 'Punta');
+      if (nextPos === null) return;
+      pl.name = nextName.trim() || pl.name;
+      pl.number = parseInt(nextNum, 10) || pl.number;
+      pl.position = nextPos.trim() || pl.position;
+      saveState();
+      renderSetupView();
+      showToast('Jugador actualizado.', 'success');
+    }
 
-      const numVal = parseInt(document.getElementById(`edit-player-number-${playerId}`)?.value, 10);
-      const nameVal = (document.getElementById(`edit-player-name-${playerId}`)?.value || '').trim();
-      const posVal = document.getElementById(`edit-player-pos-${playerId}`)?.value || p.position;
+    function removePlayer(playerId) {
+      const team = getActiveTeam();
+      team.players = (team.players || []).filter(p => p.id !== playerId);
+      saveState();
+      renderSetupView();
+    }
 
-      if (!numVal || numVal < 1 || numVal > 99 || !nameVal) {
-        showToast('Completá un dorsal válido (1-99) y el nombre del jugador', 'warning');
+    function openBulkImportModal() {
+      const team = getActiveTeam();
+      document.getElementById('bulk-branch-select').value = team.branch || 'Masculino';
+      document.getElementById('bulk-category-input').value = team.category || '';
+      document.getElementById('bulk-import-modal')?.classList.remove('hidden');
+    }
+
+    function closeBulkImportModal() {
+      document.getElementById('bulk-import-modal')?.classList.add('hidden');
+    }
+
+    function processBulkImport() {
+      const branch = document.getElementById('bulk-branch-select')?.value || 'Masculino';
+      const category = (document.getElementById('bulk-category-input')?.value || '').trim();
+      const raw = (document.getElementById('bulk-roster-textarea')?.value || '').trim();
+      if (!raw) {
+        showToast('Pegá al menos una línea de jugadores.', 'warning');
         return;
       }
+      const team = getActiveTeam();
+      team.branch = branch;
+      if (category) team.category = category;
 
-      p.number = numVal;
-      p.name = nameVal;
-      p.position = posVal;
-      editingPlayerId = null;
+      const lines = raw.split(/\r?\n/).map(l => l.replace(/^\s*[-*•]\s*/, '').trim()).filter(Boolean);
+      let addedCount = 0;
+      let pendingNumber = null;
 
-      saveState();
-      renderSetupView();
-      renderLiveView();
-      renderStatsView();
-      showToast(`Jugador #${p.number} ${p.name} actualizado`, 'success');
-    }
-
-    function removePlayerFromRoster(playerId) {
-      const active = getActiveTeam();
-      if (!active) return;
-      if (editingPlayerId === playerId) editingPlayerId = null;
-      active.players = active.players.filter(pl => pl.id !== playerId);
-      syncCurrentMatchConvokedFromRoster();
-      saveState();
-      renderSetupView();
-      renderLiveView();
-      showToast('Jugador eliminado del plantel', 'info');
-    }
-
-    // =========================================================
-    // CARGA MASIVA (SOPORTA 1 LÍNEA Y MULTILÍNEA CON/SIN BULLETS)
-    // =========================================================
-    function openBulkModal() {
-      parsedPreviewTeams = [];
-      document.getElementById('bulk-textarea').value = '';
-      document.getElementById('bulk-preview-container').innerHTML = '';
-      document.getElementById('btn-confirm-bulk').disabled = true;
-      document.getElementById('bulk-modal').classList.remove('hidden');
-    }
-
-    function closeBulkModal() {
-      document.getElementById('bulk-modal').classList.add('hidden');
-    }
-
-    function normalizePosition(raw) {
-      const s = (raw || '').toLowerCase();
-      if (s.includes('armador') || s.includes('levant')) return 'Armador';
-      if (s.includes('libero') || s.includes('líbero')) return 'Líbero';
-      if (s.includes('central')) return 'Central';
-      if (s.includes('opuesto')) return 'Opuesto';
-      if (s.includes('punta') || s.includes('receptor')) return 'Punta';
-      return 'Universal';
-    }
-
-    function parseBulkText(rawText) {
-      const rawLines = rawText.split(/\r?\n/).map(l => l.replace(/^[\s•\-\*–—]+/, '').trim()).filter(Boolean);
-      if (!rawLines.length) return [];
-
-      // Detectar si es formato multilínea (dorsal solo en una línea y nombre en la siguiente)
-      const isMultilineBlock = rawLines.some(l => /^\d{1,2}$/.test(l));
-
-      if (isMultilineBlock) {
-        let teamName = getActiveTeam()?.name || 'Equipo Importado';
-        let startIndex = 0;
-        if (!/^\d{1,2}$/.test(rawLines[0]) && rawLines[0].length <= 40) {
-          teamName = rawLines[0];
-          startIndex = 1;
+      lines.forEach(line => {
+        if (/^\d+\s*años?$/i.test(line) || /^c$/i.test(line)) return;
+        if (/^\d{1,2}$/.test(line)) {
+          pendingNumber = parseInt(line, 10);
+          return;
         }
-
-        const players = [];
-        let current = null;
-        for (let i = startIndex; i < rawLines.length; i++) {
-          const line = rawLines[i];
-          if (/^\d{1,2}$/.test(line)) {
-            if (current && current.name) players.push(current);
-            current = { number: parseInt(line, 10), name: '', position: 'Universal' };
-            continue;
-          }
-          if (!current) continue;
-          if (/^c$/i.test(line) || /^cap(it[aá]n)?$/i.test(line)) continue;
-          if (/^\d{1,2}\s*a[ñn]os$/i.test(line)) continue;
-          if (/^(l[ií]bero|armador|punta|central|opuesto|universal)$/i.test(line)) {
-            current.position = normalizePosition(line);
-            continue;
-          }
-          if (!current.name) {
-            current.name = line;
-          }
+        const matchInline = line.match(/^#?(\d{1,2})\s+(.+)$/);
+        if (matchInline) {
+          const id = 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+          const p = { id, number: parseInt(matchInline[1], 10), name: matchInline[2].trim(), position: 'Jugador', status: 'bench' };
+          team.players.push(p);
+          appState.currentMatch.statsByPlayer[id] = emptyPlayerStats();
+          addedCount++;
+          pendingNumber = null;
+          return;
         }
-        if (current && current.name) players.push(current);
-        return players.length ? [{ teamName, players }] : [];
-      }
-
-      // Formato clásico de 1 línea por jugador: "#12 Juan Perez - Punta"
-      const players = [];
-      let teamName = getActiveTeam()?.name || 'Equipo Importado';
-      rawLines.forEach((line, idx) => {
-        const m = line.match(/^#?(\d{1,2})[\s\.\-\):]+([^-–—(|]+)(?:[-–—(|]+(.+))?$/);
-        if (m) {
-          players.push({
-            number: parseInt(m[1], 10),
-            name: m[2].trim(),
-            position: normalizePosition(m[3] || '')
-          });
-        } else if (idx === 0 && line.length <= 40) {
-          teamName = line;
-        }
-      });
-      return players.length ? [{ teamName, players }] : [];
-    }
-
-    function previewBulkImport() {
-      const text = document.getElementById('bulk-textarea').value;
-      parsedPreviewTeams = parseBulkText(text);
-      const box = document.getElementById('bulk-preview-container');
-      const btn = document.getElementById('btn-confirm-bulk');
-
-      if (!parsedPreviewTeams.length) {
-        box.innerHTML = `<div class="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300">No se detectaron jugadores válidos. Revisá el formato.</div>`;
-        btn.disabled = true;
-        return;
-      }
-
-      const grp = parsedPreviewTeams[0];
-      btn.disabled = false;
-      box.innerHTML = `
-        <div class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-2">
-          <div class="font-bold text-emerald-300">Equipo detectado: ${escapeHtml(grp.teamName)} (${grp.players.length} jugadores)</div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-44 overflow-y-auto">
-            ${grp.players.map(p => `
-              <div class="px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-between">
-                <span class="text-white font-semibold">#${p.number} ${escapeHtml(p.name)}</span>
-                <span class="text-[11px] text-slate-400">${escapeHtml(p.position)}</span>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    function confirmBulkImport() {
-      if (!parsedPreviewTeams.length) return;
-      const grp = parsedPreviewTeams[0];
-      let targetTeam = appState.teams.find(t => t.name.toLowerCase() === grp.teamName.toLowerCase());
-      if (!targetTeam) {
-        targetTeam = {
-          id: 'team_' + Date.now(),
-          name: grp.teamName,
-          branch: '',
-          players: []
-        };
-        appState.teams.push(targetTeam);
-      }
-
-      grp.players.forEach((np, i) => {
-        const existing = targetTeam.players.find(ep => ep.number === np.number);
-        if (existing) {
-          existing.name = np.name;
-          existing.position = np.position;
-        } else {
-          targetTeam.players.push({
-            id: 'p_' + Date.now() + '_' + i,
-            number: np.number,
-            name: np.name,
-            position: np.position,
-            status: 'banco'
-          });
-        }
+        const id = 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+        const p = { id, number: pendingNumber || (team.players.length + 1), name: line, position: 'Jugador', status: 'bench' };
+        team.players.push(p);
+        appState.currentMatch.statsByPlayer[id] = emptyPlayerStats();
+        addedCount++;
+        pendingNumber = null;
       });
 
-      appState.selectedTeamId = targetTeam.id;
-      syncCurrentMatchConvokedFromRoster();
       saveState();
-      renderAll();
-      closeBulkModal();
-      showToast(`${grp.players.length} jugadores importados en "${targetTeam.name}"`, 'success');
+      closeBulkImportModal();
+      renderSetupView();
+      showToast(`${addedCount} jugador(es) importados.`, 'success');
     }
 
-    // =========================================================
-    // VISTA 2: EN VIVO (MARCADOR Y ACCIONES TÁCTICAS)
-    // =========================================================
+    function startMatchAndGoLive() {
+      onMatchMetaChange();
+      const team = getActiveTeam();
+      const starters = (team.players || []).filter(p => p.status === 'starter');
+      const pool = starters.length ? starters : (team.players || []).filter(p => p.status !== 'not_convoked');
+      if (pool.length && !pool.some(p => p.id === appState.currentMatch.selectedPlayerId)) {
+        appState.currentMatch.selectedPlayerId = pool[0].id;
+      }
+      switchTab('live');
+    }
+
     function renderLiveView() {
-      const activeTeam = getActiveTeam();
       const m = appState.currentMatch;
+      const team = getActiveTeam();
+      document.getElementById('live-set-num').textContent = m.setNum || 1;
+      document.getElementById('live-match-title').textContent = `${team.name} vs ${m.rival || 'Rival'}`;
+      document.getElementById('live-home-name').textContent = team.name;
+      document.getElementById('live-away-name').textContent = m.rival || 'Rival';
+      document.getElementById('live-home-score').textContent = m.homeScore || 0;
+      document.getElementById('live-away-score').textContent = m.awayScore || 0;
+      document.getElementById('live-home-sets').textContent = m.homeSets || 0;
+      document.getElementById('live-away-sets').textContent = m.awaySets || 0;
 
-      document.getElementById('live-my-team-name').textContent = activeTeam ? activeTeam.name : 'Mi Equipo';
-      document.getElementById('live-opp-team-name').textContent = m.opponentName || 'Rival';
-      document.getElementById('live-my-score').textContent = m.scoreUs;
-      document.getElementById('live-opp-score').textContent = m.scoreThem;
-      document.getElementById('live-set-badge').textContent = `SET ${m.currentSet}`;
-      document.getElementById('live-sets-score').textContent = `Sets: ${m.setsUs} - ${m.setsThem}`;
-
-      const setsPills = document.getElementById('live-sets-pills');
-      if (setsPills) {
-        setsPills.innerHTML = (m.completedSets || []).map(s =>
-          `<span class="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-700 text-slate-300 font-mono">S${s.set}: ${s.us}-${s.them}</span>`
-        ).join('');
+      const setsHist = document.getElementById('live-sets-history');
+      if (setsHist) {
+        setsHist.innerHTML = (m.setsHistory || []).map(s => `<div>Set ${s.set}: ${s.home} - ${s.away}</div>`).join('');
       }
 
-      const convokedPlayers = activeTeam
-        ? activeTeam.players.filter(p => getPlayerStatus(p) !== 'no_convocado').sort((a, b) => a.number - b.number)
-        : [];
-
-      if (selectedLivePlayerId && !convokedPlayers.some(p => p.id === selectedLivePlayerId)) {
-        selectedLivePlayerId = null;
-      }
-
-      const selectedPlayer = convokedPlayers.find(p => p.id === selectedLivePlayerId);
-      const pill = document.getElementById('live-selected-player-pill');
-      const targetLbl = document.getElementById('live-action-target-label');
-
-      if (selectedPlayer) {
-        pill.textContent = `#${selectedPlayer.number} ${selectedPlayer.name}`;
-        pill.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
-        targetLbl.textContent = `#${selectedPlayer.number} ${selectedPlayer.name} (${selectedPlayer.position})`;
-      } else {
-        pill.textContent = 'Ninguno seleccionado';
-        pill.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700';
-        targetLbl.textContent = 'Seleccioná un jugador arriba';
-      }
-
-      const grid = document.getElementById('live-players-grid');
-      if (grid) {
-        if (!convokedPlayers.length) {
-          grid.innerHTML = `<div class="col-span-full text-xs text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-xl p-3">No hay jugadores convocados. Configuralos en "1. Preparar Partido".</div>`;
+      const courtBox = document.getElementById('live-court-players');
+      const convoked = (team.players || []).filter(p => p.status !== 'not_convoked');
+      if (courtBox) {
+        if (!convoked.length) {
+          courtBox.innerHTML = `<div class="col-span-full text-xs text-slate-400">No hay jugadores convocados activos.</div>`;
         } else {
-          grid.innerHTML = convokedPlayers.map(p => {
-            const isSel = p.id === selectedLivePlayerId;
-            const isTitular = getPlayerStatus(p) === 'titular';
+          courtBox.innerHTML = convoked.map(p => {
+            const active = p.id === m.selectedPlayerId;
             return `
               <button onclick="selectLivePlayer('${p.id}')"
-                class="action-btn p-2.5 rounded-xl border text-left transition-all ${
-                  isSel
-                    ? 'bg-emerald-500 text-slate-950 border-emerald-300 shadow-lg shadow-emerald-500/25'
-                    : 'bg-slate-950/90 hover:bg-slate-900 text-white border-slate-800'
-                }">
+                class="p-2.5 rounded-xl border text-left transition ${active ? 'court-chip-active bg-slate-900' : 'bg-slate-950/75 border-slate-800 hover:border-slate-700'}">
                 <div class="flex items-center justify-between gap-1">
-                  <span class="font-black text-sm">#${p.number}</span>
-                  <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${
-                    isSel ? 'bg-slate-950/20 text-slate-950' :
-                    isTitular ? 'bg-emerald-500/15 text-emerald-300' : 'bg-amber-500/15 text-amber-300'
-                  }">${isTitular ? 'TIT' : 'BAN'}</span>
+                  <span class="text-xs font-black text-emerald-300">#${escapeHtml(p.number)}</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">${p.status === 'starter' ? 'Tit' : 'Bco'}</span>
                 </div>
-                <div class="text-xs font-bold truncate mt-0.5">${escapeHtml(p.name)}</div>
-                <div class="text-[10px] ${isSel ? 'text-slate-900 font-semibold' : 'text-slate-400'}">${escapeHtml(p.position)}</div>
+                <div class="text-xs font-bold text-white truncate mt-1">${escapeHtml(p.name)}</div>
+                <div class="text-[10px] text-slate-400 truncate">${escapeHtml(p.position || '')}</div>
               </button>
             `;
           }).join('');
         }
       }
 
-      const feed = document.getElementById('live-events-feed');
-      if (feed) {
-        const recent = [...(m.events || [])].reverse().slice(0, 15);
-        if (!recent.length) {
-          feed.innerHTML = `<div class="text-slate-500">Aún no hay acciones registradas en este partido.</div>`;
-        } else {
-          feed.innerHTML = recent.map(ev => {
-            const meta = ACTION_META[ev.type] || { label: ev.type, deltaUs: 0, deltaThem: 0 };
-            const badgeCls = meta.deltaUs > 0
-              ? 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30'
-              : meta.deltaThem > 0
-              ? 'text-rose-300 bg-rose-500/15 border-rose-500/30'
-              : 'text-sky-300 bg-sky-500/15 border-sky-500/30';
-            return `
-              <div class="px-3 py-2 rounded-xl bg-slate-950/80 border border-slate-800/80 flex items-center justify-between gap-2">
-                <div class="truncate">
-                  <span class="font-mono text-[10px] text-slate-500 mr-1.5">S${ev.set} (${ev.scoreUs}-${ev.scoreThem})</span>
-                  <span class="font-bold text-white">${escapeHtml(ev.playerLabel || 'Equipo')}</span>
-                  <span class="text-slate-400">• ${escapeHtml(meta.label)}</span>
-                </div>
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 ${badgeCls}">
-                  ${meta.deltaUs > 0 ? '+1 Propio' : meta.deltaThem > 0 ? '+1 Rival' : 'Continuidad'}
-                </span>
-              </div>
-            `;
-          }).join('');
-        }
+      const selPlayer = (team.players || []).find(p => p.id === m.selectedPlayerId) || convoked[0];
+      if (selPlayer && m.selectedPlayerId !== selPlayer.id) {
+        m.selectedPlayerId = selPlayer.id;
+      }
+      const label = document.getElementById('live-selected-player-label');
+      if (label) {
+        label.textContent = selPlayer ? `#${selPlayer.number} ${selPlayer.name} (${selPlayer.position || 'Jugador'})` : 'Ninguno';
+      }
+
+      const logBox = document.getElementById('live-recent-log');
+      if (logBox) {
+        const items = (m.history || []).slice(0, 12);
+        logBox.innerHTML = items.length
+          ? items.map(it => `<div class="py-1 px-2 rounded bg-slate-950/60 border border-slate-800/70 flex justify-between gap-2"><span>${escapeHtml(it.text)}</span><span class="text-slate-500 shrink-0">${escapeHtml(it.score)}</span></div>`).join('')
+          : `<div class="text-slate-500">Sin acciones registradas aún.</div>`;
       }
     }
 
     function selectLivePlayer(playerId) {
-      selectedLivePlayerId = (selectedLivePlayerId === playerId) ? null : playerId;
-      renderLiveView();
-    }
-
-    function adjustDirectScore(side, delta) {
-      const m = appState.currentMatch;
-      if (side === 'us') m.scoreUs = Math.max(0, m.scoreUs + delta);
-      if (side === 'them') m.scoreThem = Math.max(0, m.scoreThem + delta);
+      appState.currentMatch.selectedPlayerId = playerId;
       saveState();
       renderLiveView();
     }
 
-    function recordTacticalAction(actionType) {
-      const meta = ACTION_META[actionType];
-      if (!meta) return;
-      const activeTeam = getActiveTeam();
-      const player = activeTeam?.players.find(p => p.id === selectedLivePlayerId);
+    function adjustScore(side, delta) {
+      const m = appState.currentMatch;
+      if (side === 'home') m.homeScore = Math.max(0, (m.homeScore || 0) + delta);
+      if (side === 'away') m.awayScore = Math.max(0, (m.awayScore || 0) + delta);
+      saveState();
+      renderLiveView();
+    }
 
-      if (!player && actionType !== 'opp_err') {
-        showToast('Seleccioná primero un jugador convocado en el Paso 1', 'warning');
+    function recordAction(actionKey) {
+      const m = appState.currentMatch;
+      const team = getActiveTeam();
+      const player = (team.players || []).find(p => p.id === m.selectedPlayerId) || (team.players || [])[0];
+      if (!player) {
+        showToast('Seleccioná un jugador primero.', 'warning');
         return;
       }
+      if (!m.statsByPlayer[player.id]) {
+        m.statsByPlayer[player.id] = emptyPlayerStats();
+      }
+      m.statsByPlayer[player.id][actionKey] = (m.statsByPlayer[player.id][actionKey] || 0) + 1;
 
-      const m = appState.currentMatch;
-      m.scoreUs = Math.max(0, m.scoreUs + meta.deltaUs);
-      m.scoreThem = Math.max(0, m.scoreThem + meta.deltaThem);
+      const pointForUs = ['attack_point', 'serve_ace', 'block_point', 'opp_error'].includes(actionKey);
+      const pointForRival = ['attack_block', 'attack_err', 'set_err', 'rec_err', 'serve_err', 'block_err', 'fault_other'].includes(actionKey);
+      if (pointForUs) m.homeScore = (m.homeScore || 0) + 1;
+      if (pointForRival) m.awayScore = (m.awayScore || 0) + 1;
 
-      m.events.push({
-        id: 'ev_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
-        set: m.currentSet,
-        playerId: player ? player.id : null,
-        playerLabel: player ? `#${player.number} ${player.name}` : 'Error Rival',
-        type: actionType,
-        scoreUs: m.scoreUs,
-        scoreThem: m.scoreThem,
-        ts: Date.now()
+      const labels = {
+        attack_point: 'Ataque Punto (#)', attack_pos: 'Ataque +', attack_block: 'Ataque Bloqueado', attack_err: 'Error Ataque',
+        set_perf: 'Armado Perf. (#)', set_good: 'Armado Bueno (+)', set_bad: 'Armado Malo (-)', set_err: 'Error Armado',
+        rec_perf: 'Recep. Perf. (#)', rec_good: 'Recep. Buena (+)', rec_bad: 'Recep. Mala (-)', rec_err: 'Error Recep.',
+        serve_ace: 'Ace (#)', serve_pos: 'Saque +', serve_err: 'Error Saque',
+        block_point: 'Bloqueo Punto (#)', block_touch: 'Bloqueo Toque +', block_err: 'Bloqueo Falta',
+        dig_pos: 'Defensa +', dig_neg: 'Defensa -', opp_error: 'Error Rival', fault_other: 'Falta / Red'
+      };
+
+      m.history.unshift({
+        id: 'act_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        playerId: player.id,
+        actionKey,
+        pointForUs,
+        pointForRival,
+        text: `#${player.number} ${player.name}: ${labels[actionKey] || actionKey}`,
+        score: `${m.homeScore}-${m.awayScore}`
       });
 
       saveState();
       renderLiveView();
-      renderStatsView();
     }
 
     function undoLastAction() {
       const m = appState.currentMatch;
-      if (!m.events || !m.events.length) {
-        showToast('No hay acciones para deshacer', 'info');
+      const last = (m.history || []).shift();
+      if (!last) {
+        showToast('No hay jugadas para deshacer.', 'info');
         return;
       }
-      const last = m.events.pop();
-      const meta = ACTION_META[last.type];
-      if (meta) {
-        m.scoreUs = Math.max(0, m.scoreUs - meta.deltaUs);
-        m.scoreThem = Math.max(0, m.scoreThem - meta.deltaThem);
+      if (m.statsByPlayer[last.playerId]) {
+        m.statsByPlayer[last.playerId][last.actionKey] = Math.max(0, (m.statsByPlayer[last.playerId][last.actionKey] || 0) - 1);
       }
+      if (last.pointForUs) m.homeScore = Math.max(0, (m.homeScore || 0) - 1);
+      if (last.pointForRival) m.awayScore = Math.max(0, (m.awayScore || 0) - 1);
       saveState();
       renderLiveView();
-      renderStatsView();
-      showToast('Última acción deshecha', 'info');
+      showToast('Última acción deshecha.', 'info');
     }
 
     function finishCurrentSet() {
       const m = appState.currentMatch;
-      if (m.scoreUs === 0 && m.scoreThem === 0) {
-        showToast('El marcador del set está 0 - 0', 'warning');
-        return;
-      }
-      if (!confirm(`¿Cerrar Set ${m.currentSet} con marcador ${m.scoreUs} - ${m.scoreThem}?`)) return;
-
-      m.completedSets.push({ set: m.currentSet, us: m.scoreUs, them: m.scoreThem });
-      if (m.scoreUs > m.scoreThem) m.setsUs++;
-      else if (m.scoreThem > m.scoreUs) m.setsThem++;
-
-      m.currentSet++;
-      m.scoreUs = 0;
-      m.scoreThem = 0;
-
+      m.setsHistory.push({ set: m.setNum || 1, home: m.homeScore || 0, away: m.awayScore || 0 });
+      if ((m.homeScore || 0) > (m.awayScore || 0)) m.homeSets = (m.homeSets || 0) + 1;
+      else if ((m.awayScore || 0) > (m.homeScore || 0)) m.awaySets = (m.awaySets || 0) + 1;
+      m.setNum = (m.setNum || 1) + 1;
+      m.homeScore = 0;
+      m.awayScore = 0;
       saveState();
       renderLiveView();
-      showToast(`Set cerrado. Comienza Set ${m.currentSet}`, 'success');
+      showToast(`Set ${m.setNum - 1} cerrado.`, 'success');
     }
 
-    function archiveCurrentMatch() {
+    function saveMatchToLibrary() {
       const m = appState.currentMatch;
-      const activeTeam = getActiveTeam();
-      if (!activeTeam) return;
-
-      const archiveCopy = JSON.parse(JSON.stringify(m));
-      archiveCopy.id = 'arch_' + Date.now();
-      archiveCopy.teamId = activeTeam.id;
-      archiveCopy.teamName = activeTeam.name;
-      archiveCopy.createdBy = currentUser || 'desconocido';
-      archiveCopy.archivedAt = new Date().toISOString();
-
-      appState.archivedMatches.unshift(archiveCopy);
-
-      // Reiniciar partido actual limpio para el mismo equipo
-      const today = new Date().toISOString().slice(0, 10);
-      appState.currentMatch = {
-        id: 'match_live_' + Date.now(),
-        teamId: activeTeam.id,
-        opponentName: 'Rival',
-        tournament: m.tournament || 'Torneo Oficial',
-        date: today,
-        bestOf: m.bestOf || 5,
-        currentSet: 1,
-        scoreUs: 0,
-        scoreThem: 0,
-        setsUs: 0,
-        setsThem: 0,
-        completedSets: [],
-        events: [],
-        convokedIds: activeTeam.players.filter(p => getPlayerStatus(p) !== 'no_convocado').map(p => p.id)
+      const team = getActiveTeam();
+      const snapshot = {
+        id: 'saved_' + Date.now(),
+        date: new Date().toLocaleString('es-AR'),
+        createdBy: appState.currentUser || 'defeadmin',
+        teamId: team.id,
+        teamName: team.name,
+        rival: m.rival || 'Rival',
+        homeScore: m.homeScore || 0,
+        awayScore: m.awayScore || 0,
+        homeSets: m.homeSets || 0,
+        awaySets: m.awaySets || 0,
+        setsHistory: JSON.parse(JSON.stringify(m.setsHistory || [])),
+        playersSnapshot: JSON.parse(JSON.stringify(team.players || [])),
+        statsByPlayer: JSON.parse(JSON.stringify(m.statsByPlayer || {}))
       };
-
+      appState.savedMatches.unshift(snapshot);
       saveState();
-      renderAll();
-      showToast('Partido guardado en la Biblioteca', 'success');
+      showToast('Partido guardado en Biblioteca.', 'success');
     }
 
-    // =========================================================
-    // CÁLCULO ESTADÍSTICO, RENDIMIENTO Y MVP AUTOMÁTICO
-    // =========================================================
-    function computePlayerMatchStats(matchObj, playerId) {
-      const s = {
-        pts: 0, err: 0,
-        serveAce: 0, servePos: 0, serveErr: 0,
-        attKill: 0, attPos: 0, attBlk: 0, attErr: 0,
-        blkKill: 0, blkTouch: 0, blkErr: 0,
-        setPerf: 0, setGood: 0, setPoor: 0, setErr: 0,
-        recPerf: 0, recGood: 0, recPoor: 0, recErr: 0,
-        defPos: 0, defNeg: 0,
-        mvpIndex: 0
-      };
-
-      (matchObj.events || []).forEach(ev => {
-        if (ev.playerId !== playerId) return;
-        const meta = ACTION_META[ev.type];
-        if (!meta) return;
-        if (meta.isPoint) s.pts++;
-        if (meta.isError) s.err++;
-        s.mvpIndex += meta.mvpWeight;
-
-        switch (ev.type) {
-          case 'serve_ace': s.serveAce++; break;
-          case 'serve_pos': s.servePos++; break;
-          case 'serve_err': s.serveErr++; break;
-          case 'attack_kill': s.attKill++; break;
-          case 'attack_pos': s.attPos++; break;
-          case 'attack_blk': s.attBlk++; break;
-          case 'attack_err': s.attErr++; break;
-          case 'blk_kill': s.blkKill++; break;
-          case 'blk_touch': s.blkTouch++; break;
-          case 'blk_err': s.blkErr++; break;
-          case 'set_perf': s.setPerf++; break;
-          case 'set_good': s.setGood++; break;
-          case 'set_poor': s.setPoor++; break;
-          case 'set_err': s.setErr++; break;
-          case 'rec_perf': s.recPerf++; break;
-          case 'rec_good': s.recGood++; break;
-          case 'rec_poor': s.recPoor++; break;
-          case 'rec_err': s.recErr++; break;
-          case 'def_pos': s.defPos++; break;
-          case 'def_neg': s.defNeg++; break;
-        }
-      });
-
-      s.mvpIndex = Math.round(s.mvpIndex * 10) / 10;
-      return s;
-    }
-
-    function getSelectedMatchSourceForStats() {
-      if (selectedStatsMatchId === 'current') {
-        const team = getActiveTeam();
-        return {
-          match: appState.currentMatch,
-          team
-        };
-      }
-      const arch = appState.archivedMatches.find(m => m.id === selectedStatsMatchId);
-      if (!arch) {
-        selectedStatsMatchId = 'current';
-        return { match: appState.currentMatch, team: getActiveTeam() };
-      }
-      const team = appState.teams.find(t => t.id === arch.teamId) || getActiveTeam();
-      return { match: arch, team };
-    }
-
-    function onSelectStatsMatch(val) {
-      selectedStatsMatchId = val;
-      renderStatsView();
+    function computePlayerTotals(st) {
+      const s = { ...emptyPlayerStats(), ...(st || {}) };
+      const pts = (s.attack_point || 0) + (s.block_point || 0) + (s.serve_ace || 0);
+      const errs = (s.attack_err || 0) + (s.attack_block || 0) + (s.set_err || 0) + (s.rec_err || 0) + (s.serve_err || 0) + (s.block_err || 0) + (s.fault_other || 0);
+      const mvpScore = pts * 2 + ((s.set_perf || 0) + (s.rec_perf || 0)) * 0.6 + ((s.set_good || 0) + (s.rec_good || 0) + (s.dig_pos || 0) + (s.block_touch || 0)) * 0.35 - errs * 1.1;
+      return { ...s, pts, errs, mvpScore: Number(mvpScore.toFixed(1)) };
     }
 
     function renderStatsView() {
-      const selector = document.getElementById('stats-match-selector');
-      if (selector) {
-        const activeTeam = getActiveTeam();
-        const opts = [`<option value="current">Partido Actual En Vivo (${escapeHtml(activeTeam?.name || 'Equipo')} vs ${escapeHtml(appState.currentMatch.opponentName || 'Rival')})</option>`];
-        appState.archivedMatches.forEach(m => {
-          opts.push(`<option value="${m.id}" ${selectedStatsMatchId === m.id ? 'selected' : ''}>${escapeHtml(m.date || '')} • ${escapeHtml(m.teamName || 'Equipo')} vs ${escapeHtml(m.opponentName || 'Rival')}</option>`);
-        });
-        selector.innerHTML = opts.join('');
-        selector.value = selectedStatsMatchId;
+      const team = getActiveTeam();
+      const heading = document.getElementById('stats-team-heading');
+      const subtitle = document.getElementById('stats-team-subtitle');
+      if (heading) heading.textContent = `Rendimiento del Equipo — ${team.name}`;
+      if (subtitle) subtitle.textContent = `${team.branch || ''} ${team.category ? '• ' + team.category : ''} • Planilla individual y MVP automático`;
+
+      const srcSelect = document.getElementById('stats-source-select');
+      const currentVal = srcSelect?.value || 'current';
+      if (srcSelect) {
+        const opts = [
+          `<option value="current">Partido Actual (${escapeHtml(team.name)} vs ${escapeHtml(appState.currentMatch.rival || 'Rival')})</option>`,
+          ...appState.savedMatches.map(sm => `<option value="${escapeHtml(sm.id)}">${escapeHtml(sm.teamName)} vs ${escapeHtml(sm.rival)} (${escapeHtml(sm.date)})</option>`)
+        ];
+        srcSelect.innerHTML = opts.join('');
+        if ([...srcSelect.options].some(o => o.value === currentVal)) srcSelect.value = currentVal;
       }
 
-      const { match, team } = getSelectedMatchSourceForStats();
-      const teamBadge = document.getElementById('stats-team-badge');
-      const subtitle = document.getElementById('stats-match-subtitle');
-      if (teamBadge) {
-        teamBadge.textContent = team ? `${team.name}${team.branch ? ' • ' + team.branch : ''}` : 'Equipo';
-      }
-      if (subtitle) {
-        subtitle.textContent = `${team?.name || 'Equipo'} vs ${match.opponentName || 'Rival'} • ${match.tournament || ''} (${match.date || ''})`;
+      const chosenId = srcSelect?.value || 'current';
+      const savedMatch = appState.savedMatches.find(sm => sm.id === chosenId);
+      const roster = savedMatch ? (savedMatch.playersSnapshot || team.players) : (team.players || []);
+      const statsMap = savedMatch ? (savedMatch.statsByPlayer || {}) : (appState.currentMatch.statsByPlayer || {});
+
+      const rows = roster.map(p => ({ player: p, m: computePlayerTotals(statsMap[p.id]) }));
+      const mvpRow = [...rows].sort((a, b) => b.m.mvpScore - a.m.mvpScore)[0];
+      const mvpBanner = document.getElementById('stats-mvp-banner');
+      if (mvpBanner) {
+        mvpBanner.innerHTML = mvpRow && mvpRow.m.mvpScore > 0
+          ? `🏆 <strong>MVP Automático:</strong> #${escapeHtml(mvpRow.player.number)} ${escapeHtml(mvpRow.player.name)} (${mvpRow.m.pts} pts • Índice ${mvpRow.m.mvpScore})`
+          : `🏆 <strong>MVP Automático:</strong> Registrá acciones en cancha para calcular el jugador más valioso.`;
       }
 
       const tbody = document.getElementById('stats-table-body');
-      if (!tbody || !team) return;
-
-      const sortedPlayers = [...team.players].sort((a, b) => a.number - b.number);
-      let bestPlayer = null;
-      let bestStats = null;
-
-      const rowsHtml = sortedPlayers.map(p => {
-        const st = computePlayerMatchStats(match, p.id);
-        const isConvoked = selectedStatsMatchId === 'current'
-          ? getPlayerStatus(p) !== 'no_convocado'
-          : (match.convokedIds || []).includes(p.id);
-
-        if (isConvoked && st.mvpIndex > 0 && (!bestStats || st.mvpIndex > bestStats.mvpIndex)) {
-          bestPlayer = p;
-          bestStats = st;
-        }
-
-        const bal = st.pts - st.err;
-        return `
-          <tr class="hover:bg-slate-800/40 transition-colors">
-            <td class="py-2.5 px-3 font-bold text-white whitespace-nowrap">
-              <button onclick="openPlayerProfile('${team.id}', '${p.id}')" class="hover:text-sky-300 text-left">
-                #${p.number} ${escapeHtml(p.name)}
-              </button>
-              <span class="block text-[10px] font-normal text-slate-400">${escapeHtml(p.position)}</span>
-            </td>
-            <td class="py-2.5 px-2 text-center">
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isConvoked ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'}">
-                ${isConvoked ? 'Conv' : 'No'}
-              </span>
-            </td>
-            <td class="py-2.5 px-2 text-center font-black text-emerald-400">${st.pts}</td>
-            <td class="py-2.5 px-2 text-center font-bold text-rose-400">${st.err}</td>
-            <td class="py-2.5 px-2 text-center font-mono ${bal >= 0 ? 'text-emerald-300' : 'text-rose-300'}">${bal >= 0 ? '+' + bal : bal}</td>
-            <td class="py-2.5 px-2 text-center font-mono text-slate-300">${st.serveAce}/${st.servePos}/${st.serveErr}</td>
-            <td class="py-2.5 px-2 text-center font-mono text-slate-300">${st.attKill}/${st.attPos}/${st.attBlk}/${st.attErr}</td>
-            <td class="py-2.5 px-2 text-center font-mono text-slate-300">${st.blkKill}/${st.blkTouch}/${st.blkErr}</td>
-            <td class="py-2.5 px-2 text-center font-mono text-slate-300">${st.setPerf}/${st.setGood}/${st.setPoor}/${st.setErr}</td>
-            <td class="py-2.5 px-2 text-center font-mono text-slate-300">${st.recPerf}/${st.recGood}/${st.recPoor}/${st.recErr}</td>
-            <td class="py-2.5 px-2 text-center font-mono text-slate-300">${st.defPos}/${st.defNeg}</td>
-            <td class="py-2.5 px-2 text-center font-mono font-extrabold text-amber-300">${st.mvpIndex.toFixed(1)}</td>
-          </tr>
-        `;
-      }).join('');
-
-      tbody.innerHTML = rowsHtml || `<tr><td colspan="12" class="p-4 text-center text-slate-500">Sin jugadores en el plantel.</td></tr>`;
-
-      const mvpNameEl = document.getElementById('stats-mvp-name');
-      const mvpDetailEl = document.getElementById('stats-mvp-detail');
-      const mvpScoreEl = document.getElementById('stats-mvp-score');
-      if (bestPlayer && bestStats) {
-        mvpNameEl.textContent = `#${bestPlayer.number} ${bestPlayer.name} (${bestPlayer.position})`;
-        mvpDetailEl.textContent = `${bestStats.pts} pts directos • ${bestStats.err} errores • Eficiencia global ponderada por fundamento`;
-        mvpScoreEl.textContent = `Índice: ${bestStats.mvpIndex.toFixed(1)}`;
-      } else {
-        mvpNameEl.textContent = 'Sin datos suficientes';
-        mvpDetailEl.textContent = 'Registrá acciones en vivo para calcular el índice de rendimiento.';
-        mvpScoreEl.textContent = 'Índice: 0.0';
-      }
+      if (!tbody) return;
+      tbody.innerHTML = rows.map(({ player, m }) => `
+        <tr>
+          <td class="p-2.5 font-bold text-white whitespace-nowrap">#${escapeHtml(player.number)} ${escapeHtml(player.name)} <span class="text-[10px] text-slate-400">(${escapeHtml(player.position || '')})</span></td>
+          <td class="p-2.5 text-center font-black text-emerald-400">${m.pts}</td>
+          <td class="p-2.5 text-center">${m.attack_point}</td>
+          <td class="p-2.5 text-center">${m.block_point}</td>
+          <td class="p-2.5 text-center">${m.serve_ace}</td>
+          <td class="p-2.5 text-center text-sky-300">${m.set_perf + m.set_good}</td>
+          <td class="p-2.5 text-center text-indigo-300">${m.rec_perf + m.rec_good}</td>
+          <td class="p-2.5 text-center text-purple-300">${m.dig_pos}</td>
+          <td class="p-2.5 text-center text-rose-400">${m.errs}</td>
+        </tr>
+      `).join('');
     }
 
-    function exportCurrentStatsCSV() {
-      const { match, team } = getSelectedMatchSourceForStats();
-      if (!team) return;
-      const headers = ['Dorsal', 'Jugador', 'Posicion', 'Puntos', 'Errores', 'Saque_Ace', 'Saque_Pos', 'Saque_Err', 'Ataque_Punto', 'Ataque_Pos', 'Ataque_Bloq', 'Ataque_Err', 'Bloq_Punto', 'Bloq_Toque', 'Bloq_Err', 'Armado_Perf', 'Armado_Bueno', 'Armado_Malo', 'Armado_Err', 'Recep_Perf', 'Recep_Buena', 'Recep_Mala', 'Recep_Err', 'Def_Pos', 'Def_Neg', 'Indice_MVP'];
-      const rows = team.players.map(p => {
-        const s = computePlayerMatchStats(match, p.id);
-        return [
-          p.number, `"${p.name}"`, p.position, s.pts, s.err,
-          s.serveAce, s.servePos, s.serveErr,
-          s.attKill, s.attPos, s.attBlk, s.attErr,
-          s.blkKill, s.blkTouch, s.blkErr,
-          s.setPerf, s.setGood, s.setPoor, s.setErr,
-          s.recPerf, s.recGood, s.recPoor, s.recErr,
-          s.defPos, s.defNeg, s.mvpIndex.toFixed(1)
-        ].join(',');
+    function exportStatsCsv() {
+      const team = getActiveTeam();
+      const statsMap = appState.currentMatch.statsByPlayer || {};
+      const headers = ['Dorsal', 'Jugador', 'Posicion', 'Puntos', 'Ataque_Pts', 'Bloqueo_Pts', 'Ace', 'Armado_Pos', 'Recep_Pos', 'Defensa_Pos', 'Errores'];
+      const lines = [headers.join(',')];
+      (team.players || []).forEach(p => {
+        const m = computePlayerTotals(statsMap[p.id]);
+        lines.push([p.number, `"${p.name}"`, `"${p.position || ''}"`, m.pts, m.attack_point, m.block_point, m.serve_ace, m.set_perf + m.set_good, m.rec_perf + m.rec_good, m.dig_pos, m.errs].join(','));
       });
-      const csv = [headers.join(','), ...rows].join('\n');
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `stats_${team.name.replace(/\s+/g, '_')}_vs_${(match.opponentName || 'rival').replace(/\s+/g, '_')}.csv`;
+      a.download = `${team.name.replace(/\s+/g, '_')}_estadisticas.csv`;
       a.click();
       URL.revokeObjectURL(url);
+      showToast('CSV exportado.', 'success');
     }
 
-    // =========================================================
-    // VISTA 4: BIBLIOTECA / ARCHIVO POR EQUIPO
-    // =========================================================
     function renderLibraryView() {
       const filterSel = document.getElementById('library-team-filter');
+      const currentFilter = filterSel?.value || 'ALL';
       if (filterSel) {
-        const prev = filterSel.value;
-        filterSel.innerHTML = `<option value="all">Todos los equipos</option>` +
-          appState.teams.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
-        if ([...filterSel.options].some(o => o.value === prev)) filterSel.value = prev;
+        filterSel.innerHTML = `<option value="ALL">Todos los equipos</option>` + appState.teams.map(t =>
+          `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)}</option>`
+        ).join('');
+        if ([...filterSel.options].some(o => o.value === currentFilter)) filterSel.value = currentFilter;
       }
 
-      const selectedTeamFilter = filterSel ? filterSel.value : 'all';
-      const grid = document.getElementById('library-matches-grid');
-      if (!grid) return;
-
-      const list = appState.archivedMatches.filter(m =>
-        selectedTeamFilter === 'all' || m.teamId === selectedTeamFilter
-      );
-
-      if (!list.length) {
-        grid.innerHTML = `<div class="col-span-full p-5 rounded-2xl bg-slate-950/60 border border-slate-800 text-xs text-slate-400">No hay partidos archivados para este filtro todavía. Guardá un partido desde "2. En Vivo".</div>`;
+      const listBox = document.getElementById('library-matches-list');
+      if (!listBox) return;
+      const matches = (appState.savedMatches || []).filter(m => currentFilter === 'ALL' || m.teamId === currentFilter);
+      if (!matches.length) {
+        listBox.innerHTML = `<div class="p-4 rounded-xl bg-slate-950/70 border border-slate-800 text-xs text-slate-400">No hay partidos guardados para este filtro.</div>`;
         return;
       }
 
-      grid.innerHTML = list.map(m => {
-        const canDelete = currentUser === 'defeadmin' || (m.createdBy && m.createdBy === currentUser);
-        const setsSummary = (m.completedSets || []).map(s => `${s.us}-${s.them}`).join(' | ') || `En curso (${m.scoreUs}-${m.scoreThem})`;
+      listBox.innerHTML = matches.map(m => {
+        const canDelete = isAdminUser() || (m.createdBy && m.createdBy === appState.currentUser);
         return `
-          <div class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 flex flex-col justify-between gap-3">
+          <div class="p-3.5 rounded-xl bg-slate-950/75 border border-slate-800 flex flex-wrap items-center justify-between gap-2">
             <div>
-              <div class="flex items-center justify-between gap-2 text-[11px] text-slate-400">
-                <span class="font-bold text-emerald-300">${escapeHtml(m.teamName || 'Equipo')}</span>
-                <span>${escapeHtml(m.date || '')}</span>
-              </div>
-              <div class="text-sm font-black text-white mt-1">
-                vs ${escapeHtml(m.opponentName || 'Rival')}
-              </div>
-              <div class="text-xs text-slate-400 mt-0.5">
-                ${escapeHtml(m.tournament || '')} • Sets: <strong class="text-white">${m.setsUs} - ${m.setsThem}</strong> (${escapeHtml(setsSummary)})
-              </div>
-              <div class="text-[10px] text-slate-500 mt-1">
-                Registrado por: ${escapeHtml(m.createdBy || 'N/D')} • ${(m.events || []).length} acciones
-              </div>
+              <div class="text-xs sm:text-sm font-black text-white">${escapeHtml(m.teamName)} vs ${escapeHtml(m.rival)} <span class="text-emerald-400 ml-1">${m.homeSets}-${m.awaySets} sets (${m.homeScore}-${m.awayScore})</span></div>
+              <div class="text-[11px] text-slate-400">Autor: <span class="text-slate-300">${escapeHtml(m.createdBy || 'sistema')}</span> • ${escapeHtml(m.date || '')}</div>
             </div>
-
-            <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
-              <button onclick="openArchivedMatchInStats('${m.id}')"
-                class="px-3 py-1.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 text-xs font-bold">
-                📊 Ver Estadísticas
-              </button>
-              ${canDelete ? `
-                <button onclick="deleteArchivedMatch('${m.id}')"
-                  class="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-xs font-bold">
-                  🗑️ Borrar
-                </button>
-              ` : ''}
+            <div class="flex items-center gap-2">
+              <button onclick="openMatchInStats('${m.id}')" class="px-3 py-1.5 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 text-xs font-bold">Ver Rendimiento</button>
+              ${canDelete ? `<button onclick="deleteSavedMatch('${m.id}')" class="px-3 py-1.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-xs font-bold">Borrar</button>` : ''}
             </div>
           </div>
         `;
       }).join('');
     }
 
-    function openArchivedMatchInStats(matchId) {
-      selectedStatsMatchId = matchId;
+    function openMatchInStats(matchId) {
       switchTab('stats');
+      const sel = document.getElementById('stats-source-select');
+      if (sel) {
+        sel.value = matchId;
+        renderStatsView();
+      }
     }
 
-    function deleteArchivedMatch(matchId) {
-      const m = appState.archivedMatches.find(item => item.id === matchId);
+    function deleteSavedMatch(matchId) {
+      const m = appState.savedMatches.find(item => item.id === matchId);
       if (!m) return;
-      const canDelete = currentUser === 'defeadmin' || (m.createdBy && m.createdBy === currentUser);
+      const canDelete = isAdminUser() || (m.createdBy && m.createdBy === appState.currentUser);
       if (!canDelete) {
-        showToast('Solo el autor del partido o defeadmin pueden borrarlo', 'warning');
+        showToast('Solo el autor del partido o defeadmin pueden borrarlo.', 'warning');
         return;
       }
-      if (!confirm(`¿Borrar el partido vs ${m.opponentName || 'Rival'} (${m.date || ''})?`)) return;
-      appState.archivedMatches = appState.archivedMatches.filter(item => item.id !== matchId);
-      if (selectedStatsMatchId === matchId) selectedStatsMatchId = 'current';
+      appState.savedMatches = appState.savedMatches.filter(item => item.id !== matchId);
       saveState();
       renderLibraryView();
-      renderSetupView();
-      showToast('Partido eliminado de la biblioteca', 'info');
+      showToast('Partido eliminado.', 'info');
     }
 
-    // =========================================================
-    // PERFIL INDIVIDUAL DEL JUGADOR (MODAL)
-    // =========================================================
-    function openPlayerProfile(teamId, playerId) {
-      const team = appState.teams.find(t => t.id === teamId);
-      const player = team?.players.find(p => p.id === playerId);
-      if (!team || !player) return;
+    function renderConfigPanel() {
+      const roleBadge = document.getElementById('config-role-badge');
+      const adminPanel = document.getElementById('admin-only-config-panel');
+      const adminFlag = isAdminUser();
 
-      document.getElementById('profile-player-number').textContent = `#${player.number}`;
-      document.getElementById('profile-player-name').textContent = player.name;
-      document.getElementById('profile-player-meta').textContent = `${player.position} • ${team.name}${team.branch ? ' (' + team.branch + ')' : ''}`;
+      if (roleBadge) {
+        roleBadge.textContent = adminFlag ? 'Administrador (defeadmin)' : `Usuario: ${appState.currentUser || 'Invitado'}`;
+        roleBadge.className = adminFlag
+          ? 'text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+          : 'text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700';
+      }
 
-      const teamMatches = appState.archivedMatches.filter(m => m.teamId === team.id);
-      const allSources = teamMatches.map(m => ({
-        date: m.date || '-',
-        opponent: m.opponentName || 'Rival',
-        wasConvoked: (m.convokedIds || []).includes(player.id),
-        stats: computePlayerMatchStats(m, player.id),
-        isMvp: computeMatchMvpPlayerId(m, team) === player.id
-      }));
+      if (!adminPanel) return;
+      adminPanel.classList.toggle('hidden', !adminFlag);
+      if (!adminFlag) return;
 
-      // Sumar también el partido actual si pertenece a este equipo
-      if (appState.currentMatch.teamId === team.id) {
-        allSources.unshift({
-          date: 'En Vivo',
-          opponent: appState.currentMatch.opponentName || 'Rival',
-          wasConvoked: getPlayerStatus(player) !== 'no_convocado',
-          stats: computePlayerMatchStats(appState.currentMatch, player.id),
-          isMvp: computeMatchMvpPlayerId(appState.currentMatch, team) === player.id
+      const notifBox = document.getElementById('admin-password-notifications');
+      if (notifBox) {
+        const list = appState.passwordNotifications || [];
+        notifBox.innerHTML = list.length
+          ? list.map(n => `<div class="p-2.5 rounded-lg bg-slate-900 border ${n.read ? 'border-slate-800 opacity-75' : 'border-amber-500/40'} flex items-center justify-between gap-2"><div><span class="font-bold text-white">${escapeHtml(n.username)}</span> cambió su contraseña (${escapeHtml(n.detail || 'actualizada')})</div><span class="text-[10px] text-slate-400 shrink-0">${escapeHtml(n.date || '')}</span></div>`).join('')
+          : `<div class="text-slate-400">No hay avisos recientes de cambio de contraseña.</div>`;
+      }
+
+      const usersBox = document.getElementById('admin-users-list');
+      if (usersBox) {
+        usersBox.innerHTML = (appState.users || []).map(u => {
+          const isSelfAdmin = u.username === 'defeadmin';
+          return `
+            <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <div class="text-xs sm:text-sm font-bold text-white">${escapeHtml(u.name || u.username)} <span class="font-mono text-emerald-400 text-xs">@${escapeHtml(u.username)}</span></div>
+                <div class="text-[11px] text-slate-400">Rol: ${isSelfAdmin ? 'Administrador' : 'Entrenador / Perfil'}</div>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button onclick="resetUserPasswordByAdmin('${escapeHtml(u.username)}')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold">Reset Clave</button>
+                ${!isSelfAdmin ? `<button onclick="deleteUserProfile('${escapeHtml(u.username)}')" class="px-2.5 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-xs font-bold">Eliminar</button>` : ''}
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    function changeOwnPassword() {
+      const inp = document.getElementById('my-new-password');
+      const newPass = (inp?.value || '').trim();
+      if (newPass.length < 4) {
+        showToast('La nueva contraseña debe tener al menos 4 caracteres.', 'warning');
+        return;
+      }
+      const uname = appState.currentUser;
+      const userObj = (appState.users || []).find(u => u.username === uname);
+      if (!userObj) return;
+      userObj.password = newPass;
+      if (uname !== 'defeadmin') {
+        appState.passwordNotifications.unshift({
+          id: 'notif_' + Date.now(),
+          username: uname,
+          detail: 'cambio realizado por el usuario',
+          date: new Date().toLocaleString('es-AR'),
+          read: false
         });
       }
-
-      const totals = allSources.reduce((acc, row) => {
-        if (row.wasConvoked) acc.convoked++;
-        else acc.notConvoked++;
-        if (row.isMvp) acc.mvps++;
-        acc.pts += row.stats.pts;
-        acc.err += row.stats.err;
-        acc.mvpSum += row.stats.mvpIndex;
-        return acc;
-      }, { convoked: 0, notConvoked: 0, mvps: 0, pts: 0, err: 0, mvpSum: 0 });
-
-      document.getElementById('profile-summary-cards').innerHTML = `
-        <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 text-center">
-          <div class="text-[10px] text-slate-400 uppercase font-bold">Convocatorias</div>
-          <div class="text-sm font-black text-emerald-300 mt-0.5">${totals.convoked} Sí / ${totals.notConvoked} No</div>
-        </div>
-        <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 text-center">
-          <div class="text-[10px] text-slate-400 uppercase font-bold">Puntos Totales</div>
-          <div class="text-lg font-black text-white mt-0.5">${totals.pts}</div>
-        </div>
-        <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 text-center">
-          <div class="text-[10px] text-slate-400 uppercase font-bold">Errores Totales</div>
-          <div class="text-lg font-black text-rose-400 mt-0.5">${totals.err}</div>
-        </div>
-        <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 text-center">
-          <div class="text-[10px] text-slate-400 uppercase font-bold">Premios MVP</div>
-          <div class="text-lg font-black text-amber-300 mt-0.5">🏆 ${totals.mvps}</div>
-        </div>
-        <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 text-center">
-          <div class="text-[10px] text-slate-400 uppercase font-bold">Índice Acum.</div>
-          <div class="text-lg font-black text-sky-300 mt-0.5">${totals.mvpSum.toFixed(1)}</div>
-        </div>
-      `;
-
-      const tbody = document.getElementById('profile-matches-tbody');
-      tbody.innerHTML = allSources.length ? allSources.map(r => `
-        <tr>
-          <td class="py-2 px-3 font-semibold text-white">${escapeHtml(r.date)} • vs ${escapeHtml(r.opponent)}</td>
-          <td class="py-2 px-2 text-center">
-            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${r.wasConvoked ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'}">
-              ${r.wasConvoked ? 'Sí' : 'No'}
-            </span>
-          </td>
-          <td class="py-2 px-2 text-center font-bold text-emerald-400">${r.stats.pts}</td>
-          <td class="py-2 px-2 text-center text-rose-400">${r.stats.err}</td>
-          <td class="py-2 px-2 text-center font-mono text-slate-300">${r.stats.serveAce}/${r.stats.servePos}/${r.stats.serveErr}</td>
-          <td class="py-2 px-2 text-center font-mono text-slate-300">${r.stats.attKill}/${r.stats.attPos}/${r.stats.attErr}</td>
-          <td class="py-2 px-2 text-center font-mono text-slate-300">${r.stats.setPerf}/${r.stats.setGood}/${r.stats.setPoor}/${r.stats.setErr}</td>
-          <td class="py-2 px-2 text-center font-mono text-slate-300">${r.stats.recPerf}/${r.stats.recGood}/${r.stats.recPoor}/${r.stats.recErr}</td>
-          <td class="py-2 px-2 text-center font-mono font-bold text-amber-300">
-            ${r.stats.mvpIndex.toFixed(1)} ${r.isMvp ? '🏆' : ''}
-          </td>
-        </tr>
-      `).join('') : `<tr><td colspan="9" class="p-4 text-center text-slate-500">Sin partidos registrados aún.</td></tr>`;
-
-      document.getElementById('player-profile-modal').classList.remove('hidden');
+      inp.value = '';
+      saveState();
+      renderTabs();
+      showToast('Contraseña actualizada correctamente.', 'success');
     }
 
-    function computeMatchMvpPlayerId(matchObj, team) {
-      if (!team || !team.players.length) return null;
-      let bestId = null;
-      let bestScore = 0;
-      team.players.forEach(p => {
-        const st = computePlayerMatchStats(matchObj, p.id);
-        if (st.mvpIndex > bestScore) {
-          bestScore = st.mvpIndex;
-          bestId = p.id;
-        }
-      });
-      return bestId;
-    }
-
-    function closePlayerProfile() {
-      document.getElementById('player-profile-modal').classList.add('hidden');
-    }
-
-    // INICIALIZACIÓN
-    (function init() {
-      const savedUser = localStorage.getItem(AUTH_SESSION_KEY);
-      if (savedUser && USERS_DB[savedUser]) {
-        currentUser = savedUser;
-        enterApp();
+    function createUserProfile() {
+      if (!isAdminUser()) return;
+      const uInp = document.getElementById('new-user-username');
+      const dInp = document.getElementById('new-user-display');
+      const pInp = document.getElementById('new-user-password');
+      const username = (uInp?.value || '').trim().toLowerCase().replace(/\s+/g, '_');
+      const name = (dInp?.value || '').trim() || username;
+      const password = (pInp?.value || '').trim();
+      if (!username || password.length < 3) {
+        showToast('Completá usuario y contraseña (mín. 3 caracteres).', 'warning');
+        return;
       }
-    })();
+      if ((appState.users || []).some(u => u.username.toLowerCase() === username)) {
+        showToast('Ese nombre de usuario ya existe.', 'warning');
+        return;
+      }
+      appState.users.push({ username, name, password, role: 'coach' });
+      uInp.value = '';
+      dInp.value = '';
+      pInp.value = '';
+      saveState();
+      renderConfigPanel();
+      showToast(`Perfil @${username} creado.`, 'success');
+    }
+
+    function resetUserPasswordByAdmin(username) {
+      if (!isAdminUser()) return;
+      const userObj = (appState.users || []).find(u => u.username === username);
+      if (!userObj) return;
+      userObj.password = '1234';
+      appState.passwordNotifications.unshift({
+        id: 'notif_' + Date.now(),
+        username,
+        detail: 'reseteada a 1234 por defeadmin',
+        date: new Date().toLocaleString('es-AR'),
+        read: false
+      });
+      saveState();
+      renderConfigPanel();
+      showToast(`Clave de @${username} reseteada a "1234".`, 'success');
+    }
+
+    function deleteUserProfile(username) {
+      if (!isAdminUser() || username === 'defeadmin') return;
+      appState.users = (appState.users || []).filter(u => u.username !== username);
+      saveState();
+      renderConfigPanel();
+      showToast(`Perfil @${username} eliminado.`, 'info');
+    }
+
+    function clearPasswordNotifications() {
+      if (!isAdminUser()) return;
+      (appState.passwordNotifications || []).forEach(n => { n.read = true; });
+      saveState();
+      renderTabs();
+    }
+
+    function renderAll() {
+      updateAuthVisibility();
+      renderTabs();
+      renderSetupView();
+      renderLiveView();
+      renderStatsView();
+      renderLibraryView();
+      if (appState.activeTab === 'config') renderConfigPanel();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderAll();
+    });
   </script>
 </body>
-</html>
+</html>}
