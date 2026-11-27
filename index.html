@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Vóley Stats Live • v13.05.29</title>
+  <title>Vóley Stats Live • v13.05.31</title>
   <meta name="theme-color" content="#0f172a" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -83,7 +83,7 @@
 
         if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
           const swCode = `
-            const CACHE_NAME = 'voley-stats-13-05-29';
+            const CACHE_NAME = 'voley-stats-13-05-30';
             self.addEventListener('install', (event) => {
               event.waitUntil(self.skipWaiting());
             });
@@ -122,7 +122,7 @@
             PWA • CANCHA & NUBE
           </span>
           <span id="login-version-badge" class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-            v13.05.29
+            v13.05.31
           </span>
         </div>
       </div>
@@ -139,7 +139,7 @@
           <label for="login-username" class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5">
             Usuario
           </label>
-          <input id="login-username" type="text" required autocomplete="username" placeholder="Ej: admin o profe"
+          <input id="login-username" type="text" required autocomplete="username" placeholder="Ej: defeadmin o ciro"
             class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500" />
         </div>
 
@@ -175,7 +175,7 @@
             <div class="flex items-center gap-2">
               <h1 class="text-base sm:text-lg font-black text-white truncate">Vóley Stats Live</h1>
               <span id="app-version-badge" class="text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-800 text-emerald-300 border border-slate-700 shrink-0">
-                v13.05.29
+                v13.05.31
               </span>
             </div>
             <div class="flex flex-wrap items-center gap-2 text-[11px] text-slate-400 mt-0.5">
@@ -549,6 +549,25 @@
 
           <div id="stats-mvp-banner" class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs sm:text-sm text-amber-200"></div>
 
+          <!-- Filtros de ordenamiento rápido en Rendimiento -->
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Ordenar planilla por:</span>
+            <div class="flex flex-wrap items-center gap-1.5" id="stats-sort-buttons">
+              <button type="button" id="sort-btn-number" onclick="setStatsSort('number')"
+                class="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 transition">
+                Por Nro
+              </button>
+              <button type="button" id="sort-btn-points" onclick="setStatsSort('points')"
+                class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition">
+                Por Puntos
+              </button>
+              <button type="button" id="sort-btn-errors" onclick="setStatsSort('errors')"
+                class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition">
+                Por Error
+              </button>
+            </div>
+          </div>
+
           <div class="overflow-x-auto rounded-xl border border-slate-800">
             <table class="w-full text-left border-collapse text-xs">
               <thead class="bg-slate-950/90 text-slate-400 uppercase text-[10px]">
@@ -682,9 +701,9 @@
   </div>
 
   <script>
-    const APP_VERSION = '13.05.29';
+    const APP_VERSION = '13.05.31';
     const STORAGE_KEY = 'voley_stats_live_state_v13';
-
+    let statsSortMode = 'number';
     function emptyPlayerStats() {
       return {
         attack_point: 0, attack_pos: 0, attack_block: 0, attack_err: 0,
@@ -950,21 +969,47 @@
 
       rosterBox.innerHTML = players.map(p => {
         const status = p.status || 'bench';
+        const statusMeta = {
+          starter: {
+            label: 'Titular',
+            cls: 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border-emerald-500/50'
+          },
+          bench: {
+            label: 'Banco',
+            cls: 'bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border-sky-500/50'
+          },
+          not_convoked: {
+            label: 'No convocado',
+            cls: 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border-amber-500/50'
+          }
+        };
+        const stInfo = statusMeta[status] || statusMeta.bench;
+        const positions = ['Punta', 'Central', 'Opuesto', 'Armador', 'Líbero', 'Universal'];
+        const currentPos = positions.includes(p.position) ? p.position : (p.position || 'Universal');
+        const posOptions = positions.map(pos =>
+          `<option value="${escapeHtml(pos)}" ${currentPos === pos ? 'selected' : ''}>${escapeHtml(pos)}</option>`
+        ).join('') + (!positions.includes(currentPos) ? `<option value="${escapeHtml(currentPos)}" selected>${escapeHtml(currentPos)}</option>` : '');
+
         return `
           <div class="p-3 rounded-xl bg-slate-950/75 border border-slate-800 flex flex-wrap items-center justify-between gap-2">
             <div class="flex items-center gap-2.5 min-w-0">
               <span class="w-8 h-8 rounded-lg bg-slate-800 text-emerald-300 font-black text-xs flex items-center justify-center shrink-0">#${escapeHtml(p.number)}</span>
               <div class="truncate">
                 <div class="text-xs sm:text-sm font-bold text-white truncate">${escapeHtml(p.name)}</div>
-                <div class="text-[11px] text-slate-400">${escapeHtml(p.position || 'Jugador')}</div>
+                <div class="text-[11px] text-slate-400">${escapeHtml(currentPos)}</div>
               </div>
             </div>
             <div class="flex flex-wrap items-center gap-1.5">
-              <button onclick="setPlayerStatus('${p.id}', 'starter')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold border ${status === 'starter' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50' : 'bg-slate-900 text-slate-400 border-slate-800'}">Titular</button>
-              <button onclick="setPlayerStatus('${p.id}', 'bench')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold border ${status === 'bench' ? 'bg-sky-500/20 text-sky-300 border-sky-500/50' : 'bg-slate-900 text-slate-400 border-slate-800'}">Banco</button>
-              <button onclick="setPlayerStatus('${p.id}', 'not_convoked')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold border ${status === 'not_convoked' ? 'bg-amber-500/20 text-amber-300 border-amber-500/50' : 'bg-slate-900 text-slate-400 border-slate-800'}">No convocado</button>
-              <button onclick="editPlayerQuick('${p.id}')" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs">✏️</button>
-              <button onclick="removePlayer('${p.id}')" class="px-2 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 text-xs">🗑️</button>
+              <button type="button" onclick="cyclePlayerStatus('${p.id}')" title="Tocá para cambiar estado"
+                class="px-3 py-1 rounded-lg text-[11px] font-bold border transition ${stInfo.cls}">
+                ${stInfo.label}
+              </button>
+              <select aria-label="Puesto de ${escapeHtml(p.name)}" onchange="setPlayerPosition('${p.id}', this.value)"
+                class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 text-[11px] font-bold focus:outline-none focus:border-emerald-500">
+                ${posOptions}
+              </select>
+              <button type="button" onclick="editPlayerQuick('${p.id}')" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs">✏️</button>
+              <button type="button" onclick="removePlayer('${p.id}')" class="px-2 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 text-xs">🗑️</button>
             </div>
           </div>
         `;
@@ -1018,27 +1063,22 @@
       renderSetupView();
     }
 
-    function editPlayerQuick(playerId) {
+    function cyclePlayerStatus(playerId) {
       const team = getActiveTeam();
       const pl = (team.players || []).find(p => p.id === playerId);
       if (!pl) return;
-      const nextName = prompt('Nombre del jugador:', pl.name);
-      if (nextName === null) return;
-      const nextNum = prompt('Número de camiseta:', String(pl.number));
-      if (nextNum === null) return;
-      const nextPos = prompt('Posición:', pl.position || 'Punta');
-      if (nextPos === null) return;
-      pl.name = nextName.trim() || pl.name;
-      pl.number = parseInt(nextNum, 10) || pl.number;
-      pl.position = nextPos.trim() || pl.position;
+      const order = ['starter', 'bench', 'not_convoked'];
+      const idx = order.indexOf(pl.status || 'bench');
+      pl.status = order[(idx + 1) % order.length];
       saveState();
       renderSetupView();
-      showToast('Jugador actualizado.', 'success');
     }
 
-    function removePlayer(playerId) {
+    function setPlayerPosition(playerId, position) {
       const team = getActiveTeam();
-      team.players = (team.players || []).filter(p => p.id !== playerId);
+      const pl = (team.players || []).find(p => p.id === playerId);
+      if (!pl) return;
+      pl.position = position || 'Universal';
       saveState();
       renderSetupView();
     }
@@ -1309,6 +1349,16 @@
       const statsMap = savedMatch ? (savedMatch.statsByPlayer || {}) : (appState.currentMatch.statsByPlayer || {});
 
       const rows = roster.map(p => ({ player: p, m: computePlayerTotals(statsMap[p.id]) }));
+      const sortedRows = [...rows].sort((a, b) => {
+        if (statsSortMode === 'points') {
+          return (b.m.pts - a.m.pts) || (b.m.mvpScore - a.m.mvpScore) || ((a.player.number || 0) - (b.player.number || 0));
+        }
+        if (statsSortMode === 'errors') {
+          return (b.m.errs - a.m.errs) || (b.m.pts - a.m.pts) || ((a.player.number || 0) - (b.player.number || 0));
+        }
+        return (Number(a.player.number) || 999) - (Number(b.player.number) || 999);
+      });
+      updateStatsSortButtons();
       const mvpRow = [...rows].sort((a, b) => b.m.mvpScore - a.m.mvpScore)[0];
       const mvpBanner = document.getElementById('stats-mvp-banner');
       if (mvpBanner) {
@@ -1319,7 +1369,7 @@
 
       const tbody = document.getElementById('stats-table-body');
       if (!tbody) return;
-      tbody.innerHTML = rows.map(({ player, m }) => `
+      tbody.innerHTML = sortedRows.map(({ player, m }) => `
         <tr>
           <td class="p-2.5 font-bold text-white whitespace-nowrap">#${escapeHtml(player.number)} ${escapeHtml(player.name)} <span class="text-[10px] text-slate-400">(${escapeHtml(player.position || '')})</span></td>
           <td class="p-2.5 text-center font-black text-emerald-400">${m.pts}</td>
@@ -1332,6 +1382,28 @@
           <td class="p-2.5 text-center text-rose-400">${m.errs}</td>
         </tr>
       `).join('');
+    }
+
+    function setStatsSort(mode) {
+      if (!['number', 'points', 'errors'].includes(mode)) return;
+      statsSortMode = mode;
+      updateStatsSortButtons();
+      renderStatsView();
+    }
+
+    function updateStatsSortButtons() {
+      const map = {
+        number: document.getElementById('sort-btn-number'),
+        points: document.getElementById('sort-btn-points'),
+        errors: document.getElementById('sort-btn-errors')
+      };
+      Object.entries(map).forEach(([key, btn]) => {
+        if (!btn) return;
+        const active = key === statsSortMode;
+        btn.className = active
+          ? 'px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 transition'
+          : 'px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition';
+      });
     }
 
     function exportStatsCsv() {
