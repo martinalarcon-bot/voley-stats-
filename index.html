@@ -57,7 +57,7 @@
 
         if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
           const swCode = `
-            const CACHE_NAME = 'voley-stats-live-13.05.06';
+            const CACHE_NAME = 'voley-stats-live-13.05.07';
             self.addEventListener('install', (e) => { self.skipWaiting(); });
             self.addEventListener('activate', (e) => { e.waitUntil(self.clients.claim()); });
             self.addEventListener('fetch', (e) => {
@@ -192,7 +192,7 @@
             <h1 class="text-xl font-extrabold text-white">Vóley Stats Live</h1>
           </div>
         </div>
-        <span id="login-version-badge" class="px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-[11px] font-mono text-slate-400">v13.05.06</span>
+        <span id="login-version-badge" class="px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-[11px] font-mono text-slate-400">v13.05.07</span>
       </div>
 
       <p class="text-xs sm:text-sm text-slate-400 mb-6 leading-relaxed">
@@ -247,7 +247,7 @@
           <div>
             <div class="flex items-center gap-2">
               <span class="font-extrabold text-sm sm:text-base tracking-tight text-white">Vóley Stats Live</span>
-              <span id="app-version-pill" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">v13.05.06</span>
+              <span id="app-version-pill" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">v13.05.07</span>
             </div>
             <p id="header-match-subtitle" class="text-[11px] text-slate-400 truncate max-w-[210px] sm:max-w-xs">
               Prepará el partido o empezá a registrar
@@ -1188,14 +1188,14 @@
   <!-- LÓGICA DE LA APLICACIÓN                                   -->
   <!-- ========================================================= -->
   <script>
-    const APP_VERSION = '13.05.06';
+    const APP_VERSION = '13.05.07';
     const STORAGE_KEY = 'voley_stats_live_state_v3';
     const SUPABASE_CFG_KEY = 'voley_stats_live_supabase_cfg_v1';
     const DEFAULT_SUPABASE_URL = 'https://aevmoxgnptjreycgniks.supabase.co';
     const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_4fNdq9CWVz6yfhLGC3ewZA_s9qxjNrS';
     const AUTH_SESSION_KEY = 'voley_stats_live_auth_user_v1';
     const ADMIN_USERNAME = 'defeadmin';
-    const DEFAULT_ADMIN_USER = { username: 'defeadmin', password: 'Penna1610', role: 'admin' };
+    const DEFAULT_ADMIN_USER = { username: 'defeadmin', password: '123', role: 'admin' };
 
     let parsedPreviewTeams = [];
     let deferredInstallPrompt = null;
@@ -2405,18 +2405,48 @@
     }
 
     function parseFederationSheet(text) {
-      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      const rawLines = text.split(/\r?\n/);
+      // Limpia viñetas iniciales (-, •, *) y descarta líneas vacías (como "- ")
+      const lines = rawLines
+        .map(l => l.replace(/^[-•*–]\s*/, '').trim())
+        .filter(Boolean);
+
       const teams = [];
       let currentTeam = null;
+      let pendingPlayer = null;
+
+      const flushPendingPlayer = () => {
+        if (pendingPlayer && pendingPlayer.name) {
+          if (!currentTeam) {
+            currentTeam = { name: 'Equipo Importado', players: [] };
+            teams.push(currentTeam);
+          }
+          const initialStatus = currentTeam.players.length < 6 ? 'titular' : 'banco';
+          currentTeam.players.push({
+            id: 'imp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+            number: pendingPlayer.number,
+            name: pendingPlayer.name,
+            position: pendingPlayer.position || 'Universal',
+            status: initialStatus,
+            onCourt: initialStatus === 'titular'
+          });
+        }
+        pendingPlayer = null;
+      };
 
       const teamHeaderRegex = /^#?\d+\s*[-–]\s*(.+)$/;
       const playerLineRegex = /^(\d{1,2})\s*[-–.)]\s*([^-–(]+?)(?:\s*[-–]\s*\(?([A-Za-zÁÉÍÓÚáéíóú]+)\)?)?$/;
+      const standaloneNumberRegex = /^(\d{1,2})$/;
+      const ageLineRegex = /^\d{1,2}\s*años?$/i;
+      const standalonePosRegex = /^(AR|ARM|ARMADOR|PTA|PUNTA|CEN|CENTRAL|OP|OPU|OPUESTO|LIB|LIBERO|LÍBERO|UNIVERSAL)$/i;
 
       lines.forEach(line => {
         if (/^(N°|NRO|JUGADOR|POS|EQUIPO|PLANILLA|FECHA)/i.test(line)) return;
 
+        // 1. Formato clásico en una sola línea: "1 - ALARCON, Martina - (AR)"
         const pMatch = line.match(playerLineRegex);
         if (pMatch && parseInt(pMatch[1], 10) <= 99) {
+          flushPendingPlayer();
           if (!currentTeam) {
             currentTeam = { name: 'Equipo Importado', players: [] };
             teams.push(currentTeam);
@@ -2437,16 +2467,67 @@
           return;
         }
 
+        // 2. Encabezado de equipo con código: "#349 - VILLA DORA B"
         const tMatch = line.match(teamHeaderRegex);
         if (tMatch) {
+          flushPendingPlayer();
           currentTeam = {
             name: tMatch[1].trim(),
+            players: []
+          };
+          teams.push(currentTeam);
+          return;
+        }
+
+        // 3. Dorsal suelto en bloque multilínea: "1", "3", "17", etc.
+        const numMatch = line.match(standaloneNumberRegex);
+        if (numMatch && parseInt(numMatch[1], 10) >= 1 && parseInt(numMatch[1], 10) <= 99) {
+          flushPendingPlayer();
+          pendingPlayer = {
+            number: parseInt(numMatch[1], 10),
+            name: '',
+            position: 'Universal'
+          };
+          return;
+        }
+
+        // 4. Si hay un jugador multilínea abierto, procesar sus atributos
+        if (pendingPlayer) {
+          // Ignorar edad ("17 años") y marca de capitán ("C")
+          if (ageLineRegex.test(line) || /^C$/i.test(line)) {
+            return;
+          }
+          // Detectar posición suelta ("Líbero", "Armador", etc.)
+          if (standalonePosRegex.test(line)) {
+            pendingPlayer.position = normalizePosition(line);
+            return;
+          }
+          // Si todavía no tiene nombre, esta línea es el nombre completo del jugador
+          if (!pendingPlayer.name) {
+            pendingPlayer.name = line;
+            return;
+          }
+          // Si ya tiene nombre y aparece otra línea de texto (ej: una nueva cabecera de equipo)
+          flushPendingPlayer();
+          currentTeam = {
+            name: line,
+            players: []
+          };
+          teams.push(currentTeam);
+          return;
+        }
+
+        // 5. Línea de texto antes de cualquier dorsal (ej: "DBANF B") -> Nombre del equipo
+        if (!ageLineRegex.test(line) && !/^C$/i.test(line)) {
+          currentTeam = {
+            name: line,
             players: []
           };
           teams.push(currentTeam);
         }
       });
 
+      flushPendingPlayer();
       return teams.filter(t => t.players.length > 0);
     }
 
