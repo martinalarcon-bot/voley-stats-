@@ -57,7 +57,7 @@
 
         if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
           const swCode = `
-            const CACHE_NAME = 'voley-stats-live-13.05.07';
+            const CACHE_NAME = 'voley-stats-live-13.05.09';
             self.addEventListener('install', (e) => { self.skipWaiting(); });
             self.addEventListener('activate', (e) => { e.waitUntil(self.clients.claim()); });
             self.addEventListener('fetch', (e) => {
@@ -192,7 +192,7 @@
             <h1 class="text-xl font-extrabold text-white">Vóley Stats Live</h1>
           </div>
         </div>
-        <span id="login-version-badge" class="px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-[11px] font-mono text-slate-400">v13.05.07</span>
+        <span id="login-version-badge" class="px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-[11px] font-mono text-slate-400">v13.05.09</span>
       </div>
 
       <p class="text-xs sm:text-sm text-slate-400 mb-6 leading-relaxed">
@@ -247,7 +247,7 @@
           <div>
             <div class="flex items-center gap-2">
               <span class="font-extrabold text-sm sm:text-base tracking-tight text-white">Vóley Stats Live</span>
-              <span id="app-version-pill" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">v13.05.07</span>
+              <span id="app-version-pill" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">v13.05.09</span>
             </div>
             <p id="header-match-subtitle" class="text-[11px] text-slate-400 truncate max-w-[210px] sm:max-w-xs">
               Prepará el partido o empezá a registrar
@@ -838,103 +838,180 @@
           <div class="lg:col-span-7 panel-surface rounded-2xl p-4 space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800">
               <div>
-                <span class="text-[11px] font-bold uppercase tracking-wider text-sky-400">Paso 2 · Acción Táctica</span>
+                <span class="text-[11px] font-bold uppercase tracking-wider text-sky-400">Paso 2 · Acción Táctica por Fundamento</span>
                 <h3 id="live-selected-player-banner" class="text-sm sm:text-base font-extrabold text-white">
                   Seleccioná un jugador para registrar
                 </h3>
               </div>
-              <span class="text-[11px] text-slate-400">1 toque registra y actualiza marcador</span>
+              <span class="text-[11px] text-slate-400">1 toque registra calidad y actualiza marcador</span>
             </div>
 
-            <!-- BLOQUE A: PUNTOS GANADOS (+1 MI EQUIPO) -->
-            <div class="space-y-2">
+            <!-- 1. SAQUE -->
+            <div class="space-y-1.5">
               <div class="flex items-center justify-between">
-                <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">Puntos Ganados (+1 Mi Equipo)</span>
-                <span class="text-[11px] text-slate-500">Suma punto directo</span>
-              </div>
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <button onclick="recordStat('attack_point', 'Ataque Punto', 1, 'positive')"
-                  class="action-btn p-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-left">
-                  <div class="text-base sm:text-lg font-black text-emerald-300">⚡ Ataque</div>
-                  <div class="text-[11px] text-emerald-200/80 font-medium">Remate ganador</div>
-                </button>
-
-                <button onclick="recordStat('block_point', 'Bloqueo Punto', 1, 'positive')"
-                  class="action-btn p-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-left">
-                  <div class="text-base sm:text-lg font-black text-emerald-300">🧱 Bloqueo</div>
-                  <div class="text-[11px] text-emerald-200/80 font-medium">Punto de tapa</div>
-                </button>
-
-                <button onclick="recordStat('ace_point', 'Ace / Saque Punto', 1, 'positive')"
-                  class="action-btn p-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-left">
-                  <div class="text-base sm:text-lg font-black text-emerald-300">🎯 Ace</div>
-                  <div class="text-[11px] text-emerald-200/80 font-medium">Punto de saque</div>
-                </button>
-
-                <button onclick="recordStat('opp_error_point', 'Error Rival (+1)', 1, 'neutral')"
-                  class="action-btn p-3 rounded-xl bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/40 text-left">
-                  <div class="text-base sm:text-lg font-black text-teal-300">🎁 Error Rival</div>
-                  <div class="text-[11px] text-teal-200/80 font-medium">+1 punto propio</div>
-                </button>
-              </div>
-            </div>
-
-            <!-- BLOQUE B: CONTINUIDAD / CONTROL (NO SUMA PUNTO) -->
-            <div class="space-y-2">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-extrabold uppercase tracking-wider text-sky-400">Continuidad y Volumen (Sin cambio en marcador)</span>
-                <span class="text-[11px] text-slate-500">Mide calidad de juego</span>
+                <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-300">🏐 Saque</span>
+                <span class="text-[10px] text-slate-500">Punto / Presión / Error</span>
               </div>
               <div class="grid grid-cols-3 gap-2">
-                <button onclick="recordStat('reception_good', 'Recepción Positiva', 0, 'continuity')"
-                  class="action-btn p-2.5 sm:p-3 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/35 text-left">
-                  <div class="text-xs sm:text-sm font-extrabold text-sky-300">🛡️ Recepción +</div>
-                  <div class="text-[11px] text-slate-400">Pase perfecto / bueno</div>
+                <button onclick="recordStat('ace_point', 'Saque Ace (#)', 1, 'positive')"
+                  class="action-btn p-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-left">
+                  <div class="text-xs sm:text-sm font-black text-emerald-300">🎯 Ace (#)</div>
+                  <div class="text-[10px] text-emerald-200/80">+1 punto propio</div>
                 </button>
-
-                <button onclick="recordStat('dig_good', 'Defensa Positiva', 0, 'continuity')"
-                  class="action-btn p-2.5 sm:p-3 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/35 text-left">
-                  <div class="text-xs sm:text-sm font-extrabold text-sky-300">🤿 Defensa +</div>
-                  <div class="text-[11px] text-slate-400">Pelota defendida</div>
+                <button onclick="recordStat('serve_good', 'Saque Positivo (+)', 0, 'continuity')"
+                  class="action-btn p-2.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/35 text-left">
+                  <div class="text-xs sm:text-sm font-extrabold text-sky-300">⚡ Saque +</div>
+                  <div class="text-[10px] text-slate-400">Dificulta recepción</div>
                 </button>
-
-                <button onclick="recordStat('assist_good', 'Armado / Asistencia', 0, 'continuity')"
-                  class="action-btn p-2.5 sm:p-3 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/35 text-left">
-                  <div class="text-xs sm:text-sm font-extrabold text-sky-300">🙌 Armado +</div>
-                  <div class="text-[11px] text-slate-400">Habilitación limpia</div>
+                <button onclick="recordStat('serve_error', 'Error de Saque (=)', -1, 'error')"
+                  class="action-btn p-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-left">
+                  <div class="text-xs sm:text-sm font-extrabold text-rose-300">❌ Err. Saque</div>
+                  <div class="text-[10px] text-rose-200/70">+1 punto rival</div>
                 </button>
               </div>
             </div>
 
-            <!-- BLOQUE C: ERRORES PROPIOS (+1 RIVAL) -->
-            <div class="space-y-2">
+            <!-- 2. ATAQUE -->
+            <div class="space-y-1.5">
               <div class="flex items-center justify-between">
-                <span class="text-xs font-extrabold uppercase tracking-wider text-rose-400">Errores No Forzados (+1 Rival)</span>
-                <span class="text-[11px] text-slate-500">Suma punto al rival</span>
+                <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-300">💥 Ataque</span>
+                <span class="text-[10px] text-slate-500">Punto / Continuidad / Bloqueado / Error</span>
               </div>
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <button onclick="recordStat('serve_error', 'Error de Saque', -1, 'error')"
-                  class="action-btn p-2.5 sm:p-3 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-left">
-                  <div class="text-xs sm:text-sm font-extrabold text-rose-300">❌ Err. Saque</div>
-                  <div class="text-[11px] text-rose-200/70">Red o afuera</div>
+                <button onclick="recordStat('attack_point', 'Ataque Punto (#)', 1, 'positive')"
+                  class="action-btn p-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-left">
+                  <div class="text-xs sm:text-sm font-black text-emerald-300">⚡ Punto (#)</div>
+                  <div class="text-[10px] text-emerald-200/80">+1 remate ganador</div>
                 </button>
-
-                <button onclick="recordStat('attack_error', 'Error de Ataque', -1, 'error')"
-                  class="action-btn p-2.5 sm:p-3 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-left">
+                <button onclick="recordStat('attack_good', 'Ataque Positivo (+)', 0, 'continuity')"
+                  class="action-btn p-2.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/35 text-left">
+                  <div class="text-xs sm:text-sm font-extrabold text-sky-300">↗️ Ataque +</div>
+                  <div class="text-[10px] text-slate-400">Defendido / sigue</div>
+                </button>
+                <button onclick="recordStat('attack_blocked', 'Ataque Bloqueado (-)', -1, 'error')"
+                  class="action-btn p-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-left">
+                  <div class="text-xs sm:text-sm font-extrabold text-rose-300">🛑 Bloqueado</div>
+                  <div class="text-[10px] text-rose-200/70">+1 tapa rival</div>
+                </button>
+                <button onclick="recordStat('attack_error', 'Error de Ataque (=)', -1, 'error')"
+                  class="action-btn p-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-left">
                   <div class="text-xs sm:text-sm font-extrabold text-rose-300">❌ Err. Ataque</div>
-                  <div class="text-[11px] text-rose-200/70">Afuera / red / tapado</div>
+                  <div class="text-[10px] text-rose-200/70">+1 fuera / red</div>
                 </button>
+              </div>
+            </div>
 
-                <button onclick="recordStat('reception_error', 'Error de Recepción', -1, 'error')"
-                  class="action-btn p-2.5 sm:p-3 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-left">
+            <!-- 3. BLOQUEO -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-300">🧱 Bloqueo</span>
+                <span class="text-[10px] text-slate-500">Punto / Toque positivo / Falta de red</span>
+              </div>
+              <div class="grid grid-cols-3 gap-2">
+                <button onclick="recordStat('block_point', 'Bloqueo Punto (#)', 1, 'positive')"
+                  class="action-btn p-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-left">
+                  <div class="text-xs sm:text-sm font-black text-emerald-300">🧱 Punto (#)</div>
+                  <div class="text-[10px] text-emerald-200/80">+1 tapa directa</div>
+                </button>
+                <button onclick="recordStat('block_touch', 'Toque Bloqueo (+)', 0, 'continuity')"
+                  class="action-btn p-2.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/35 text-left">
+                  <div class="text-xs sm:text-sm font-extrabold text-sky-300">✋ Toque +</div>
+                  <div class="text-[10px] text-slate-400">Amortigua / frena</div>
+                </button>
+                <button onclick="recordStat('block_error', 'Error Bloqueo / Red (=)', -1, 'error')"
+                  class="action-btn p-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-left">
+                  <div class="text-xs sm:text-sm font-extrabold text-rose-300">⚠️ Red / Block</div>
+                  <div class="text-[10px] text-rose-200/70">+1 punto rival</div>
+                </button>
+              </div>
+            </div>
+
+            <!-- 4. ARMADO (PERFECCIÓN / BUENO / MALO / ERROR) -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-300">🙌 Armado / Levantada</span>
+                <span class="text-[10px] text-slate-500">Perfecto · Bueno · Malo · Error</span>
+              </div>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <button onclick="recordStat('assist_perfect', 'Armado Perfecto (#)', 0, 'continuity')"
+                  class="action-btn p-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/35 text-left">
+                  <div class="text-xs sm:text-sm font-extrabold text-emerald-300">✨ Perfecto (#)</div>
+                  <div class="text-[10px] text-slate-300">1 bloqueo / solo</div>
+                </button>
+                <button onclick="recordStat('assist_good', 'Armado Bueno (+)', 0, 'continuity')"
+                  class="action-btn p-2.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/35 text-left">
+                  <div class="text-xs sm:text-sm font-extrabold text-sky-300">👍 Bueno (+)</div>
+                  <div class="text-[10px] text-slate-400">Habilita cómodo</div>
+                </button>
+                <button onclick="recordStat('assist_poor', 'Armado Malo (-)', 0, 'negative_continuity')"
+                  class="action-btn p-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/35 text-left">
+                  <div class="text-xs sm:text-sm font-extrabold text-amber-300">👎 Malo (-)</div>
+                  <div class="text-[10px] text-amber-200/75">Forzado / vendido</div>
+                </button>
+                <button onclick="recordStat('assist_error', 'Error Armado / Doble (=)', -1, 'error')"
+                  class="action-btn p-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-left">
+                  <div class="text-xs sm:text-sm font-extrabold text-rose-300">❌ Err. Armado</div>
+                  <div class="text-[10px] text-rose-200/70">+1 doble / retención</div>
+                </button>
+              </div>
+            </div>
+
+            <!-- 5. RECEPCIÓN -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-300">🛡️ Recepción de Saque</span>
+                <span class="text-[10px] text-slate-500">Perfecta · Buena · Mala · Error</span>
+              </div>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <button onclick="recordStat('reception_perfect', 'Recepción Perfecta (#)', 0, 'continuity')"
+                  class="action-btn p-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/35 text-left">
+                  <div class="text-xs sm:text-sm font-extrabold text-emerald-300">🎯 Perfecta (#)</div>
+                  <div class="text-[10px] text-slate-300">Doble positiva</div>
+                </button>
+                <button onclick="recordStat('reception_good', 'Recepción Buena (+)', 0, 'continuity')"
+                  class="action-btn p-2.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/35 text-left">
+                  <div class="text-xs sm:text-sm font-extrabold text-sky-300">👍 Buena (+)</div>
+                  <div class="text-[10px] text-slate-400">Permite construir</div>
+                </button>
+                <button onclick="recordStat('reception_poor', 'Recepción Mala (-)', 0, 'negative_continuity')"
+                  class="action-btn p-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/35 text-left">
+                  <div class="text-xs sm:text-sm font-extrabold text-amber-300">⚠️ Mala (-)</div>
+                  <div class="text-[10px] text-amber-200/75">Vende / freeball</div>
+                </button>
+                <button onclick="recordStat('reception_error', 'Error de Recepción (=)', -1, 'error')"
+                  class="action-btn p-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-left">
                   <div class="text-xs sm:text-sm font-extrabold text-rose-300">❌ Err. Recep.</div>
-                  <div class="text-[11px] text-rose-200/70">Ace rival</div>
+                  <div class="text-[10px] text-rose-200/70">+1 ace rival</div>
                 </button>
+              </div>
+            </div>
 
-                <button onclick="recordStat('unforced_error', 'Falta / Otro Error', -1, 'error')"
-                  class="action-btn p-2.5 sm:p-3 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-left">
-                  <div class="text-xs sm:text-sm font-extrabold text-rose-300">⚠️ Falta / Red</div>
-                  <div class="text-[11px] text-rose-200/70">Invasión / toque red</div>
+            <!-- 6. DEFENSA Y PUNTOS DIRECTOS DE EQUIPO -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-300">🤿 Defensa y Puntos de Equipo</span>
+                <span class="text-[10px] text-slate-500">Defensa + / - · Error Rival · Falta</span>
+              </div>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <button onclick="recordStat('dig_good', 'Defensa Positiva (+)', 0, 'continuity')"
+                  class="action-btn p-2.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/35 text-left">
+                  <div class="text-xs sm:text-sm font-extrabold text-sky-300">🤿 Defensa +</div>
+                  <div class="text-[10px] text-slate-400">Contraataque limpio</div>
+                </button>
+                <button onclick="recordStat('dig_poor', 'Defensa Mala (-)', 0, 'negative_continuity')"
+                  class="action-btn p-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/35 text-left">
+                  <div class="text-xs sm:text-sm font-extrabold text-amber-300">💦 Defensa -</div>
+                  <div class="text-[10px] text-amber-200/75">Pelota vendida</div>
+                </button>
+                <button onclick="recordStat('opp_error_point', 'Error Rival (+1)', 1, 'neutral')"
+                  class="action-btn p-2.5 rounded-xl bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/40 text-left">
+                  <div class="text-xs sm:text-sm font-extrabold text-teal-300">🎁 Error Rival</div>
+                  <div class="text-[10px] text-teal-200/80">+1 punto propio</div>
+                </button>
+                <button onclick="recordStat('unforced_error', 'Falta / Otro Error (=)', -1, 'error')"
+                  class="action-btn p-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-left">
+                  <div class="text-xs sm:text-sm font-extrabold text-rose-300">🚫 Falta / Otro</div>
+                  <div class="text-[10px] text-rose-200/70">+1 punto rival</div>
                 </button>
               </div>
             </div>
@@ -1030,15 +1107,15 @@
               <thead>
                 <tr class="bg-slate-950/90 text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-800">
                   <th class="py-3 px-3 sm:px-4 font-bold">Jugador</th>
-                  <th class="py-3 px-2.5 text-center font-bold text-emerald-400">Pts Tot</th>
-                  <th class="py-3 px-2.5 text-center font-bold">Ataq</th>
-                  <th class="py-3 px-2.5 text-center font-bold">Bloq</th>
-                  <th class="py-3 px-2.5 text-center font-bold">Ace</th>
-                  <th class="py-3 px-2.5 text-center font-bold text-sky-400">Rec+</th>
-                  <th class="py-3 px-2.5 text-center font-bold text-sky-400">Def+</th>
-                  <th class="py-3 px-2.5 text-center font-bold text-sky-400">Arm+</th>
-                  <th class="py-3 px-2.5 text-center font-bold text-rose-400">Err</th>
-                  <th class="py-3 px-3 text-center font-bold">Bal +/-</th>
+                  <th class="py-3 px-2 text-center font-bold text-emerald-400">Pts Tot</th>
+                  <th class="py-3 px-2 text-center font-bold">Ataq (#/+)</th>
+                  <th class="py-3 px-2 text-center font-bold">Bloq (#/+)</th>
+                  <th class="py-3 px-2 text-center font-bold">Saq (#/+)</th>
+                  <th class="py-3 px-2 text-center font-bold text-sky-400">Rec (#/+/-)</th>
+                  <th class="py-3 px-2 text-center font-bold text-sky-400">Def (+/-)</th>
+                  <th class="py-3 px-2 text-center font-bold text-sky-400">Arm (#/+/-)</th>
+                  <th class="py-3 px-2 text-center font-bold text-rose-400">Err</th>
+                  <th class="py-3 px-2.5 text-center font-bold">Bal +/-</th>
                   <th class="py-3 px-3 text-center font-bold text-amber-400">Índice MVP</th>
                 </tr>
               </thead>
@@ -1188,11 +1265,11 @@
   <!-- LÓGICA DE LA APLICACIÓN                                   -->
   <!-- ========================================================= -->
   <script>
-    const APP_VERSION = '13.05.07';
+    const APP_VERSION = '13.05.09';
     const STORAGE_KEY = 'voley_stats_live_state_v3';
     const SUPABASE_CFG_KEY = 'voley_stats_live_supabase_cfg_v1';
     const DEFAULT_SUPABASE_URL = 'https://aevmoxgnptjreycgniks.supabase.co';
-    const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_4fNdq9CWVz6yfhLGC3ewZA_s9qxjNrS';
+    const DEFAULT_SUPABASE_ANON_KEY = '';
     const AUTH_SESSION_KEY = 'voley_stats_live_auth_user_v1';
     const ADMIN_USERNAME = 'defeadmin';
     const DEFAULT_ADMIN_USER = { username: 'defeadmin', password: '123', role: 'admin' };
@@ -1295,18 +1372,87 @@
     // =========================================================
     // FÓRMULA OBJETIVA Y AUTOMÁTICA DE MVP POR PARTIDO
     // =========================================================
-    // Pesos transparentes y fijos:
-    // +3 pts por Punto ganado (Ataque, Bloqueo, Ace)
-    // +1.5 pts por Armado / Asistencia positiva
-    // +1.2 pts por Recepción o Defensa positiva
-    // -2 pts por Error no forzado cometido
+    // Pesos transparentes y fijos por calidad técnica:
+    // +3.0 pts por Punto ganado (#): Ataque Punto, Bloqueo Punto, Ace
+    // +1.8 pts por Armado Perfecto (#) o Recepción Perfecta (#)
+    // +1.2 pts por Armado Bueno (+), Recepción Buena (+), Defensa +, Ataque +, Saque +, Toque Bloqueo +
+    // -0.6 pts por Acción negativa sin punto directo (-): Armado Malo, Recepción Mala, Defensa -
+    // -2.0 pts por Error directo (=): Saque, Ataque, Bloqueado, Bloqueo/Red, Armado, Recepción, Falta
+    const ERROR_EVENT_TYPES = [
+      'serve_error',
+      'attack_error',
+      'attack_blocked',
+      'block_error',
+      'assist_error',
+      'reception_error',
+      'unforced_error'
+    ];
+
+    function applyEventToPlayerBucket(bucket, evType) {
+      switch (evType) {
+        case 'attack_point': bucket.attack++; break;
+        case 'attack_good': bucket.attackGood++; break;
+        case 'block_point': bucket.block++; break;
+        case 'block_touch': bucket.blockTouch++; break;
+        case 'ace_point': bucket.ace++; break;
+        case 'serve_good': bucket.serveGood++; break;
+        case 'reception_perfect': bucket.recPerfect++; break;
+        case 'reception_good': bucket.recGood++; break;
+        case 'reception_poor': bucket.recPoor++; break;
+        case 'dig_good': bucket.digGood++; break;
+        case 'dig_poor': bucket.digPoor++; break;
+        case 'assist_perfect': bucket.assistPerfect++; break;
+        case 'assist_good': bucket.assistGood++; break;
+        case 'assist_poor': bucket.assistPoor++; break;
+        default:
+          if (ERROR_EVENT_TYPES.includes(evType)) {
+            bucket.errors++;
+          }
+          break;
+      }
+    }
+
+    function createEmptyStatsBucket(extra = {}) {
+      return {
+        attack: 0,
+        attackGood: 0,
+        block: 0,
+        blockTouch: 0,
+        ace: 0,
+        serveGood: 0,
+        recPerfect: 0,
+        recGood: 0,
+        recPoor: 0,
+        digGood: 0,
+        digPoor: 0,
+        assistPerfect: 0,
+        assistGood: 0,
+        assistPoor: 0,
+        errors: 0,
+        ...extra
+      };
+    }
+
     function computePlayerMVPScore(stats) {
       const earned = (stats.attack || 0) + (stats.block || 0) + (stats.ace || 0);
+      const perfectTech = (stats.assistPerfect || 0) + (stats.recPerfect || 0);
+      const positiveTech =
+        (stats.assistGood || 0) +
+        (stats.recGood || 0) +
+        (stats.digGood || 0) +
+        (stats.attackGood || 0) +
+        (stats.serveGood || 0) +
+        (stats.blockTouch || 0);
+      const negativeTech =
+        (stats.assistPoor || 0) +
+        (stats.recPoor || 0) +
+        (stats.digPoor || 0);
+
       const raw =
         earned * 3 +
-        (stats.assist || 0) * 1.5 +
-        (stats.recPlus || 0) * 1.2 +
-        (stats.digPlus || 0) * 1.2 -
+        perfectTech * 1.8 +
+        positiveTech * 1.2 -
+        negativeTech * 0.6 -
         (stats.errors || 0) * 2;
       return Math.round(raw * 10) / 10;
     }
@@ -1319,59 +1465,39 @@
       const rosterMap = new Map();
       if (teamObj && Array.isArray(teamObj.players)) {
         teamObj.players.forEach(p => {
-          rosterMap.set(p.id, {
+          rosterMap.set(p.id, createEmptyStatsBucket({
             playerId: p.id,
             number: p.number,
             name: p.name,
-            position: p.position,
-            attack: 0,
-            block: 0,
-            ace: 0,
-            recPlus: 0,
-            digPlus: 0,
-            assist: 0,
-            errors: 0
-          });
+            position: p.position
+          }));
         });
       }
 
       matchObj.events.forEach(ev => {
         if (!ev.playerId || ev.playerId === 'TEAM') return;
         if (!rosterMap.has(ev.playerId)) {
-          rosterMap.set(ev.playerId, {
+          rosterMap.set(ev.playerId, createEmptyStatsBucket({
             playerId: ev.playerId,
             number: ev.playerNumber || '?',
             name: ev.playerName || 'Jugador',
-            position: '',
-            attack: 0,
-            block: 0,
-            ace: 0,
-            recPlus: 0,
-            digPlus: 0,
-            assist: 0,
-            errors: 0
-          });
+            position: ''
+          }));
         }
-        const row = rosterMap.get(ev.playerId);
-        switch (ev.type) {
-          case 'attack_point': row.attack++; break;
-          case 'block_point': row.block++; break;
-          case 'ace_point': row.ace++; break;
-          case 'reception_good': row.recPlus++; break;
-          case 'dig_good': row.digPlus++; break;
-          case 'assist_good': row.assist++; break;
-          case 'serve_error':
-          case 'attack_error':
-          case 'reception_error':
-          case 'unforced_error':
-            row.errors++;
-            break;
-        }
+        applyEventToPlayerBucket(rosterMap.get(ev.playerId), ev.type);
       });
 
       let best = null;
       rosterMap.forEach(row => {
-        const totalActions = row.attack + row.block + row.ace + row.recPlus + row.digPlus + row.assist + row.errors;
+        const totalActions =
+          row.attack + row.attackGood +
+          row.block + row.blockTouch +
+          row.ace + row.serveGood +
+          row.recPerfect + row.recGood + row.recPoor +
+          row.digGood + row.digPoor +
+          row.assistPerfect + row.assistGood + row.assistPoor +
+          row.errors;
+
         if (totalActions === 0) return;
         const mvpScore = computePlayerMVPScore(row);
         const totalPoints = row.attack + row.block + row.ace;
@@ -2732,7 +2858,8 @@
           let pillClass = 'bg-slate-900 text-slate-300 border-slate-800';
           if (ev.scoreDelta > 0) pillClass = 'bg-emerald-500/15 text-emerald-300 border-emerald-500/35';
           if (ev.scoreDelta < 0) pillClass = 'bg-rose-500/15 text-rose-300 border-rose-500/35';
-          if (ev.scoreDelta === 0) pillClass = 'bg-sky-500/15 text-sky-300 border-sky-500/35';
+          if (ev.scoreDelta === 0 && ev.category === 'negative_continuity') pillClass = 'bg-amber-500/15 text-amber-300 border-amber-500/35';
+          else if (ev.scoreDelta === 0) pillClass = 'bg-sky-500/15 text-sky-300 border-sky-500/35';
 
           return `
             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold border ${pillClass}">
@@ -3110,19 +3237,12 @@
 
       const playerStatsMap = new Map();
       (source.players || []).forEach(p => {
-        playerStatsMap.set(p.id, {
+        playerStatsMap.set(p.id, createEmptyStatsBucket({
           id: p.id,
           number: p.number,
           name: p.name,
-          position: p.position,
-          attack: 0,
-          block: 0,
-          ace: 0,
-          recPlus: 0,
-          digPlus: 0,
-          assist: 0,
-          errors: 0
-        });
+          position: p.position
+        }));
       });
 
       filteredEvents.forEach(ev => {
@@ -3138,35 +3258,14 @@
 
         if (ev.playerId && ev.playerId !== 'TEAM') {
           if (!playerStatsMap.has(ev.playerId)) {
-            playerStatsMap.set(ev.playerId, {
+            playerStatsMap.set(ev.playerId, createEmptyStatsBucket({
               id: ev.playerId,
               number: ev.playerNumber || '?',
               name: ev.playerName || 'Jugador',
-              position: '',
-              attack: 0,
-              block: 0,
-              ace: 0,
-              recPlus: 0,
-              digPlus: 0,
-              assist: 0,
-              errors: 0
-            });
+              position: ''
+            }));
           }
-          const st = playerStatsMap.get(ev.playerId);
-          switch (ev.type) {
-            case 'attack_point': st.attack++; break;
-            case 'block_point': st.block++; break;
-            case 'ace_point': st.ace++; break;
-            case 'reception_good': st.recPlus++; break;
-            case 'dig_good': st.digPlus++; break;
-            case 'assist_good': st.assist++; break;
-            case 'serve_error':
-            case 'attack_error':
-            case 'reception_error':
-            case 'unforced_error':
-              st.errors++;
-              break;
-          }
+          applyEventToPlayerBucket(playerStatsMap.get(ev.playerId), ev.type);
         }
       });
 
@@ -3197,7 +3296,12 @@
         const totalPts = r.attack + r.block + r.ace;
         const balance = totalPts - r.errors;
         const mvpIndex = computePlayerMVPScore(r);
-        const totalAct = totalPts + r.recPlus + r.digPlus + r.assist + r.errors;
+        const totalAct =
+          totalPts + r.attackGood + r.blockTouch + r.serveGood +
+          r.recPerfect + r.recGood + r.recPoor +
+          r.digGood + r.digPoor +
+          r.assistPerfect + r.assistGood + r.assistPoor +
+          r.errors;
         return { ...r, totalPts, balance, mvpIndex, totalAct };
       }).sort((a, b) => b.mvpIndex - a.mvpIndex || b.totalPts - a.totalPts || a.number - b.number);
 
@@ -3231,15 +3335,15 @@
                 </div>
               </button>
             </td>
-            <td class="py-3 px-2.5 text-center font-black text-emerald-400">${r.totalPts}</td>
-            <td class="py-3 px-2.5 text-center text-slate-200">${r.attack}</td>
-            <td class="py-3 px-2.5 text-center text-slate-200">${r.block}</td>
-            <td class="py-3 px-2.5 text-center text-slate-200">${r.ace}</td>
-            <td class="py-3 px-2.5 text-center text-sky-300">${r.recPlus}</td>
-            <td class="py-3 px-2.5 text-center text-sky-300">${r.digPlus}</td>
-            <td class="py-3 px-2.5 text-center text-sky-300">${r.assist}</td>
-            <td class="py-3 px-2.5 text-center font-bold text-rose-400">${r.errors}</td>
-            <td class="py-3 px-3 text-center font-extrabold ${
+            <td class="py-3 px-2 text-center font-black text-emerald-400">${r.totalPts}</td>
+            <td class="py-3 px-2 text-center text-slate-200" title="Punto (#) / Positivo (+)">${r.attack}<span class="text-slate-500">/${r.attackGood}</span></td>
+            <td class="py-3 px-2 text-center text-slate-200" title="Punto (#) / Toque (+)">${r.block}<span class="text-slate-500">/${r.blockTouch}</span></td>
+            <td class="py-3 px-2 text-center text-slate-200" title="Ace (#) / Positivo (+)">${r.ace}<span class="text-slate-500">/${r.serveGood}</span></td>
+            <td class="py-3 px-2 text-center text-sky-300" title="Perfecta (#) / Buena (+) / Mala (-)">${r.recPerfect}/${r.recGood}/<span class="text-amber-300">${r.recPoor}</span></td>
+            <td class="py-3 px-2 text-center text-sky-300" title="Defensa + / Defensa -">${r.digGood}/<span class="text-amber-300">${r.digPoor}</span></td>
+            <td class="py-3 px-2 text-center text-sky-300" title="Armado Perfecto (#) / Bueno (+) / Malo (-)">${r.assistPerfect}/${r.assistGood}/<span class="text-amber-300">${r.assistPoor}</span></td>
+            <td class="py-3 px-2 text-center font-bold text-rose-400">${r.errors}</td>
+            <td class="py-3 px-2.5 text-center font-extrabold ${
               r.balance > 0 ? 'text-emerald-400' : r.balance < 0 ? 'text-rose-400' : 'text-slate-400'
             }">
               ${r.balance > 0 ? `+${r.balance}` : r.balance}
@@ -3256,28 +3360,28 @@
       const source = getSelectedMatchSourceForStats();
       if (!source) return;
 
-      const headers = ['Numero', 'Jugador', 'Posicion', 'Puntos_Totales', 'Ataque', 'Bloqueo', 'Ace', 'Recepcion_Pos', 'Defensa_Pos', 'Armado_Pos', 'Errores', 'Balance_Neto', 'Indice_MVP'];
+      const headers = [
+        'Numero', 'Jugador', 'Posicion', 'Puntos_Totales',
+        'Ataque_Punto', 'Ataque_Pos', 'Bloqueo_Punto', 'Bloqueo_Toque',
+        'Ace', 'Saque_Pos',
+        'Recep_Perfecta', 'Recep_Buena', 'Recep_Mala',
+        'Defensa_Pos', 'Defensa_Mala',
+        'Armado_Perfecto', 'Armado_Bueno', 'Armado_Malo',
+        'Errores_Totales', 'Balance_Neto', 'Indice_MVP'
+      ];
 
       const playerStatsMap = new Map();
       (source.players || []).forEach(p => {
-        playerStatsMap.set(p.id, {
+        playerStatsMap.set(p.id, createEmptyStatsBucket({
           number: p.number,
           name: p.name,
-          position: p.position,
-          attack: 0, block: 0, ace: 0, recPlus: 0, digPlus: 0, assist: 0, errors: 0
-        });
+          position: p.position
+        }));
       });
 
       (source.events || []).forEach(ev => {
         if (!ev.playerId || ev.playerId === 'TEAM' || !playerStatsMap.has(ev.playerId)) return;
-        const st = playerStatsMap.get(ev.playerId);
-        if (ev.type === 'attack_point') st.attack++;
-        if (ev.type === 'block_point') st.block++;
-        if (ev.type === 'ace_point') st.ace++;
-        if (ev.type === 'reception_good') st.recPlus++;
-        if (ev.type === 'dig_good') st.digPlus++;
-        if (ev.type === 'assist_good') st.assist++;
-        if (['serve_error', 'attack_error', 'reception_error', 'unforced_error'].includes(ev.type)) st.errors++;
+        applyEventToPlayerBucket(playerStatsMap.get(ev.playerId), ev.type);
       });
 
       const csvRows = [headers.join(',')];
@@ -3291,11 +3395,19 @@
           `"${r.position}"`,
           tot,
           r.attack,
+          r.attackGood,
           r.block,
+          r.blockTouch,
           r.ace,
-          r.recPlus,
-          r.digPlus,
-          r.assist,
+          r.serveGood,
+          r.recPerfect,
+          r.recGood,
+          r.recPoor,
+          r.digGood,
+          r.digPoor,
+          r.assistPerfect,
+          r.assistGood,
+          r.assistPoor,
           r.errors,
           bal,
           mvpIdx
@@ -3566,29 +3678,16 @@
         });
       }
 
-      const totals = {
+      const totals = createEmptyStatsBucket({
         matchesPlayed: 0,
-        mvpAwards: 0,
-        attack: 0,
-        block: 0,
-        ace: 0,
-        recPlus: 0,
-        digPlus: 0,
-        assist: 0,
-        errors: 0
-      };
+        mvpAwards: 0
+      });
 
       const perMatchRows = allSources.map(src => {
-        const st = { attack: 0, block: 0, ace: 0, recPlus: 0, digPlus: 0, assist: 0, errors: 0 };
+        const st = createEmptyStatsBucket();
         src.events.forEach(ev => {
           if (ev.playerId !== player.id) return;
-          if (ev.type === 'attack_point') st.attack++;
-          if (ev.type === 'block_point') st.block++;
-          if (ev.type === 'ace_point') st.ace++;
-          if (ev.type === 'reception_good') st.recPlus++;
-          if (ev.type === 'dig_good') st.digPlus++;
-          if (ev.type === 'assist_good') st.assist++;
-          if (['serve_error', 'attack_error', 'reception_error', 'unforced_error'].includes(ev.type)) st.errors++;
+          applyEventToPlayerBucket(st, ev.type);
         });
 
         const pts = st.attack + st.block + st.ace;
@@ -3599,11 +3698,19 @@
         if (src.wasConvoked) totals.matchesPlayed++;
         if (wonMvp) totals.mvpAwards++;
         totals.attack += st.attack;
+        totals.attackGood += st.attackGood;
         totals.block += st.block;
+        totals.blockTouch += st.blockTouch;
         totals.ace += st.ace;
-        totals.recPlus += st.recPlus;
-        totals.digPlus += st.digPlus;
-        totals.assist += st.assist;
+        totals.serveGood += st.serveGood;
+        totals.recPerfect += st.recPerfect;
+        totals.recGood += st.recGood;
+        totals.recPoor += st.recPoor;
+        totals.digGood += st.digGood;
+        totals.digPoor += st.digPoor;
+        totals.assistPerfect += st.assistPerfect;
+        totals.assistGood += st.assistGood;
+        totals.assistPoor += st.assistPoor;
         totals.errors += st.errors;
 
         return {
@@ -3619,6 +3726,10 @@
       const totalPts = totals.attack + totals.block + totals.ace;
       const totalBalance = totalPts - totals.errors;
       const currentStatusMeta = getStatusBadgeMeta(getPlayerStatus(player));
+      const totalPosVolume =
+        totals.recPerfect + totals.recGood + totals.digGood + totals.assistPerfect + totals.assistGood;
+      const totalNegVolume =
+        totals.recPoor + totals.digPoor + totals.assistPoor;
 
       const bodyEl = document.getElementById('player-profile-body');
       bodyEl.innerHTML = `
@@ -3655,37 +3766,41 @@
             <h4 class="text-xs font-extrabold uppercase tracking-wider text-sky-400">Totales Acumulados</h4>
             <span class="text-xs font-bold text-slate-400">Balance Neto: <strong class="${totalBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${totalBalance > 0 ? `+${totalBalance}` : totalBalance}</strong></span>
           </div>
-          <div class="grid grid-cols-4 sm:grid-cols-8 gap-2 text-center">
+          <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 text-center">
             <div class="p-2 rounded-xl bg-slate-900 border border-slate-800">
               <div class="text-[10px] text-slate-400">Pts Tot</div>
               <div class="text-sm sm:text-base font-black text-emerald-400">${totalPts}</div>
             </div>
             <div class="p-2 rounded-xl bg-slate-900 border border-slate-800">
-              <div class="text-[10px] text-slate-400">Ataq</div>
-              <div class="text-sm sm:text-base font-bold text-white">${totals.attack}</div>
+              <div class="text-[10px] text-slate-400">Ataq (#/+)</div>
+              <div class="text-sm sm:text-base font-bold text-white">${totals.attack}/${totals.attackGood}</div>
             </div>
             <div class="p-2 rounded-xl bg-slate-900 border border-slate-800">
-              <div class="text-[10px] text-slate-400">Bloq</div>
-              <div class="text-sm sm:text-base font-bold text-white">${totals.block}</div>
+              <div class="text-[10px] text-slate-400">Bloq (#/+)</div>
+              <div class="text-sm sm:text-base font-bold text-white">${totals.block}/${totals.blockTouch}</div>
             </div>
             <div class="p-2 rounded-xl bg-slate-900 border border-slate-800">
-              <div class="text-[10px] text-slate-400">Ace</div>
-              <div class="text-sm sm:text-base font-bold text-white">${totals.ace}</div>
+              <div class="text-[10px] text-slate-400">Saq (#/+)</div>
+              <div class="text-sm sm:text-base font-bold text-white">${totals.ace}/${totals.serveGood}</div>
             </div>
             <div class="p-2 rounded-xl bg-slate-900 border border-slate-800">
-              <div class="text-[10px] text-slate-400">Rec+</div>
-              <div class="text-sm sm:text-base font-bold text-sky-300">${totals.recPlus}</div>
+              <div class="text-[10px] text-slate-400">Arm (#/+/-)</div>
+              <div class="text-sm sm:text-base font-bold text-sky-300">${totals.assistPerfect}/${totals.assistGood}/<span class="text-amber-300">${totals.assistPoor}</span></div>
             </div>
             <div class="p-2 rounded-xl bg-slate-900 border border-slate-800">
-              <div class="text-[10px] text-slate-400">Def+</div>
-              <div class="text-sm sm:text-base font-bold text-sky-300">${totals.digPlus}</div>
+              <div class="text-[10px] text-slate-400">Rec (#/+/-)</div>
+              <div class="text-sm sm:text-base font-bold text-sky-300">${totals.recPerfect}/${totals.recGood}/<span class="text-amber-300">${totals.recPoor}</span></div>
             </div>
             <div class="p-2 rounded-xl bg-slate-900 border border-slate-800">
-              <div class="text-[10px] text-slate-400">Arm+</div>
-              <div class="text-sm sm:text-base font-bold text-sky-300">${totals.assist}</div>
+              <div class="text-[10px] text-slate-400">Def (+/-)</div>
+              <div class="text-sm sm:text-base font-bold text-sky-300">${totals.digGood}/<span class="text-amber-300">${totals.digPoor}</span></div>
             </div>
             <div class="p-2 rounded-xl bg-slate-900 border border-slate-800">
-              <div class="text-[10px] text-slate-400">Err</div>
+              <div class="text-[10px] text-slate-400">Vol + / -</div>
+              <div class="text-sm sm:text-base font-bold text-sky-300">${totalPosVolume}/<span class="text-amber-300">${totalNegVolume}</span></div>
+            </div>
+            <div class="p-2 rounded-xl bg-slate-900 border border-slate-800">
+              <div class="text-[10px] text-slate-400">Errores</div>
               <div class="text-sm sm:text-base font-bold text-rose-400">${totals.errors}</div>
             </div>
           </div>
@@ -3706,7 +3821,8 @@
                        <th class="py-2.5 px-2 text-center">Conv.</th>
                        <th class="py-2.5 px-2 text-center text-emerald-400">Pts</th>
                        <th class="py-2.5 px-2 text-center">Atq/Blq/Ace</th>
-                       <th class="py-2.5 px-2 text-center text-sky-300">Vol+</th>
+                       <th class="py-2.5 px-2 text-center text-sky-300">Arm (#/+/-)</th>
+                       <th class="py-2.5 px-2 text-center text-sky-300">Rec/Def+</th>
                        <th class="py-2.5 px-2 text-center text-rose-400">Err</th>
                        <th class="py-2.5 px-3 text-center text-amber-300">Ídx MVP</th>
                      </tr>
@@ -3728,7 +3844,8 @@
                          </td>
                          <td class="py-2.5 px-2 text-center font-black text-emerald-400">${mr.pts}</td>
                          <td class="py-2.5 px-2 text-center text-slate-300">${mr.attack}/${mr.block}/${mr.ace}</td>
-                         <td class="py-2.5 px-2 text-center text-sky-300">${mr.recPlus + mr.digPlus + mr.assist}</td>
+                         <td class="py-2.5 px-2 text-center text-sky-300">${mr.assistPerfect}/${mr.assistGood}/<span class="text-amber-300">${mr.assistPoor}</span></td>
+                         <td class="py-2.5 px-2 text-center text-sky-300">${mr.recPerfect + mr.recGood}/${mr.digGood}</td>
                          <td class="py-2.5 px-2 text-center text-rose-400">${mr.errors}</td>
                          <td class="py-2.5 px-3 text-center font-extrabold text-amber-300">${mr.wasConvoked ? mr.mvpIdx : '—'}</td>
                        </tr>
