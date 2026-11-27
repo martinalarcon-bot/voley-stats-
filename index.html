@@ -1,9 +1,9 @@
-{<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Vóley Stats Live • v13.05.31</title>
+  <title>Vóley Stats Live • v13.05.36</title>
   <meta name="theme-color" content="#0f172a" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -122,7 +122,7 @@
             PWA • CANCHA & NUBE
           </span>
           <span id="login-version-badge" class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-            v13.05.31
+            v13.05.36
           </span>
         </div>
       </div>
@@ -139,7 +139,7 @@
           <label for="login-username" class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5">
             Usuario
           </label>
-          <input id="login-username" type="text" required autocomplete="username" placeholder="Ej: defeadmin o ciro"
+          <input id="login-username" type="text" required autocomplete="username" placeholder="Ej: admin o profe"
             class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500" />
         </div>
 
@@ -156,10 +156,6 @@
           Ingresar a la Cancha
         </button>
       </form>
-
-      <div class="pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
-        <span>Demo: <strong class="text-slate-200">defeadmin</strong> / <strong class="text-slate-200">admin</strong> o <strong class="text-slate-200">ciro</strong> / <strong class="text-slate-200">123</strong></span>
-      </div>
     </div>
   </div>
 
@@ -175,7 +171,7 @@
             <div class="flex items-center gap-2">
               <h1 class="text-base sm:text-lg font-black text-white truncate">Vóley Stats Live</h1>
               <span id="app-version-badge" class="text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-800 text-emerald-300 border border-slate-700 shrink-0">
-                v13.05.31
+                v13.05.36
               </span>
             </div>
             <div class="flex flex-wrap items-center gap-2 text-[11px] text-slate-400 mt-0.5">
@@ -201,22 +197,26 @@
         </div>
 
         <!-- Navegación principal -->
-        <nav class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2 mt-3" aria-label="Secciones principales">
-          <button id="tab-setup" onclick="switchTab('setup')"
+        <nav class="grid grid-cols-2 sm:grid-cols-5 gap-1.5 sm:gap-2 mt-3" aria-label="Secciones principales">
+          <button id="tab-home" onclick="switchTab('home')"
             class="tab-btn active py-2.5 px-2.5 rounded-xl text-xs sm:text-sm font-bold text-center border border-transparent transition">
-            1. Preparar Partido
+            1. Inicio
+          </button>
+          <button id="tab-setup" onclick="switchTab('setup')"
+            class="tab-btn py-2.5 px-2.5 rounded-xl text-xs sm:text-sm font-bold text-center bg-slate-900/90 text-slate-300 hover:bg-slate-800 border border-slate-800 transition">
+            2. Prepartido
           </button>
           <button id="tab-live" onclick="switchTab('live')"
             class="tab-btn py-2.5 px-2.5 rounded-xl text-xs sm:text-sm font-bold text-center bg-slate-900/90 text-slate-300 hover:bg-slate-800 border border-slate-800 transition">
-            2. En Vivo
+            3. En Vivo
           </button>
           <button id="tab-stats" onclick="switchTab('stats')"
             class="tab-btn py-2.5 px-2.5 rounded-xl text-xs sm:text-sm font-bold text-center bg-slate-900/90 text-slate-300 hover:bg-slate-800 border border-slate-800 transition">
-            3. Rendimiento
+            4. Rendimiento
           </button>
           <button id="tab-library" onclick="switchTab('library')"
-            class="tab-btn py-2.5 px-2.5 rounded-xl text-xs sm:text-sm font-bold text-center bg-slate-900/90 text-slate-300 hover:bg-slate-800 border border-slate-800 transition">
-            4. Biblioteca
+            class="tab-btn col-span-2 sm:col-span-1 py-2.5 px-2.5 rounded-xl text-xs sm:text-sm font-bold text-center bg-slate-900/90 text-slate-300 hover:bg-slate-800 border border-slate-800 transition">
+            5. Biblioteca
           </button>
         </nav>
 
@@ -239,16 +239,101 @@
     <!-- Contenido principal -->
     <main class="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-6 py-4 space-y-4">
       <!-- ========================================================= -->
-      <!-- SOLAPA 1: PREPARAR PARTIDO                                -->
+      <!-- SOLAPA 1: INICIO (TORNEOS Y PLANTELES)                    -->
       <!-- ========================================================= -->
-      <section id="view-setup" class="space-y-4">
-        <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-4">
+      <section id="view-home" class="space-y-4">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <!-- Tarjeta de Torneos Cargados -->
+          <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <div>
+                <h2 class="text-sm sm:text-base font-black text-white">🏆 Torneos Cargados</h2>
+                <p class="text-[11px] text-slate-400">Tocá un torneo para desplegar opciones, editar o seleccionar.</p>
+              </div>
+              <button type="button" onclick="toggleAddTournamentForm()"
+                class="px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/35 text-xs font-bold transition">
+                + Nuevo Torneo
+              </button>
+            </div>
+
+            <div id="add-tournament-box" class="hidden p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+              <div class="text-[11px] font-extrabold uppercase tracking-wider text-amber-300">Sumar Torneo / Copa</div>
+              <div class="flex flex-col sm:flex-row gap-2">
+                <input id="new-tournament-name" type="text" placeholder="Ej: Torneo Apertura FMV / Copa Plata"
+                  class="flex-1 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500" />
+                <input id="new-tournament-season" type="text" placeholder="Temporada (ej: 2026)"
+                  class="sm:w-32 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500" />
+                <button type="button" onclick="createTournament()"
+                  class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black transition">
+                  Guardar
+                </button>
+              </div>
+            </div>
+
+            <div id="home-tournaments-list" class="space-y-2"></div>
+          </div>
+
+          <!-- Tarjeta de Planteles / Equipos Cargados -->
+          <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <div>
+                <h2 class="text-sm sm:text-base font-black text-white">🏐 Planteles Cargados</h2>
+                <p class="text-[11px] text-slate-400">Tocá un plantel para desplegar nómina, vincular torneos o ir a Prepartido.</p>
+              </div>
+              <button type="button" onclick="toggleAddTeamForm()"
+                class="px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/35 text-xs font-bold transition">
+                + Nuevo Plantel
+              </button>
+            </div>
+
+            <div id="add-team-box" class="hidden p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2.5">
+              <div class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-300">Sumar Plantel / Equipo</div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <input id="new-team-name" type="text" placeholder="Nombre (ej: DBANF B)"
+                  class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-emerald-500" />
+                <select id="new-team-branch"
+                  class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-emerald-500">
+                  <option value="Masculino">Masculino</option>
+                  <option value="Femenino">Femenino</option>
+                  <option value="Mixto">Mixto</option>
+                </select>
+                <input id="new-team-category" type="text" placeholder="Categoría (ej: Sub-18)"
+                  class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-emerald-500" />
+              </div>
+              <div class="space-y-1">
+                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Torneos en los que participa:</div>
+                <div id="new-team-tournaments-checks" class="flex flex-wrap gap-1.5"></div>
+              </div>
+              <div class="flex justify-end">
+                <button type="button" onclick="createTeam()"
+                  class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black transition">
+                  Crear Plantel
+                </button>
+              </div>
+            </div>
+
+            <div id="home-teams-list" class="space-y-2"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================= -->
+      <!-- SOLAPA 2: PREPARTIDO (PLANTEL SELECCIONADO Y NÓMINA)      -->
+      <!-- ========================================================= -->
+      <section id="view-setup" class="hidden space-y-4">
+        <div id="setup-roster-panel" class="glass-card rounded-2xl p-4 sm:p-5 space-y-4">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h2 class="text-base sm:text-lg font-black text-white">Configuración del Partido y Plantel</h2>
-              <p class="text-xs text-slate-400">Seleccioná equipo, rival, torneo y definí Titulares, Banco o No Convocados.</p>
+              <div class="flex items-center gap-2">
+                <h2 id="setup-roster-title" class="text-base sm:text-lg font-black text-white">Prepartido • Plantel Seleccionado</h2>
+              </div>
+              <p id="setup-roster-subtitle" class="text-xs text-slate-400">Configurá rival, torneo vinculado y definí Titulares, Banco o No Convocados.</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
+              <button type="button" onclick="switchTab('home')"
+                class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold transition">
+                ← Cambiar Plantel
+              </button>
               <button onclick="openBulkImportModal()"
                 class="px-3 py-2 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 text-xs font-bold transition">
                 📥 Carga Masiva
@@ -263,7 +348,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label for="setup-team-select" class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">
-                Mi Equipo
+                Plantel Seleccionado
               </label>
               <select id="setup-team-select" onchange="onSetupTeamChange()"
                 class="w-full px-3 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500"></select>
@@ -279,7 +364,7 @@
 
             <div>
               <label for="setup-tournament-select" class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">
-                Torneo / Copa
+                Torneo / Copa del Plantel
               </label>
               <select id="setup-tournament-select" onchange="onMatchMetaChange()"
                 class="w-full px-3 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500"></select>
@@ -316,7 +401,7 @@
       </section>
 
       <!-- ========================================================= -->
-      <!-- SOLAPA 2: EN VIVO                                         -->
+      <!-- SOLAPA 3: EN VIVO                                         -->
       <!-- ========================================================= -->
       <section id="view-live" class="hidden space-y-4">
         <!-- Marcador y control de sets -->
@@ -528,7 +613,7 @@
       </section>
 
       <!-- ========================================================= -->
-      <!-- SOLAPA 3: RENDIMIENTO                                     -->
+      <!-- SOLAPA 4: RENDIMIENTO                                     -->
       <!-- ========================================================= -->
       <section id="view-stats" class="hidden space-y-4">
         <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-4">
@@ -590,7 +675,7 @@
       </section>
 
       <!-- ========================================================= -->
-      <!-- SOLAPA 4: BIBLIOTECA Y ARCHIVO DE PARTIDOS                -->
+      <!-- SOLAPA 5: BIBLIOTECA Y ARCHIVO DE PARTIDOS                -->
       <!-- ========================================================= -->
       <section id="view-library" class="hidden space-y-4">
         <div class="glass-card rounded-2xl p-4 sm:p-5 space-y-4">
@@ -701,9 +786,13 @@
   </div>
 
   <script>
-    const APP_VERSION = '13.05.31';
+    const APP_VERSION = '13.05.36';
     const STORAGE_KEY = 'voley_stats_live_state_v13';
     let statsSortMode = 'number';
+    let expandedTournamentId = null;
+    let expandedTeamId = null;
+    let editingTournamentId = null;
+    let editingTeamId = null;
     function emptyPlayerStats() {
       return {
         attack_point: 0, attack_pos: 0, attack_block: 0, attack_err: 0,
@@ -730,7 +819,7 @@
       ];
       return {
         currentUser: null,
-        activeTab: 'setup',
+        activeTab: 'home',
         users: [
           { username: 'defeadmin', name: 'Administrador General', password: 'admin', role: 'admin' },
           { username: 'ciro', name: 'Ciro (DT)', password: '123', role: 'coach' },
@@ -743,12 +832,13 @@
             name: 'DBANF A',
             branch: 'Masculino',
             category: 'Sub-18',
+            tournamentIds: ['t_metro', 't_copa'],
             players: defaultPlayers
           }
         ],
         tournaments: [
-          { id: 't_metro', name: 'Metropolitano FMV' },
-          { id: 't_copa', name: 'Copa Club / Amistoso' }
+          { id: 't_metro', name: 'Metropolitano FMV', season: '2026' },
+          { id: 't_copa', name: 'Copa Club / Amistoso', season: '2026' }
         ],
         savedMatches: [],
         currentMatch: createNewMatchObject(defaultTeamId, 't_metro', defaultPlayers)
@@ -787,14 +877,24 @@
       st.passwordNotifications = Array.isArray(st.passwordNotifications) ? st.passwordNotifications : [];
       st.teams = Array.isArray(st.teams) && st.teams.length ? st.teams : base.teams;
       st.tournaments = Array.isArray(st.tournaments) && st.tournaments.length ? st.tournaments : base.tournaments;
+      const allTourIds = st.tournaments.map(t => t.id);
+      st.teams.forEach(tm => {
+        if (!Array.isArray(tm.tournamentIds)) {
+          tm.tournamentIds = [...allTourIds];
+        } else {
+          tm.tournamentIds = tm.tournamentIds.filter(id => allTourIds.includes(id));
+        }
+      });
       st.savedMatches = Array.isArray(st.savedMatches) ? st.savedMatches : [];
-      st.activeTab = st.activeTab || 'setup';
-
+      st.activeTab = st.activeTab || 'home';
       const activeTeam = st.teams.find(t => t.id === st.currentMatch?.teamId) || st.teams[0];
       if (!st.currentMatch || typeof st.currentMatch !== 'object') {
-        st.currentMatch = createNewMatchObject(activeTeam.id, st.tournaments[0]?.id || '', activeTeam.players);
+        st.currentMatch = createNewMatchObject(activeTeam.id, activeTeam.tournamentIds?.[0] || st.tournaments[0]?.id || '', activeTeam.players || []);
       } else {
-        st.currentMatch.statsByPlayer = st.currentMatch.statsByPlayer || {};
+        st.currentMatch.teamId = activeTeam.id;
+        st.currentMatch.statsByPlayer = st.currentMatch.statsByPlayer && typeof st.currentMatch.statsByPlayer === 'object'
+          ? st.currentMatch.statsByPlayer
+          : {};
         (activeTeam.players || []).forEach(p => {
           if (!st.currentMatch.statsByPlayer[p.id]) {
             st.currentMatch.statsByPlayer[p.id] = emptyPlayerStats();
@@ -898,10 +998,11 @@
     }
 
     function switchTab(tabName) {
-      const valid = ['setup', 'live', 'stats', 'library', 'config'];
-      appState.activeTab = valid.includes(tabName) ? tabName : 'setup';
+      const valid = ['home', 'setup', 'live', 'stats', 'library', 'config'];
+      appState.activeTab = valid.includes(tabName) ? tabName : 'home';
       saveState();
       renderTabs();
+      if (appState.activeTab === 'home') renderHomeView();
       if (appState.activeTab === 'setup') renderSetupView();
       if (appState.activeTab === 'live') renderLiveView();
       if (appState.activeTab === 'stats') renderStatsView();
@@ -910,8 +1011,8 @@
     }
 
     function renderTabs() {
-      const tabs = ['setup', 'live', 'stats', 'library', 'config'];
-      const active = appState.activeTab || 'setup';
+      const tabs = ['home', 'setup', 'live', 'stats', 'library', 'config'];
+      const active = appState.activeTab || 'home';
       tabs.forEach(t => {
         const btn = document.getElementById('tab-' + t);
         const view = document.getElementById('view-' + t);
@@ -939,19 +1040,57 @@
       return appState.teams.find(t => t.id === appState.currentMatch.teamId) || appState.teams[0];
     }
 
+    function renderHomeView() {
+      renderNewTeamTournamentChecks();
+      renderHomeHubs();
+    }
+
+    function renderNewTeamTournamentChecks() {
+      const box = document.getElementById('new-team-tournaments-checks');
+      if (!box) return;
+      if (!appState.tournaments.length) {
+        box.innerHTML = `<span class="text-[11px] text-slate-500">Creá un torneo primero para vincularlo.</span>`;
+        return;
+      }
+      box.innerHTML = appState.tournaments.map(tr => `
+        <label class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-[11px] text-slate-200 cursor-pointer hover:border-emerald-500/40">
+          <input type="checkbox" name="new-team-tour" value="${escapeHtml(tr.id)}" checked class="accent-emerald-500" />
+          <span>${escapeHtml(tr.name)}</span>
+        </label>
+      `).join('');
+    }
+
     function renderSetupView() {
       const teamSelect = document.getElementById('setup-team-select');
       const tourSelect = document.getElementById('setup-tournament-select');
       const rivalInput = document.getElementById('setup-rival-input');
+      const rosterTitle = document.getElementById('setup-roster-title');
+      const rosterSubtitle = document.getElementById('setup-roster-subtitle');
       const team = getActiveTeam();
+      const linkedTourIds = Array.isArray(team.tournamentIds) && team.tournamentIds.length
+        ? team.tournamentIds
+        : appState.tournaments.map(t => t.id);
+      const linkedTours = appState.tournaments.filter(tr => linkedTourIds.includes(tr.id));
+      const availableTours = linkedTours.length ? linkedTours : appState.tournaments;
 
+      if (availableTours.length && !availableTours.some(tr => tr.id === appState.currentMatch.tournamentId)) {
+        appState.currentMatch.tournamentId = availableTours[0].id;
+      }
+
+      if (rosterTitle && team) {
+        rosterTitle.textContent = `Prepartido • ${team.name}${team.category ? ' (' + team.category + ')' : ''}`;
+      }
+      if (rosterSubtitle && team) {
+        const tourNames = linkedTours.map(t => t.name).join(', ');
+        rosterSubtitle.textContent = `${team.branch || 'Sin rama'}${tourNames ? ' • Torneos: ' + tourNames : ''} • Definí Titulares, Banco o No Convocados.`;
+      }
       if (teamSelect) {
         teamSelect.innerHTML = appState.teams.map(t =>
           `<option value="${escapeHtml(t.id)}" ${t.id === team.id ? 'selected' : ''}>${escapeHtml(t.name)} (${escapeHtml(t.branch || '')} • ${escapeHtml(t.category || '')})</option>`
         ).join('');
       }
       if (tourSelect) {
-        tourSelect.innerHTML = appState.tournaments.map(tr =>
+        tourSelect.innerHTML = availableTours.map(tr =>
           `<option value="${escapeHtml(tr.id)}" ${tr.id === appState.currentMatch.tournamentId ? 'selected' : ''}>${escapeHtml(tr.name)}</option>`
         ).join('');
       }
@@ -1014,6 +1153,380 @@
           </div>
         `;
       }).join('');
+    }
+
+    function renderHomeHubs() {
+      const tourListEl = document.getElementById('home-tournaments-list');
+      const teamListEl = document.getElementById('home-teams-list');
+      const activeTourId = appState.currentMatch.tournamentId;
+      const activeTeamId = getActiveTeam()?.id;
+
+      if (tourListEl) {
+        if (!appState.tournaments.length) {
+          tourListEl.innerHTML = `<div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-xs text-slate-400">No hay torneos cargados. Tocá "+ Nuevo Torneo" para sumar uno.</div>`;
+        } else {
+          tourListEl.innerHTML = appState.tournaments.map(tr => {
+            const isExpanded = expandedTournamentId === tr.id;
+            const isSelected = activeTourId === tr.id;
+            const isEditing = editingTournamentId === tr.id;
+            const matchCount = (appState.savedMatches || []).filter(m => m.tournamentId === tr.id).length;
+            const linkedTeams = (appState.teams || []).filter(tm => Array.isArray(tm.tournamentIds) && tm.tournamentIds.includes(tr.id));
+
+            return `
+              <div class="rounded-xl bg-slate-950/80 border ${isSelected ? 'border-amber-500/50' : 'border-slate-800'} overflow-hidden transition">
+                <button type="button" onclick="toggleExpandTournament('${tr.id}')"
+                  class="w-full p-3 flex items-center justify-between gap-2 text-left hover:bg-slate-900/70 transition">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2">
+                      <span class="text-xs sm:text-sm font-bold text-white truncate">${escapeHtml(tr.name)}</span>
+                      ${isSelected ? `<span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/35 font-bold shrink-0">Activo</span>` : ''}
+                    </div>
+                    <div class="text-[11px] text-slate-400 mt-0.5">
+                      ${tr.season ? `Temporada ${escapeHtml(tr.season)} • ` : ''}${linkedTeams.length} plantel${linkedTeams.length === 1 ? '' : 'es'} • ${matchCount} partido${matchCount === 1 ? '' : 's'}
+                    </div>
+                  </div>
+                  <span class="text-xs text-slate-400 shrink-0">${isExpanded ? '▲' : '▼'}</span>
+                </button>
+
+                ${isExpanded ? `
+                  <div class="px-3 pb-3 pt-2 border-t border-slate-800/80 bg-slate-900/50 space-y-2.5">
+                    ${isEditing ? `
+                      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <input id="edit-tour-name-${tr.id}" type="text" value="${escapeHtml(tr.name)}"
+                          class="sm:col-span-2 px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white" />
+                        <input id="edit-tour-season-${tr.id}" type="text" value="${escapeHtml(tr.season || '')}" placeholder="Temporada"
+                          class="px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white" />
+                      </div>
+                      <div class="flex justify-end gap-1.5">
+                        <button type="button" onclick="cancelEditTournament()" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 text-[11px] font-bold">Cancelar</button>
+                        <button type="button" onclick="saveEditTournament('${tr.id}')" class="px-3 py-1 rounded-lg bg-amber-500 text-slate-950 text-[11px] font-black">Guardar cambios</button>
+                      </div>
+                    ` : `
+                      <div class="flex flex-wrap gap-1">
+                        ${linkedTeams.length
+                          ? linkedTeams.map(tm => `<span class="text-[10px] px-2 py-0.5 rounded-md bg-slate-950 border border-slate-800 text-emerald-300">🏐 ${escapeHtml(tm.name)}</span>`).join('')
+                          : `<span class="text-[11px] text-slate-400">Sin planteles vinculados aún.</span>`
+                        }
+                      </div>
+                      <div class="flex flex-wrap items-center justify-between gap-2">
+                        <button type="button" onclick="selectTournamentForMatch('${tr.id}')"
+                          class="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold transition">
+                          ✓ Usar en el partido
+                        </button>
+                        <div class="flex items-center gap-1.5">
+                          <button type="button" onclick="startEditTournament('${tr.id}')"
+                            class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold">
+                            ✏️ Modificar
+                          </button>
+                          <button type="button" onclick="deleteTournament('${tr.id}')"
+                            class="px-2.5 py-1.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-xs font-bold">
+                            🗑️ Eliminar
+                          </button>
+                        </div>
+                      </div>
+                    `}
+                  </div>
+                ` : ''}
+              </div>
+            `;
+          }).join('');
+        }
+      }
+
+      if (teamListEl) {
+        if (!appState.teams.length) {
+          teamListEl.innerHTML = `<div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-xs text-slate-400">No hay planteles cargados. Tocá "+ Nuevo Plantel" para sumar uno.</div>`;
+        } else {
+          teamListEl.innerHTML = appState.teams.map(tm => {
+            const isExpanded = expandedTeamId === tm.id;
+            const isSelected = activeTeamId === tm.id;
+            const isEditing = editingTeamId === tm.id;
+            const players = tm.players || [];
+            const startersCount = players.filter(p => p.status === 'starter').length;
+            const teamTourIds = Array.isArray(tm.tournamentIds) ? tm.tournamentIds : [];
+            const teamTours = appState.tournaments.filter(tr => teamTourIds.includes(tr.id));
+
+            return `
+              <div class="rounded-xl bg-slate-950/80 border ${isSelected ? 'border-emerald-500/50' : 'border-slate-800'} overflow-hidden transition">
+                <button type="button" onclick="toggleExpandTeam('${tm.id}')"
+                  class="w-full p-3 flex items-center justify-between gap-2 text-left hover:bg-slate-900/70 transition">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2">
+                      <span class="text-xs sm:text-sm font-bold text-white truncate">${escapeHtml(tm.name)}</span>
+                      ${isSelected ? `<span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/35 font-bold shrink-0">Seleccionado</span>` : ''}
+                    </div>
+                    <div class="text-[11px] text-slate-400 mt-0.5">
+                      ${escapeHtml(tm.branch || 'Sin rama')}${tm.category ? ' • ' + escapeHtml(tm.category) : ''} • ${players.length} jug. (${startersCount} tit.) • ${teamTours.length} torneo${teamTours.length === 1 ? '' : 's'}
+                    </div>
+                  </div>
+                  <span class="text-xs text-slate-400 shrink-0">${isExpanded ? '▲' : '▼'}</span>
+                </button>
+
+                ${isExpanded ? `
+                  <div class="px-3 pb-3 pt-2 border-t border-slate-800/80 bg-slate-900/50 space-y-2.5">
+                    ${isEditing ? `
+                      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <input id="edit-team-name-${tm.id}" type="text" value="${escapeHtml(tm.name)}"
+                          class="px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white" />
+                        <select id="edit-team-branch-${tm.id}"
+                          class="px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white">
+                          <option value="Masculino" ${tm.branch === 'Masculino' ? 'selected' : ''}>Masculino</option>
+                          <option value="Femenino" ${tm.branch === 'Femenino' ? 'selected' : ''}>Femenino</option>
+                          <option value="Mixto" ${tm.branch === 'Mixto' ? 'selected' : ''}>Mixto</option>
+                        </select>
+                        <input id="edit-team-category-${tm.id}" type="text" value="${escapeHtml(tm.category || '')}" placeholder="Categoría"
+                          class="px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white" />
+                      </div>
+                      <div class="flex justify-end gap-1.5">
+                        <button type="button" onclick="cancelEditTeam()" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 text-[11px] font-bold">Cancelar</button>
+                        <button type="button" onclick="saveEditTeam('${tm.id}')" class="px-3 py-1 rounded-lg bg-emerald-500 text-slate-950 text-[11px] font-black">Guardar cambios</button>
+                      </div>
+                    ` : `
+                      <div class="space-y-1">
+                        <div class="text-[10px] font-extrabold uppercase tracking-wider text-amber-300/90">Torneos vinculados (tocá para activar/quitar):</div>
+                        <div class="flex flex-wrap gap-1.5">
+                          ${appState.tournaments.map(tr => {
+                            const linked = teamTourIds.includes(tr.id);
+                            return `
+                              <button type="button" onclick="toggleTeamTournament('${tm.id}', '${tr.id}')"
+                                class="text-[11px] px-2.5 py-1 rounded-lg border font-bold transition ${linked
+                                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/45'
+                                  : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700'}">
+                                ${linked ? '✓' : '+'} ${escapeHtml(tr.name)}
+                              </button>
+                            `;
+                          }).join('')}
+                        </div>
+                      </div>
+                      <div class="flex flex-wrap gap-1">
+                        ${players.length
+                          ? players.map(p => `<span class="text-[10px] px-2 py-0.5 rounded-md bg-slate-950 border border-slate-800 text-slate-300">#${escapeHtml(p.number)} ${escapeHtml(p.name)}</span>`).join('')
+                          : `<span class="text-[11px] text-slate-400">Sin jugadores cargados todavía.</span>`
+                        }
+                      </div>
+                      <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+                        <button type="button" onclick="selectTeamAndGoPrepartido('${tm.id}')"
+                          class="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black transition">
+                          ▶️ Ir a 2. Prepartido con este Plantel
+                        </button>
+                        <div class="flex items-center gap-1.5">
+                          <button type="button" onclick="startEditTeam('${tm.id}')"
+                            class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold">
+                            ✏️ Modificar
+                          </button>
+                          <button type="button" onclick="deleteTeam('${tm.id}')"
+                            class="px-2.5 py-1.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-xs font-bold">
+                            🗑️ Eliminar
+                          </button>
+                        </div>
+                      </div>
+                    `}
+                  </div>
+                ` : ''}
+              </div>
+            `;
+          }).join('');
+        }
+      }
+    }
+
+    function toggleAddTournamentForm() {
+      document.getElementById('add-tournament-box')?.classList.toggle('hidden');
+    }
+
+    function createTournament() {
+      const nameInp = document.getElementById('new-tournament-name');
+      const seasonInp = document.getElementById('new-tournament-season');
+      const name = (nameInp?.value || '').trim();
+      const season = (seasonInp?.value || '').trim();
+      if (!name) {
+        showToast('Ingresá el nombre del torneo.', 'warning');
+        return;
+      }
+      const id = 't_' + Date.now();
+      appState.tournaments.push({ id, name, season });
+      appState.currentMatch.tournamentId = id;
+      expandedTournamentId = id;
+      nameInp.value = '';
+      if (seasonInp) seasonInp.value = '';
+      document.getElementById('add-tournament-box')?.classList.add('hidden');
+      saveState();
+      renderHomeView();
+      showToast(`Torneo "${name}" agregado.`, 'success');
+    }
+
+    function toggleExpandTournament(id) {
+      expandedTournamentId = expandedTournamentId === id ? null : id;
+      editingTournamentId = null;
+      renderHomeHubs();
+    }
+
+    function selectTournamentForMatch(id) {
+      appState.currentMatch.tournamentId = id;
+      saveState();
+      renderHomeHubs();
+      showToast('Torneo seleccionado para el próximo partido.', 'success');
+    }
+
+    function startEditTournament(id) {
+      editingTournamentId = id;
+      renderHomeHubs();
+    }
+
+    function cancelEditTournament() {
+      editingTournamentId = null;
+      renderHomeHubs();
+    }
+
+    function saveEditTournament(id) {
+      const tr = appState.tournaments.find(t => t.id === id);
+      if (!tr) return;
+      const newName = (document.getElementById(`edit-tour-name-${id}`)?.value || '').trim();
+      const newSeason = (document.getElementById(`edit-tour-season-${id}`)?.value || '').trim();
+      if (!newName) {
+        showToast('El nombre del torneo no puede estar vacío.', 'warning');
+        return;
+      }
+      tr.name = newName;
+      tr.season = newSeason;
+      editingTournamentId = null;
+      saveState();
+      renderHomeHubs();
+      showToast('Torneo actualizado.', 'success');
+    }
+
+    function deleteTournament(id) {
+      if (appState.tournaments.length <= 1) {
+        showToast('Debe quedar al menos un torneo cargado.', 'warning');
+        return;
+      }
+      appState.tournaments = appState.tournaments.filter(t => t.id !== id);
+      (appState.teams || []).forEach(tm => {
+        if (Array.isArray(tm.tournamentIds)) {
+          tm.tournamentIds = tm.tournamentIds.filter(tid => tid !== id);
+        }
+      });
+      if (appState.currentMatch.tournamentId === id) {
+        appState.currentMatch.tournamentId = appState.tournaments[0]?.id || '';
+      }
+      if (expandedTournamentId === id) expandedTournamentId = null;
+      saveState();
+      renderHomeView();
+      showToast('Torneo eliminado.', 'info');
+    }
+
+    function toggleAddTeamForm() {
+      renderNewTeamTournamentChecks();
+      document.getElementById('add-team-box')?.classList.toggle('hidden');
+    }
+
+    function createTeam() {
+      const nameInp = document.getElementById('new-team-name');
+      const branchSel = document.getElementById('new-team-branch');
+      const catInp = document.getElementById('new-team-category');
+      const name = (nameInp?.value || '').trim();
+      const branch = branchSel?.value || 'Masculino';
+      const category = (catInp?.value || '').trim();
+      if (!name) {
+        showToast('Ingresá el nombre del plantel.', 'warning');
+        return;
+      }
+      const checkedTours = [...document.querySelectorAll('input[name="new-team-tour"]:checked')].map(el => el.value);
+      const tournamentIds = checkedTours.length ? checkedTours : (appState.tournaments[0] ? [appState.tournaments[0].id] : []);
+      const id = 'team_' + Date.now();
+      appState.teams.push({ id, name, branch, category, tournamentIds, players: [] });
+      appState.currentMatch.teamId = id;
+      if (tournamentIds.length) appState.currentMatch.tournamentId = tournamentIds[0];
+      expandedTeamId = id;
+      nameInp.value = '';
+      if (catInp) catInp.value = '';
+      document.getElementById('add-team-box')?.classList.add('hidden');
+      saveState();
+      renderHomeView();
+      showToast(`Plantel "${name}" creado.`, 'success');
+    }
+
+    function toggleTeamTournament(teamId, tournamentId) {
+      const tm = appState.teams.find(t => t.id === teamId);
+      if (!tm) return;
+      if (!Array.isArray(tm.tournamentIds)) tm.tournamentIds = [];
+      if (tm.tournamentIds.includes(tournamentId)) {
+        tm.tournamentIds = tm.tournamentIds.filter(id => id !== tournamentId);
+      } else {
+        tm.tournamentIds.push(tournamentId);
+      }
+      if (appState.currentMatch.teamId === tm.id && tm.tournamentIds.length && !tm.tournamentIds.includes(appState.currentMatch.tournamentId)) {
+        appState.currentMatch.tournamentId = tm.tournamentIds[0];
+      }
+      saveState();
+      renderHomeHubs();
+    }
+
+    function toggleExpandTeam(id) {
+      expandedTeamId = expandedTeamId === id ? null : id;
+      editingTeamId = null;
+      renderHomeHubs();
+    }
+
+    function selectTeamAndGoPrepartido(id) {
+      const team = appState.teams.find(t => t.id === id);
+      if (!team) return;
+      appState.currentMatch.teamId = team.id;
+      if (Array.isArray(team.tournamentIds) && team.tournamentIds.length && !team.tournamentIds.includes(appState.currentMatch.tournamentId)) {
+        appState.currentMatch.tournamentId = team.tournamentIds[0];
+      }
+      (team.players || []).forEach(p => {
+        if (!appState.currentMatch.statsByPlayer[p.id]) {
+          appState.currentMatch.statsByPlayer[p.id] = emptyPlayerStats();
+        }
+      });
+      saveState();
+      switchTab('setup');
+      showToast(`Plantel ${team.name} cargado en Prepartido.`, 'success');
+    }
+
+    function startEditTeam(id) {
+      editingTeamId = id;
+      renderHomeHubs();
+    }
+
+    function cancelEditTeam() {
+      editingTeamId = null;
+      renderHomeHubs();
+    }
+
+    function saveEditTeam(id) {
+      const tm = appState.teams.find(t => t.id === id);
+      if (!tm) return;
+      const newName = (document.getElementById(`edit-team-name-${id}`)?.value || '').trim();
+      const newBranch = document.getElementById(`edit-team-branch-${id}`)?.value || 'Masculino';
+      const newCat = (document.getElementById(`edit-team-category-${id}`)?.value || '').trim();
+      if (!newName) {
+        showToast('El nombre del plantel no puede estar vacío.', 'warning');
+        return;
+      }
+      tm.name = newName;
+      tm.branch = newBranch;
+      tm.category = newCat;
+      editingTeamId = null;
+      saveState();
+      renderHomeHubs();
+      showToast('Plantel actualizado.', 'success');
+    }
+
+    function deleteTeam(id) {
+      if (appState.teams.length <= 1) {
+        showToast('Debe quedar al menos un plantel cargado.', 'warning');
+        return;
+      }
+      appState.teams = appState.teams.filter(t => t.id !== id);
+      if (appState.currentMatch.teamId === id) {
+        appState.currentMatch.teamId = appState.teams[0]?.id || '';
+      }
+      if (expandedTeamId === id) expandedTeamId = null;
+      saveState();
+      renderHomeHubs();
+      showToast('Plantel eliminado.', 'info');
     }
 
     function onSetupTeamChange() {
@@ -1613,6 +2126,7 @@
     function renderAll() {
       updateAuthVisibility();
       renderTabs();
+      renderHomeView();
       renderSetupView();
       renderLiveView();
       renderStatsView();
@@ -1625,4 +2139,4 @@
     });
   </script>
 </body>
-</html>}
+</html>
